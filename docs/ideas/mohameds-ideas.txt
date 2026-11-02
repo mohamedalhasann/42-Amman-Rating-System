@@ -1,0 +1,8 @@
+- old ratings slowly lose weight, so someone who had a bad month is not stuck with it forever
+
+- checking with "are you sure? " on 1 star before submitting, 
+
+- positivity should be scarce ,so every learner gets 3 positive tokens per week to give away
+
+- some random learners (selected by staff) review the negative cases and give an opinion
+
