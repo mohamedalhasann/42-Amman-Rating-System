@@ -1,45 +1,38 @@
-# Decisions to settle
+# Team decisions
 
-Every entry is open. Recommendations are proposals, not approved requirements. Replace an entry's status only after team agreement and record the date and owner.
+Updated 3 November 2026 from the project owner's instructions. Agreed team policies are distinct from official hackathon requirements. Technical details marked proposed remain open.
 
-## Blocking decisions before implementation
+| ID | Status | Current policy |
+| --- | --- | --- |
+| D01 | Partially agreed | NestJS backend, React frontend, PostgreSQL database. Deployment open. |
+| D02 | Agreed | Import authorized 42 Amman usernames, first names, and pictures while 42 API access remains. No runtime API dependency. Username/password login after email setup. Students use `{intra_username}@student.42amman.com`; staff use `{intra_username}@42amman.com`. |
+| D03 | Agreed | No self-votes. |
+| D04 | Agreed | One submission per voter-recipient pair per window, including held and invalidated submissions. Proposed: rejected submissions also retain that reservation. |
+| D05 | Agreed with proposed detail | 3-star labels optional. At least one flag and a nonblank explanation required at 1 star. Proposed: 2-star labels optional too. Exact selection and text length limits open. |
+| D06 | Agreed | Owner's initial mappings are in voting-rules.md. All four selected positive labels are also available at 2 stars. Staff retain catalog management. |
+| D07 | Selected under delegated judgment | Keep the staff-configurable minimum as a participation target to satisfy the PDF. Report progress without penalties, forced voting, or submission blocking. Proposed initial minimum: zero. |
+| D08 | Agreed | Student average includes counted ratings received across all voting windows. |
+| D09 | Agreed | Invalidation does not restore allowance. Held votes consume allowance. Proposed: rejected votes also keep allowance consumed. |
+| D10 | Agreed | Snapshot approved, active, eligible 42 Amman students when the window opens, not when created. Mid-window additions open. |
+| D11 | Agreed | Only one active window at a time. Proposed enforcement: reject overlapping intervals, including edits. |
+| D12 | Agreed | Lowering the maximum preserves existing votes. Remaining allowance cannot fall below zero. |
+| D13 | Agreed | Store unique student `intra_username`, `first_name`, and imported picture. Search by first name or username; display both. Ratings reference internal IDs. |
+| D14 | Agreed | Explanation required at 1 star, optional at 2 and 3. 1-star votes held pending staff approval or rejection. 2-star and 3-star votes count immediately. |
+| D15 | Deferred by owner | Abuse thresholds, observation intervals, and minimum sample sizes. Revisit before detector implementation. |
+| D16 | Deferred by owner | Whether suspicious 2-star or 3-star votes can be held. Do not implement automatic holds for them until decided. |
+| D17 | Agreed | Staff can toggle manual student approval. Disabled: email password setup grants approval. Enabled: new verified students await staff approval. Enabling it never removes established verification or approval. |
 
-| ID | Question | Proposed default | Affects |
-| --- | --- | --- | --- |
-| D01 | What stack, database, and deployment target will the team use? | Choose together; no choice assumed here. | Setup, migrations, hosting |
-| D02 | How do users sign in and who provides the student roster and staff roles? | Trusted campus identity if available; confirm integration access before choosing. No client-selected roles. | Authentication, participation totals |
-| D03 | Can students rate themselves? | Reject self-votes. | Validation and constraints |
-| D04 | Can one student rate the same peer more than once in a window? | One accepted rating per pair per window. Detect repeat attempts separately. | Unique constraint, abuse detection |
-| D05 | How many labels must a rating have? | At least one distinct label; upper bound needs agreement. | Submission validation |
-| D06 | Which positive labels are available at 2 stars? | Ask staff; do not guess. | Initial label catalog |
-| D07 | What does the minimum vote count enforce? | Track participation below the minimum; do not block partial progress or fabricate votes. | Dashboard and window closure |
-| D08 | Is the student's average for all windows or the current window? | Current window, clearly identified in the response. | Dashboard, staff analytics |
-| D09 | Does invalidation restore the voter's allowance? | No. Accepted submissions consume allowance even after invalidation. | Remaining votes and participation |
-| D10 | Who belongs to a window's participation roster? | Snapshot active students when staff creates the window; review mid-window additions separately. | Non-voter denominator |
-| D11 | Are multiple windows allowed to overlap? | One active window at a time. Reject overlapping ranges. | Student dashboard, configuration |
-| D12 | What happens if staff lower a maximum below votes already submitted? | Retain existing votes and allow no further votes from students already at or above the maximum. | Window updates |
-| D13 | How do students identify a peer without exposing private identifiers? | Authenticated directory with an approved display name and opaque recipient ID only. Ask staff which display fields are acceptable. | Peer selection, privacy |
-| D14 | Are explanations accepted or required for serious votes? | Do not make them mandatory without agreement. If accepted, staff-only plain text with a bounded length. | Malicious serious vote review |
-| D15 | What thresholds and observation intervals trigger abuse alerts? | Start with explainable configurable rules; agree numeric values and test fixtures before coding. | Detection accuracy and scope |
+## Open details before the relevant feature is built
 
-## Other decisions before the relevant feature is built
+- Deployment target, mail provider, session implementation, password policy, setup-token lifetime, and rate limits.
+- Trusted staff roster provisioning and initial administrator. Staff setup cannot be self-authorized.
+- Treatment of already-verified pending students when manual approval is disabled. Proposed: approve them with an audit event.
+- Durable photo storage and access policy. Proposed: copy image objects into controlled storage and keep references in PostgreSQL instead of relying on Intra URLs.
+- Eligibility changes after a window opens. Proposed: preserve the snapshot and add new students next window. Deactivated accounts cannot access the application.
+- Student edits, withdrawals, restoration of rejected votes, departing students, and retention. No edit, withdrawal, or restoration flow is approved yet.
+- Proposed defaults: two-decimal averages, `null` for no counted ratings, UTC storage, stable historical label wording, and preserved submissions after window date edits.
+- Confirm the deadline timezone and review the smaller initial label catalog with staff. Official PDF examples remain separate in requirements.md.
 
-- Decide whether students may edit or withdraw a submitted rating. Proposed baseline: no student edit or withdrawal flow.
-- Decide whether invalidated votes can be restored. Proposed baseline: invalidation is final for this hackathon, with an audit trail.
-- Confirm allowed window edits and treatment of accepted votes outside revised dates. Proposed baseline: preserve submissions and their window membership; date edits govern new submissions.
-- Choose average rounding, timestamp display timezone, list limits, and CSV columns. Proposed average: two decimal places, with `null` when there are no valid ratings.
-- Decide how label edits preserve past meaning. Proposed baseline: rename by replacing the label record and deactivate the old one; never overwrite historical wording.
-- Confirm treatment of departing students, data retention, and export retention with staff.
-- Agree which staff may assign staff roles and which deployment mechanism manages initial staff access.
+## Review checkpoints
 
-## Decision record template
-
-```text
-Decision ID:
-Status: agreed
-Date:
-Owner:
-Chosen rule:
-Reason:
-Documents and mock responses updated:
-```
+Resolve mail delivery and deployment before the live account-setup demo. Revisit D15 and D16 before implementing abuse handling. These are work checkpoints, not scheduled reminders.

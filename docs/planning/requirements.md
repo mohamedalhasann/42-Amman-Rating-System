@@ -34,6 +34,10 @@ These are examples from the PDF, not a fixed complete taxonomy. Staff control th
 
 The PDF does not identify which positive labels are allowed at 2 stars. Do not silently map all positive labels to 2 stars.
 
+## Team policies versus official examples
+
+The selected initial catalog is in voting-rules.md. It is smaller than the official examples above and adds `Other` at 1 star. Team choices allow unlabeled 3-star votes, require a flag and explanation for 1 star, hold 1-star submissions for staff, and use an all-window average. These are not additional claims about the PDF. Staff retain catalog controls. Review any interpretation concerns with staff.
+
 ## Evaluation and delivery
 
 | Criterion | Weight |

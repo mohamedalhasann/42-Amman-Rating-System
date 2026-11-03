@@ -1,6 +1,6 @@
 # Planning before implementation
 
-Status: Draft for team review. No backend, database, framework, or hosting choice is approved by these documents.
+Status: Planning draft incorporating owner decisions. Stack: NestJS, React, PostgreSQL. Deployment remains open. No backend or database code is included.
 
 The source of truth is [the hackathon specification](../42_Amman_Rating_System_Next_Phase.pdf). The [student experience](../42_Amman_Student_Experience_PC_and_Mobile.pdf) and [staff experience](../42_Amman_Staff_Experience_PC.pdf) describe the interface workstreams. These plans use only those three current PDFs as sources.
 
@@ -14,6 +14,7 @@ The source of truth is [the hackathon specification](../42_Amman_Rating_System_N
 6. [Security and access](security-and-access.md): Roles, privacy boundaries, and access checks.
 7. [Abuse review](abuse-review.md): Detection coverage, evidence, and human review.
 8. [Implementation plan](implementation-plan.md): Order of work and completion checks.
+9. [Authentication](authentication.md): Imported roster, email password setup, and approval.
 
 ## How to read these plans
 
@@ -21,7 +22,7 @@ The source of truth is [the hackathon specification](../42_Amman_Rating_System_N
 - **Proposed** means a team design choice. It is not an additional hackathon requirement.
 - **Open** means the team has not decided. An example value does not approve a policy.
 
-All technical structures and endpoint names below are proposals. Requirements take precedence. Record decisions before turning proposals into migrations or frontend assumptions. Do not use older deleted files as requirements.
+Technical structures and endpoint names remain proposals. Agreed owner policies are recorded in decisions.md, separately from official requirements. Do not use older deleted files as requirements.
 
 ## Immediate team handoff
 

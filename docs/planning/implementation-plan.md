@@ -5,7 +5,8 @@ Status: Proposed order. No backend or database implementation is part of this do
 ## 1. Agree on the foundation
 
 - Review blocking decisions in [decisions](decisions.md), record answers, and update dependent documents.
-- Choose the stack and identity integration based on available access and team familiarity.
+- Use NestJS, React, and PostgreSQL. Choose deployment and mail delivery.
+- Prioritize the authorized student roster and picture import before API access ends. Normal application flows must not depend on 42 API availability.
 - Agree the roster source, window rules, label mapping, and privacy-safe recipient directory with staff.
 - Review the models and API shapes together, then prepare shared mock responses for student and staff interfaces.
 
@@ -13,7 +14,8 @@ Completion: no unresolved policy blocks account creation, a rating submission, o
 
 ## 2. Build one complete rating flow
 
-- Set up the approved schema, authentication, student roster, staff role, one voting window, and permitted labels.
+- Set up the schema, imported roster, trusted staff records, email password setup, manual approval setting, one window, and agreed label catalog.
+- Capture eligibility at window opening. Add held 1-star submissions and staff approval/rejection before considering the rating flow complete.
 - Implement dashboard, peer selection, labels, and atomic rating submission.
 - Implement staff inspection of the stored rating.
 - Protect student privacy and staff routes from the first working version.
@@ -29,6 +31,8 @@ Completion: a student can submit a valid rating, see the updated allowance, and 
 Completion: totals reconcile, edits affect subsequent requests, and student calls to staff controls and export fail.
 
 ## 4. Add detection and review
+
+Review checkpoint: remind the owner to settle D15 thresholds and D16 suspicious 2-star and 3-star handling before implementing this stage. No scheduled notification is set.
 
 - Implement the agreed rules for all eight example cases and retain reliable detection work.
 - Build the unified review queue with readable evidence and involved students.

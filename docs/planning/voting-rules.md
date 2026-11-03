@@ -1,41 +1,53 @@
-# Proposed voting rules
+# Voting rules
 
-Status: Review draft. These rules implement the requirements using the defaults in [decisions](decisions.md). Unapproved defaults must not be treated as official requirements.
+Status: Owner policies recorded in [decisions](decisions.md). Technical details remain proposed. The official PDF examples are preserved in requirements.md; the catalog below is the owner's initial selection, not a verbatim copy of those examples.
 
-## Submit a rating
+## Initial catalog and submission behavior
 
-1. Authenticate an active student. Derive the voter from the session, never from request data.
-2. Resolve the requested voting window and verify server time is within its interval.
-3. Verify the voter and recipient belong to the window roster.
-4. Apply the agreed self-voting and repeated-peer rules.
-5. Check the student's accepted submission count against the current maximum.
-6. Validate stars, label count, distinct labels, active labels, and star availability. Reject invented label IDs. Validate explanations only if D14 enables them.
-7. Store the vote and labels atomically. Protect allowance checks against concurrent requests and configuration edits.
-8. Return submission confirmation and the updated allowance. Never return the recipient's average or received labels.
-9. Evaluate detection rules and make findings available to staff. Record findings reliably, using the same transaction or a durable job record; no untracked fire-and-forget work.
+| Stars | Allowed labels or flags | Selection and explanation | Initial treatment |
+| --- | --- | --- | --- |
+| 3 | Helpful; Good teammate; Community contributor; Respectful | Labels optional, explanation optional | Counts immediately |
+| 2 | Helpful; Good teammate; Community contributor; Respectful; Unreliable teammate; Disruptive | Explanation optional; labels proposed optional | Counts immediately |
+| 1 | Aggressive behavior; Disrespectful; Disruptive; Unreliable teammate; Other | At least one flag and a nonblank explanation required | Held for staff |
 
-An identical retry with the same idempotency key returns the original result without consuming another vote. Reusing the key with changed content fails. A retry returns the current allowance, which may have changed since the original request.
+`Other` is a configured flag, not an arbitrary new label. Staff can manage the catalog. Exact label selection and explanation length limits remain open. Review this smaller initial catalog with staff.
 
-## Windows and limits
+## Submission
 
-Proposed interval: inclusive start, exclusive end. The server decides whether voting is open. The browser timer is only a display.
+1. Authenticate an active, verified, approved student and derive voter ID from the session.
+2. Resolve the single open window using server time and completed opening-roster capture.
+3. Verify voter and recipient membership and current account eligibility.
+4. Reject self-votes and existing submissions for the pair in that window, including held and invalidated votes; proposed including rejected votes.
+5. Check accepted submissions against the current maximum. Held and invalidated submissions consume allowance; proposed rejected submissions do too.
+6. Validate stars, catalog IDs, allowed mappings, distinct selections, and required 1-star flag and explanation.
+7. Insert the vote and selections atomically, with concurrency protection against other submissions and configuration edits.
+8. Return confirmation, own submission state, and current allowance. Never return the recipient's score or received labels.
+9. Persist detection findings or durable work so background processing cannot silently lose them.
 
-Staff may change window times and limits. Validate edits, reject stale versions, and audit the change. Preserve accepted votes when dates change. Closing or shortening a window blocks subsequent submissions once the new deadline is reached.
+An identical retry with the same idempotency key returns the original submission and current allowance without another vote. A changed request with the same key fails. Network retries are not repeat-voting abuse.
 
-If the maximum is lowered below a student's current usage, show zero remaining votes and preserve their submissions. The minimum describes participation progress under D07; it does not prevent students from making a first vote. No automatic reset or recurring weekly schedule is assumed.
+## Windows and participation
 
-## Average and participation
+Proposed interval: inclusive start, exclusive end. One active window is allowed; proposed enforcement rejects overlapping ranges. Capture approved, active, eligible 42 Amman students when the window opens. Mid-window additions remain open. Deactivated accounts cannot vote even if in the snapshot.
 
-Proposed average: ordinary arithmetic mean of valid ratings received in the current window, rounded to two decimal places for display. No ratings means `null`, not zero stars. No weighting, reputation adjustments, or publication threshold is assumed.
+Staff can edit dates and limits with stale-version checks and audit records. Preserve submissions and, provisionally, the opening roster after edits. New submissions follow the current dates. Lowering the maximum never removes votes: remaining allowance is clamped at zero.
 
-Participation uses accepted submissions, including later invalidated votes under D09. Staff receive both submission counts and valid counts with explicit names. Students see only their own average, allowance, and window information. Do not return received vote counts or individual received votes in the student baseline response.
+Keep a configurable minimum as a participation target for staff reporting, without penalties or submission blocking. Proposed initial minimum: zero. No weekly reset or recurring schedule is assumed.
+
+## Average
+
+Student average is the arithmetic mean of counted received ratings across all windows. Exclude held, rejected, and invalidated votes. Proposed rounding: two decimals; no counted ratings means `null`. The average remains available when no voting window is open.
+
+Participation uses accepted submissions, not only counted votes. Staff see submitted, counted, held, rejected, and invalidated totals separately. Students do not receive received-label summaries, received vote counts, or individual received records.
 
 ## Staff review and invalidation
 
-A suspicious pattern creates a staff case; it does not prove abuse. Proposed baseline: votes count until staff invalidate them, including 1-star votes. The specification does not mandate holding every 1-star vote.
+Every 1-star submission starts held and appears in a staff queue with flags and explanation. Staff approval makes it count; rejection keeps it excluded. Store reviewer, time, and reason. This is separate from confirming that a voter abused the system.
 
-Staff confirm a case, identify the particular abusive votes, and give a reason for invalidation. Atomically create the invalidation and audit record. Recompute or query averages using valid votes, and update affected analytics consistently. Keep the original vote for review. Repeat invalidation requests must not apply the effect twice.
+Abuse cases describe suspicious behavior. Staff confirm abuse and invalidate specific linked votes, preserving original records and decision history. Approval, rejection, and invalidation must update averages consistently; repeated requests must not apply effects twice. Invalidation never restores allowance.
+
+Whether suspicious 2-star or 3-star votes may be held is deferred. Baseline: count them immediately until staff invalidate confirmed abuse. Revisit D16 before detector implementation.
 
 ## Label changes
 
-New submissions use the current label catalog. Deactivated labels cannot be selected again, but remain visible in historical staff records. Under the proposed replacement policy, renamed labels receive new IDs so old votes retain their original meaning.
+New submissions use the current catalog. Deactivation blocks new selection while preserving history. Proposed rename policy: replacement label records rather than overwriting historical wording.
