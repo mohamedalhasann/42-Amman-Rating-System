@@ -1,6 +1,6 @@
 # Proposed API contract
 
-Status: NestJS API draft for React clients and PostgreSQL persistence. Endpoint names remain proposals; policies follow [decisions](decisions.md). No endpoints are implemented.
+Status: Django API draft for React clients and PostgreSQL persistence. Endpoint names remain proposals; policies follow [decisions](decisions.md). No endpoints are implemented.
 
 ## Shared conventions
 
@@ -33,7 +33,7 @@ Setup and login are public authentication entry points, not public roster access
 | --- | --- | --- |
 | GET | `/me` | Current user's approved display identity and role |
 | GET | `/student/dashboard` | Own average, current window, allowance, and server time |
-| GET | `/student/peers?query=...&cursor=...` | Search eligible peers by first name or Intra username |
+| GET | `/student/peers?query=...&cursor=...` | Search eligible peers by first name, last name, or Intra username |
 | GET | `/student/labels?stars=3` | Active labels permitted for a selected star level |
 | POST | `/student/ratings` | Submit a rating with an `Idempotency-Key` header |
 
@@ -58,7 +58,7 @@ Proposed dashboard response. Values are illustrative, not approved limits:
 
 If there is no open window, return `window: null` and `allowance: null` while preserving the all-window own average. No counted received ratings means a null average. Never reuse an earlier window's allowance. Proposed baseline: return only an open window; upcoming or closed-window display is optional.
 
-Peer items contain `{ "recipient_id": "student_example", "first_name": "Example", "intra_username": "example" }`. Display both first name and username. Photo display remains proposed; expose only controlled authenticated references if enabled. Label items contain `{ "id": "label_example", "name": "Helpful" }`. Neither collection contains ratings, received labels, provider subjects, or email addresses.
+Peer items contain `{ "recipient_id": "student_example", "first_name": "Example", "last_name": "Student", "intra_username": "example" }`. Display the full name and username. Photo display remains proposed; expose only controlled authenticated references if enabled. Label items contain `{ "id": "label_example", "name": "Helpful" }`. Neither collection contains ratings, received labels, provider subjects, or email addresses.
 
 Submission body:
 

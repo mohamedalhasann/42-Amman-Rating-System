@@ -1,6 +1,6 @@
 # Data models
 
-Status: Logical PostgreSQL model for the agreed NestJS backend. No migrations are included. Agreed policies are in [decisions](decisions.md); entity layout and implementation details remain proposals. IDs are opaque internal references. Timestamps are timezone-aware UTC instants.
+Status: Logical PostgreSQL model for the agreed Django backend. No migrations are included. Agreed policies are in [decisions](decisions.md); entity layout and implementation details remain proposals. IDs are opaque internal references. Timestamps are timezone-aware UTC instants.
 
 ## Relationships
 
@@ -34,11 +34,11 @@ erDiagram
 
 Proposed shared account table: `User(id, role, active, email_verified_at, approved_at, approved_by, created_at)`. Role is `student` or `staff`; verification and approval timestamps start null. `approved_by` is a nullable staff User reference. Automatic approval can leave it null, with an audit record explaining why.
 
-`Student(user_id, intra_username, first_name, picture_storage_key, campus, imported_at)`: `user_id` is the primary key and User foreign key. `intra_username` is unique and normalized. Restrict imported campus to 42 Amman. `picture_storage_key` can be null while image collection is incomplete. Ratings use this internal student key, not the username.
+`Student(user_id, intra_username, first_name, last_name, picture_storage_key, campus, imported_at)`: `user_id` is the primary key and User foreign key. `intra_username` is unique and normalized. `first_name` and `last_name` come from the authorized roster. Restrict imported campus to 42 Amman. `picture_storage_key` can be null while image collection is incomplete. Ratings use this internal student key, not the username.
 
 `Staff(user_id, intra_username)`: `user_id` is the primary key and User foreign key, and `intra_username` is unique. Records require trusted provisioning. Setup is not public staff registration. Proposed enforcement: each User has exactly the profile matching its role; no client may choose or change that role. Dual-role accounts remain outside the agreed baseline.
 
-Separate profile tables avoid duplicating usernames across a shared account and its profile. A staff and student username may match; the proposed account-type login selector resolves the trusted profile. Student lookup returns first name and username; photo display is still proposed.
+Separate profile tables avoid duplicating usernames across a shared account and its profile. A staff and student username may match; the proposed account-type login selector resolves the trusted profile. Student lookup returns first name, last name, and username; photo display is still proposed.
 
 Email is derived from profile role: student `{intra_username}@student.42amman.com`, staff `{intra_username}@42amman.com`. Do not permit caller-supplied email addresses to redirect setup mail. The local roster and copied pictures must survive loss of 42 API access. See [authentication](authentication.md).
 
@@ -141,4 +141,4 @@ A vote with several labels appears in multiple label groups; those group counts 
 
 Proposed submission transaction: lock relevant window configuration and voter allowance, verify completed roster capture, membership and current account eligibility, check allowance and pair uniqueness, validate labels and explanation, insert rating and selections, and persist reliable detection work before commit. Define lock order with configuration and catalog edits to avoid stale rules and overspending. Database constraints are the final retry and duplicate guards.
 
-Suggested indexes: normalized student username, normalized first name for agreed search behavior, ratings by window/voter, window/recipient, recipient/time, window/stars, and submission time; label selections by label; case status/time; attempts by voter/time; held review lookup. Confirm query plans before adding indexes beyond actual needs.
+Suggested indexes: normalized student username, first name, and last name for agreed search behavior, ratings by window/voter, window/recipient, recipient/time, window/stars, and submission time; label selections by label; case status/time; attempts by voter/time; held review lookup. Confirm query plans before adding indexes beyond actual needs.

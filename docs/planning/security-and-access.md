@@ -10,7 +10,7 @@ All implementation measures below are proposed ways to satisfy that requirement.
 | --- | --- | --- | --- |
 | Own session identity | Denied | Allowed | Allowed |
 | Student own average and allowance | Denied | Own only | Use staff routes |
-| Minimal approved peer directory | Denied | First name and Intra username search | Via staff student lookup |
+| Minimal approved peer directory | Denied | First name, last name, and Intra username search | Via staff student lookup |
 | Submit student rating | Denied | Allowed under voting rules | Denied unless dual-role support is agreed |
 | Received labels or individual received votes | Denied | Denied | Allowed |
 | Other students' ratings | Denied | Denied | Allowed |

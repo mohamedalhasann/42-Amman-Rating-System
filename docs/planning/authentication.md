@@ -4,7 +4,7 @@ Status: Account flow agreed by the owner. Details marked proposed remain open. N
 
 ## Import before API access ends
 
-Collect authorized 42 Amman students' Intra usernames, first names, and pictures while authorized 42 API access remains. Validate campus membership. Persist profiles locally in PostgreSQL with normalized unique student usernames. Re-imports update profiles without creating duplicates or resetting credentials, email verification, or approval. Import alone never verifies or approves a student.
+Collect authorized 42 Amman students' Intra usernames, first names, last names, and pictures while authorized 42 API access remains. Validate campus membership. Persist profiles locally in PostgreSQL with normalized unique student usernames. Re-imports update profiles without creating duplicates or resetting credentials, email verification, or approval. Import alone never verifies or approves a student.
 
 Proposed photo storage: copy authorized images into controlled durable storage and persist object keys in PostgreSQL. Confirm whether image bytes should instead live inside PostgreSQL. A remote Intra image URL alone is insufficient if access disappears. Normal login, search, and rating requests must work without the 42 API. Confirm import completeness while access is available. A later trusted roster-update process remains open.
 

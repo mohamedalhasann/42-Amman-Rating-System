@@ -5,7 +5,7 @@ Status: Proposed order. No backend or database implementation is part of this do
 ## 1. Agree on the foundation
 
 - Review blocking decisions in [decisions](decisions.md), record answers, and update dependent documents.
-- Use NestJS, React, and PostgreSQL. Choose deployment and mail delivery.
+- Use Django, React, and PostgreSQL. Choose deployment and mail delivery.
 - Prioritize the authorized student roster and picture import before API access ends. Normal application flows must not depend on 42 API availability.
 - Agree the roster source, window rules, label mapping, and privacy-safe recipient directory with staff.
 - Review the models and API shapes together, then prepare shared mock responses for student and staff interfaces.

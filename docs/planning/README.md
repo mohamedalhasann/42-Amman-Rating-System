@@ -1,6 +1,6 @@
 # Planning before implementation
 
-Status: Planning draft incorporating owner decisions. Stack: NestJS, React, PostgreSQL. Deployment remains open. No backend or database code is included.
+Status: Planning draft incorporating owner decisions. Stack: Django, React, PostgreSQL. Deployment remains open. No backend or database code is included.
 
 The source of truth is [the hackathon specification](../42_Amman_Rating_System_Next_Phase.pdf). The [student experience](../42_Amman_Student_Experience_PC_and_Mobile.pdf) and [staff experience](../42_Amman_Staff_Experience_PC.pdf) describe the interface workstreams. These plans use only those three current PDFs as sources.
 

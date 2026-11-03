@@ -4,8 +4,8 @@ Updated 3 November 2026 from the project owner's instructions. Agreed team polic
 
 | Question | Status | Current policy |
 | --- | --- | --- |
-| What stack, database, and deployment target will the team use? | Partially agreed | NestJS backend, React frontend, PostgreSQL database. Deployment open. |
-| How do users sign in, and who provides the student roster and staff roles? | Agreed | Import authorized 42 Amman usernames, first names, and pictures while 42 API access remains. No runtime API dependency. Username/password login after email setup. Students use `{intra_username}@student.42amman.com`; staff use `{intra_username}@42amman.com`. |
+| What stack, database, and deployment target will the team use? | Partially agreed | Django backend, React frontend, PostgreSQL database. Deployment open. |
+| How do users sign in, and who provides the student roster and staff roles? | Agreed | Import authorized 42 Amman usernames, first names, last names, and pictures while 42 API access remains. No runtime API dependency. Username/password login after email setup. Students use `{intra_username}@student.42amman.com`; staff use `{intra_username}@42amman.com`. |
 | Can students rate themselves? | Agreed | No self-votes. |
 | Can one student rate the same peer more than once in a window? | Agreed | One submission per voter-recipient pair per window, including held and invalidated submissions. Proposed: rejected submissions also retain that reservation. |
 | How many labels must a rating have? | Agreed with proposed detail | 3-star labels optional. At least one flag and a nonblank explanation required at 1 star. Proposed: 2-star labels optional too. Exact selection and text length limits open. |
@@ -16,7 +16,7 @@ Updated 3 November 2026 from the project owner's instructions. Agreed team polic
 | Who belongs to a window's participation roster? | Agreed | Snapshot approved, active, eligible 42 Amman students when the window opens, not when created. Mid-window additions open. |
 | Are multiple windows allowed to overlap? | Agreed | Only one active window at a time. Proposed enforcement: reject overlapping intervals, including edits. |
 | What happens if staff lower a maximum below votes already submitted? | Agreed | Lowering the maximum preserves existing votes. Remaining allowance cannot fall below zero. |
-| How do students identify a peer without exposing private identifiers? | Agreed | Store unique student `intra_username`, `first_name`, and imported picture. Search by first name or username; display both. Ratings reference internal IDs. |
+| How do students identify a peer without exposing private identifiers? | Agreed | Store unique student `intra_username`, `first_name`, `last_name`, and imported picture. Search by first name, last name, or username; display the full name and username. Ratings reference internal IDs. |
 | Are explanations accepted or required for serious votes? | Agreed | Explanation required at 1 star, optional at 2 and 3. 1-star votes held pending staff approval or rejection. 2-star and 3-star votes count immediately. |
 | What thresholds and observation intervals trigger abuse alerts? | Deferred by owner | Abuse thresholds, observation intervals, and minimum sample sizes. Revisit before detector implementation. |
 | Can suspicious 2-star or 3-star votes be held? | Deferred by owner | Do not implement automatic holds for them until decided. |
