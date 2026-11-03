@@ -12,6 +12,7 @@
     --bar-bg:      #61892F;   /* deeper green for header bars */
     --bar-text:    #FFFFFF;
     --row-bg:      #474B4F;
+    --row-bg-hl:   #6e757c;
     --row-text:    #F1F3F4;
     --star-fill:   #86C232;
     --star-empty:  rgba(255, 255, 255, 0.14);
@@ -186,6 +187,10 @@ button:hover {
     width: 100%;
 }
 
+.profile-block h4 {
+    margin-bottom: 4px;
+}
+
 .profile-pic {
     border-radius: 50%;
     border: 2px var(--accent) solid;
@@ -277,7 +282,15 @@ button:hover {
     padding: 0 2vw;
 }
 
+.list-element:hover {
+    background-color: var(--row-bg-hl);
+    cursor: pointer;
+}
+
 .list-element h3 {
     margin: 6px 10px;
+}
+
+.list-element .list-met {
     color: var(--row-text);
 }
