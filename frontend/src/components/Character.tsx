@@ -1,97 +1,77 @@
 import type { CharacterSpec } from '../api';
 
-// A character is built from swappable SVG parts on one 160x160 canvas.
+// A character is built from swappable SVG parts on one canvas (viewBox -10 0 220 220).
+// Doodle style: thick rounded ink lines, head turned slightly, dot eyes.
 // The hoodie always wears the student's accent color.
 
 export const SKINS = ['#F6DCC8', '#EBC3A0', '#CD966B', '#9A633F', '#64412A'];
-export const HAIRS = ['Swoop', 'Curly', 'Long', 'Buzz', 'Bun'];
-export const EYES = ['Dots', 'Happy', 'Calm', 'Wide', 'Wink'];
+export const HAIRS = ['Curly', 'Bob', 'Swoop', 'Buzz', 'Bun'];
+export const EYES = ['Dots', 'Happy', 'Sleepy', 'Wide', 'Smile'];
 export const ITEMS = ['None', 'Glasses', 'Headphones', 'Beanie'];
 
 export const DEFAULT_CHARACTER: CharacterSpec = { skin: 0, hair: 0, eyes: 0, item: 0 };
 
 const INK = '#121417';
+const LINE = { stroke: INK, strokeWidth: 7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+const HEAD = 'M66 84 C64 56 84 38 108 38 C134 38 150 58 148 86 C146 112 128 130 104 130 C90 130 78 124 72 114 C68 108 66 98 66 84 Z';
 
 function HairBack({ hair }: { hair: number }) {
-  if (hair === 2)
-    return (
-      <path
-        d="M42 64 C36 30 60 20 80 20 C100 20 124 30 118 64 L124 116 C112 121 102 116 100 106 L60 106 C58 116 48 121 36 116 Z"
-        fill={INK}
-      />
-    );
-  if (hair === 4) return <circle cx="80" cy="22" r="13" fill={INK} />;
+  if (hair === 1)
+    return <path d="M52 118 C40 80 52 34 106 32 C156 32 166 76 156 120 C150 132 136 132 132 122 L84 122 C78 134 60 132 52 118 Z" fill={INK} />;
+  if (hair === 4)
+    return <circle cx="150" cy="46" r="17" fill={INK} />;
   return null;
 }
 
 function HairFront({ hair }: { hair: number }) {
   switch (hair) {
     case 1:
-      return (
-        <g fill={INK}>
-          <ellipse cx="80" cy="42" rx="33" ry="14" />
-          <circle cx="50" cy="52" r="11" />
-          <circle cx="58" cy="38" r="13" />
-          <circle cx="74" cy="31" r="14" />
-          <circle cx="91" cy="33" r="13" />
-          <circle cx="104" cy="42" r="12" />
-          <circle cx="111" cy="54" r="9" />
-        </g>
-      );
+      return <path d="M64 76 C66 48 90 36 112 38 C136 40 150 56 150 74 C130 70 110 60 100 50 C92 62 80 70 64 76 Z" fill={INK} />;
     case 2:
-      return <path d="M45 62 C42 36 62 26 80 26 C98 26 118 36 115 62 C105 50 93 45 80 47 C67 45 55 50 45 62 Z" fill={INK} />;
+      return <path d="M63 80 C60 50 86 33 112 35 C136 37 152 54 151 78 C142 67 128 61 114 61 C100 68 82 74 63 80 Z" fill={INK} />;
     case 3:
-      return <path d="M47 58 C47 38 62 30 80 30 C98 30 113 38 113 58 C104 47 93 42 80 42 C67 42 56 47 47 58 Z" fill="#3a3f46" />;
+      return <path d="M66 72 C68 50 88 38 110 38 C132 38 148 52 148 70 C130 60 92 60 66 72 Z" fill="#3a3f46" />;
     case 4:
-      return <path d="M46 60 C45 38 62 30 80 30 C98 30 115 38 114 60 C106 49 94 44 80 45 C66 44 54 49 46 60 Z" fill={INK} />;
+      return <path d="M64 76 C64 52 86 38 110 38 C134 38 150 54 150 72 C134 66 118 58 108 50 C96 62 82 70 64 76 Z" fill={INK} />;
     default:
       return (
         <path
-          d="M44 64 C40 34 60 22 80 24 C104 22 122 36 116 64 C110 52 100 46 92 48 C86 40 72 40 66 48 C58 44 48 52 44 64 Z"
+          d="M60 84 C48 70 56 46 72 42 C74 26 96 18 110 26 C126 16 148 24 150 44 C166 50 166 74 154 86 C160 100 152 116 140 114 C144 98 140 82 132 72 C118 76 98 74 86 62 C78 70 70 78 60 84 Z"
           fill={INK}
         />
       );
   }
 }
 
-function Eyes({ eyes }: { eyes: number }) {
-  const line = { fill: 'none', stroke: INK, strokeWidth: 3.5, strokeLinecap: 'round' as const };
+function Face({ eyes }: { eyes: number }) {
+  const line = { fill: 'none', stroke: INK, strokeWidth: 5, strokeLinecap: 'round' as const };
   switch (eyes) {
     case 1:
-      return (
-        <g {...line}>
-          <path d="M63 71 Q68 64 73 71" />
-          <path d="M87 71 Q92 64 97 71" />
-        </g>
-      );
+      return <path d="M83 92 Q88 85 93 92 M105 92 Q110 85 115 92" {...line} />;
     case 2:
-      return (
-        <g {...line}>
-          <path d="M63 70 Q68 73 73 70" />
-          <path d="M87 70 Q92 73 97 70" />
-        </g>
-      );
+      return <path d="M83 91 L93 91 M105 91 L115 91" {...line} />;
     case 3:
       return (
         <g>
-          <circle cx="68" cy="69" r="6.5" fill="#fff" stroke={INK} strokeWidth="3" />
-          <circle cx="92" cy="69" r="6.5" fill="#fff" stroke={INK} strokeWidth="3" />
-          <circle cx="69" cy="70" r="2.8" fill={INK} />
-          <circle cx="93" cy="70" r="2.8" fill={INK} />
+          <circle cx="88" cy="89" r="8.5" fill="#fff" stroke={INK} strokeWidth="4.5" />
+          <circle cx="111" cy="89" r="8.5" fill="#fff" stroke={INK} strokeWidth="4.5" />
+          <circle cx="86" cy="90" r="3.6" fill={INK} />
+          <circle cx="109" cy="90" r="3.6" fill={INK} />
         </g>
       );
     case 4:
       return (
         <g>
-          <circle cx="68" cy="70" r="3.6" fill={INK} />
-          <path d="M87 71 Q92 64 97 71" {...line} />
+          <circle cx="88" cy="90" r="4.8" fill={INK} />
+          <circle cx="110" cy="90" r="4.8" fill={INK} />
+          <path d="M91 108 Q98 114 105 108" {...line} />
         </g>
       );
     default:
       return (
         <g fill={INK}>
-          <circle cx="68" cy="70" r="3.6" />
-          <circle cx="92" cy="70" r="3.6" />
+          <circle cx="88" cy="90" r="4.8" />
+          <circle cx="110" cy="90" r="4.8" />
         </g>
       );
   }
@@ -101,28 +81,27 @@ function Item({ item, accent }: { item: number; accent: string }) {
   switch (item) {
     case 1:
       return (
-        <g fill="rgba(255,255,255,0.25)" stroke={INK} strokeWidth="3.5" strokeLinecap="round">
-          <circle cx="68" cy="70" r="9.5" />
-          <circle cx="92" cy="70" r="9.5" />
-          <path d="M77.5 69 Q80 66 82.5 69" fill="none" />
-          <path d="M58.5 68 L47 64" fill="none" />
-          <path d="M101.5 68 L113 64" fill="none" />
+        <g fill="rgba(255,255,255,0.3)" stroke={INK} strokeWidth="5" strokeLinecap="round">
+          <circle cx="88" cy="90" r="11.5" />
+          <circle cx="114" cy="90" r="11.5" />
+          <path d="M99.5 89 L102.5 89" fill="none" />
+          <path d="M125.5 87 L146 82" fill="none" />
         </g>
       );
     case 2:
       return (
         <g>
-          <path d="M44 66 C40 26 120 26 116 66" fill="none" stroke={INK} strokeWidth="7" strokeLinecap="round" />
-          <rect x="36" y="56" width="14" height="24" rx="6" fill={accent} stroke={INK} strokeWidth="3.5" />
-          <rect x="110" y="56" width="14" height="24" rx="6" fill={accent} stroke={INK} strokeWidth="3.5" />
+          <path d="M64 88 C56 26 154 22 150 86" fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round" />
+          <rect x="52" y="74" width="20" height="30" rx="9" fill={accent} stroke={INK} strokeWidth="6" />
+          <rect x="140" y="72" width="20" height="30" rx="9" fill={accent} stroke={INK} strokeWidth="6" />
         </g>
       );
     case 3:
       return (
-        <g stroke={INK} strokeWidth="3.5" strokeLinejoin="round">
-          <path d="M44 56 C44 28 62 20 80 20 C98 20 116 28 116 56 Z" fill={INK} />
-          <rect x="41" y="50" width="78" height="12" rx="5" fill={accent} />
-          <circle cx="80" cy="16" r="6.5" fill={accent} />
+        <g stroke={INK} strokeWidth="6" strokeLinejoin="round">
+          <path d="M60 70 C60 36 84 20 108 20 C136 20 156 38 154 70 Z" fill={INK} />
+          <rect x="56" y="62" width="102" height="18" rx="8" fill={accent} />
+          <circle cx="108" cy="15" r="9" fill={accent} />
         </g>
       );
     default:
@@ -148,7 +127,7 @@ export function Character({
   label,
 }: Props) {
   const skin = SKINS[spec.skin] ?? SKINS[0];
-  const viewBox = crop === 'head' ? '28 8 104 104' : '0 0 160 160';
+  const viewBox = crop === 'head' ? '36 4 144 144' : '-10 0 220 220';
   return (
     <svg
       width={size}
@@ -160,25 +139,16 @@ export function Character({
       aria-hidden={label ? undefined : true}
     >
       <HairBack hair={spec.hair} />
-      <path
-        d="M22 160 C24 122 44 104 80 104 C116 104 136 122 138 160 Z"
-        fill={accent}
-        stroke={INK}
-        strokeWidth="5"
-        strokeLinejoin="round"
-      />
-      <path d="M58 108 C62 122 98 122 102 108" fill="none" stroke={INK} strokeWidth="5" strokeLinecap="round" />
-      <path d="M71 118 L69 136 M89 118 L91 136" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
-      <text x="80" y="153" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontWeight={700} fontSize="15" fill={INK}>
+      <path d="M44 222 C44 176 66 152 108 150 C150 152 172 176 172 222 Z" fill={accent} {...LINE} />
+      <path d="M80 157 C88 173 128 173 136 157" fill="none" {...LINE} />
+      <path d="M100 168 L98 194 M118 168 L120 194 M66 198 L62 222 M150 198 L154 222" fill="none" {...LINE} strokeWidth={6} />
+      <path d="M98 126 L98 150 M120 122 L120 150" fill="none" {...LINE} />
+      <text x="108" y="213" textAnchor="middle" fontFamily="JetBrains Mono, monospace" fontWeight={700} fontSize="15" fill={INK}>
         42
       </text>
-      <path d="M68 96 L68 110 C72 116 88 116 92 110 L92 96 Z" fill={skin} stroke={INK} strokeWidth="5" strokeLinejoin="round" />
-      <ellipse cx="80" cy="66" rx="34" ry="36" fill={skin} stroke={INK} strokeWidth="5" />
+      <path d={HEAD} fill={skin} {...LINE} />
       <HairFront hair={spec.hair} />
-      <ellipse cx="59" cy="81" rx="5" ry="3" fill="#F28B82" opacity="0.4" />
-      <ellipse cx="101" cy="81" rx="5" ry="3" fill="#F28B82" opacity="0.4" />
-      <Eyes eyes={spec.eyes} />
-      <path d="M74 84 C78 87.5 82 87.5 86 84" fill="none" stroke={INK} strokeWidth="3.5" strokeLinecap="round" />
+      <Face eyes={spec.eyes} />
       <Item item={spec.item} accent={accent} />
     </svg>
   );
