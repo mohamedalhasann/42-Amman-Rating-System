@@ -7,7 +7,7 @@ import { HIJAB_ART, LOGO_ART } from './characterArt';
 export const SKINS = ['#F6D7BD', '#E8B895', '#C98E66', '#A86E46', '#8A5634', '#5E3A22'];
 export const HAIRS = ['Textured', 'Buzz', 'Side part', 'Curly', 'Long', 'Bun', 'Bob', 'Bald'];
 export const HAIR_COLORS = ['#16110F', '#3B2A22', '#6B4A2E', '#B9763A', '#D9B36C', '#8C8C8C', '#C2558A', '#4C6A9A'];
-export const BEARDS = ['None', 'Stubble', 'Full', 'Mustache', 'Goatee'];
+export const BEARDS = ['None', 'Stubble', 'Full', 'Mustache', 'Goatee', 'Boxed'];
 export const EYES = ['Dots', 'Happy', 'Sleepy', 'Wink'];
 export const MOUTHS = ['Smile', 'Grin', 'Calm'];
 export const GLASSES = ['None', 'Rectangle', 'Round', 'Bold'];
@@ -189,6 +189,10 @@ function cheeks(ex: number) {
 
 const BEARD_FULL = 'M48 62 C49 72 51 80 55 86 C60 99 69 106 80 106 C91 106 100 99 105 86 C109 80 111 72 112 62 C111 70 109 78 105 84 C101 85 97 83 93 80.5 C90 78.5 86 78 80 78.4 C74 78 70 78.5 67 80.5 C63 83 59 85 55 84 C51 78 49 70 48 62 Z';
 const MUSTACHE = 'M67 78.5 C70 74.5 75 74 80 75.8 C85 74 90 74.5 93 78.5 C90 80 85 79.2 80 78.6 C75 79.2 70 80 67 78.5 Z';
+// Boxed: short full beard with the skin around the mouth showing, and a mustache that curves down into it
+const BOXED_HOLE = 'M71 86 C73 83.5 77 83 80 83 C83 83 87 83.5 89 86 C89.4 91.5 85.5 95 80 95 C74.5 95 70.6 91.5 71 86 Z';
+const BOXED = BEARD_FULL + ' ' + BOXED_HOLE;
+const BOXED_MUSTACHE = 'M65 83 C66 77.5 73 75 80 77.4 C87 75 94 77.5 95 83 C94.4 86.5 92.6 88.5 90.6 89.6 C90.4 85.4 87.2 82.2 80 82.4 C72.8 82.2 69.6 85.4 69.4 89.6 C67.4 88.5 65.6 86.5 65 83 Z';
 const GOATEE = 'M71 94 C72 101 76 105 80 105 C84 105 88 101 89 94 C85 96.5 75 96.5 71 94 Z';
 
 function beard(spec: CharacterSpec, color: string) {
@@ -199,6 +203,10 @@ function beard(spec: CharacterSpec, color: string) {
       p('M60 92 C64 96 68 99 72 100 M100 92 C96 96 92 99 88 100', `fill="none" stroke="${hi}" stroke-width="1.6" stroke-linecap="round" opacity=".7"`);
     case 3: return p(MUSTACHE, `fill="${color}" ${ink(2.6)}`);
     case 4: return p(MUSTACHE, `fill="${color}" ${ink(2.6)}`) + p(GOATEE, `fill="${color}" ${ink(2.6)}`);
+    case 5: return p(BOXED, `fill="${color}" fill-rule="evenodd"`) +
+      p(BEARD_FULL, `fill="none" ${ink(3.5)}`) +
+      p(BOXED_HOLE, `fill="none" stroke="${scale(color, 0.6)}" stroke-width="1.6"`) +
+      p('M58 90 C62 95 66 99 71 101 M102 90 C98 95 94 99 89 101', `fill="none" stroke="${hi}" stroke-width="1.6" stroke-linecap="round" opacity=".7"`);
     default: return '';
   }
 }
@@ -259,7 +267,9 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
   if (!HIDES_EARS.has(spec.hair)) out.push(ears(skin));
   out.push(p(HEAD, `fill="${skin}" ${ink(4.5)}`));
   out.push(beard(spec, hairColor));
-  out.push(mouth(spec, spec.beard >= 2));
+  // with a boxed beard the mouth sits in the gap under the mustache
+  out.push(spec.beard === 5 ? `<g transform="translate(0 4)">${mouth(spec, false)}</g>` : mouth(spec, spec.beard >= 2));
+  if (spec.beard === 5) out.push(p(BOXED_MUSTACHE, `fill="${hairColor}" ${ink(3)}`));
   const front = HAIR_FRONT[spec.hair];
   if (front) {
     out.push(p(front.d, `fill="${hairColor}" ${ink(4.5)}`));

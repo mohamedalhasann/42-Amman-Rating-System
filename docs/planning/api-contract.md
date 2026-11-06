@@ -88,7 +88,7 @@ The student frontend (`frontend/`) uses these additions. They expose only the si
 | GET | `/student/participation` | `{ "streak", "windows_joined", "windows_total", "votes_given_total" }`. `streak` counts consecutive closed windows, ending with the latest, where the student reached that window's minimum |
 | GET | `/student/ratings/given?window_id=...` | The student's own submissions in that window: `rating_id`, `recipient` (peer item), `stars`, `state`, `submitted_at`. Never includes other students' ratings or anything the student received |
 
-Character values (integer indexes, see `frontend/src/components/characterSvg.ts`): `skin` 0–5, `hair` 0–7, `hairColor` 0–7, `beard` 0–4, `eyes` 0–3, `mouth` 0–2, `glasses` 0–3, `hijab` 0–2 (0 = none), `hijabColor` 0–7, `capColor` 0–4, `hoodie` 0–3 (0 = black, the default). Store the object as given; the frontend fills in missing fields with defaults, so older saved profiles keep working. Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2`.
+Character values (integer indexes, see `frontend/src/components/characterSvg.ts`): `skin` 0–5, `hair` 0–7, `hairColor` 0–7, `beard` 0–5, `eyes` 0–3, `mouth` 0–2, `glasses` 0–3, `hijab` 0–2 (0 = none), `hijabColor` 0–7, `capColor` 0–4, `hoodie` 0–3 (0 = black, the default). Store the object as given; the frontend fills in missing fields with defaults, so older saved profiles keep working. Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2`.
 
 ## Staff read routes
 
