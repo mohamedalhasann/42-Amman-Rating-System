@@ -4,7 +4,7 @@ import {
   BEARDS, CAP_COLORS, Character, EYES, GLASSES, HAIRS, HAIR_COLORS, HIJABS, HIJAB_COLORS, HOODIES, MOUTHS, SKINS,
   normalizeSpec, randomSpec,
 } from '../components/Character';
-import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
+import { Icon, Wordmark, initials } from '../components/bits';
 import { DEFAULT_ACCENT, useSession } from '../session';
 import { ApiError, type CharacterSpec } from '../api';
 
@@ -123,25 +123,13 @@ export function Onboarding() {
 
         {step === 1 && (
           <section className="onb__step rise" key="how">
-            <h1 className="onb__title">This is a ballot.</h1>
-            <div className="ballot ballot--demo" aria-hidden="true">
-              <div className="ballot__head"><span>Window 7</span><span>Ballot 1 of 5</span></div>
-              <span className="ballot__label">For</span>
-              <p className="ballot__name">Someone you worked with</p>
-              <div className="demo-stamps">
-                {([3, 2, 1] as const).map((n) => (
-                  <span key={n} className={`demo-stamp${n === 3 ? ' is-on' : ''}`}>
-                    {Array.from({ length: n }, (_, i) => <StarIcon key={i} size={12} fill="currentColor" stroke="currentColor" />)}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <h1 className="onb__title">How it works.</h1>
             <ol className="howto">
               <li>Pick someone you worked with this window.</li>
-              <li>Stamp it: 3 stars is positive, 2 is mixed, 1 is a serious issue. A 1-star ballot needs a reason that staff read.</li>
-              <li>Drop it in the box before the window closes.</li>
+              <li>Give 3 stars for positive, 2 for mixed, 1 for a serious issue. A 1-star vote needs a reason that staff read.</li>
+              <li>Vote before the window closes.</li>
             </ol>
-            <p className="muted onb__lead">Only staff can see who sent a ballot. You only ever see your own rating.</p>
+            <p className="muted onb__lead">Only staff can see who sent a vote. You only ever see your own rating.</p>
             <button className="btn btn--accent btn--block" onClick={next}>Make my character</button>
           </section>
         )}
