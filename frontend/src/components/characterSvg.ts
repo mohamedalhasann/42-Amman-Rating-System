@@ -372,22 +372,22 @@ function cheeks(ex: number) {
 
 // ---------- beard ----------
 
-// The beard follows the jaw from each sideburn to just under the chin. Its cheek line dips
-// toward the mouth, and an opening around the lips lets the normal mouths show through.
-const BEARD_FULL = 'M47.5 63 C47 80 52 93 61 101 C67 107 73 110.5 80 110.5 C87 110.5 93 107 99 101 C108 93 113 80 112.5 63 C110.5 70 107 76 101 80 C96 82.5 91 83 87 82 C84 81 76 81 73 82 C69 83 64 82.5 59 80 C53 76 49.5 70 47.5 63 Z';
-const MOUTH_GAP = 'M72 85 C72 83.5 76 83 80 83 C84 83 88 83.5 88 85 C88 89.5 84.5 92 80 92 C75.5 92 72 89.5 72 85 Z';
-const MUSTACHE = 'M69.5 81.5 C71 78 75 76.5 80 78 C85 76.5 89 78 90.5 81.5 C88 82.5 84.5 82 80 80.8 C75.5 82 72 82.5 69.5 81.5 Z';
-const GOATEE = 'M73 96 C73.5 102 76.5 106.5 80 106.5 C83.5 106.5 86.5 102 87 96 C84 97.5 76 97.5 73 96 Z';
+// Drawn after a flat-style reference: the beard runs from under each ear along the jaw, its cheek
+// line slants down to the mouth corners, and it opens into a small U of skin under the lower lip.
+// An arched mustache covers the top of that opening and joins the beard at the corners.
+const BEARD_FULL = 'M47.3 70 C48 89 62 104 80 104 C98 104 112 89 112.7 70 C109 79 101 84 92.5 87.5 C92 94.5 86.5 98.5 80 98.5 C73.5 98.5 68 94.5 67.5 87.5 C59 84 51 79 47.3 70 Z';
+const CIRCLE_BEARD = 'M65.5 86 C65.5 97 72 103.5 80 103.5 C88 103.5 94.5 97 94.5 86 L92.5 87.5 C92 94.5 86.5 98.5 80 98.5 C73.5 98.5 68 94.5 67.5 87.5 Z';
+const MUSTACHE = 'M66.5 89 C66 83 70.5 79.5 75.5 79.5 C77.5 79.5 79.2 80.3 80 81.2 C80.8 80.3 82.5 79.5 84.5 79.5 C89.5 79.5 94 83 93.5 89 C91.5 87 89 85.6 86 85.1 C84 84.8 82 85 80 85.6 C78 85 76 84.8 74 85.1 C71 85.6 68.5 87 66.5 89 Z';
+const BEARD_TEXTURE = 'M55 86 l2 2 M60 93 l2 1.5 M67 99 l1.5 1.5 M105 86 l-2 2 M100 93 l-2 1.5 M93 99 l-1.5 1.5 M80 101 l0 1.5';
 
-function beard(spec: CharacterSpec, color: string, skin: string) {
+function beard(spec: CharacterSpec, color: string) {
   const fill = `fill="${color}" ${ink(3)}`;
+  const texture = p(BEARD_TEXTURE, `fill="none" stroke="${scale(color, 0.72)}" stroke-width="1.6" stroke-linecap="round"`);
   switch (spec.beard) {
-    // a light shadow along the jaw and upper lip
-    case 1: return p(`${BEARD_FULL} ${MUSTACHE}`, `fill="${color}" opacity=".24"`);
-    // soft skin around the lips, no outline, so the mouth reads without a ring around it
-    case 2: return p(BEARD_FULL, `fill="${color}" ${ink(3.5)}`) + p(MOUTH_GAP, `fill="${skin}"`) + p(MUSTACHE, fill);
+    case 1: return p(`${BEARD_FULL} ${MUSTACHE}`, `fill="${color}" opacity=".26"`);
+    case 2: return p(BEARD_FULL, fill) + texture + p(MUSTACHE, fill);
     case 3: return p(MUSTACHE, fill);
-    case 4: return p(MUSTACHE, fill) + p(GOATEE, fill);
+    case 4: return p(CIRCLE_BEARD, fill) + p(MUSTACHE, fill);
     default: return '';
   }
 }
@@ -453,9 +453,9 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
   out.push(neck(skin));
   if (!style.hidesEars) out.push(ears(skin));
   out.push(p(HEAD, `fill="${skin}" ${ink(4.5)}`));
-  out.push(beard(spec, hairColor, skin));
+  out.push(beard(spec, hairColor));
   // Any beard sits around the mouth, so the mouth moves down a touch to clear the mustache.
-  const dy = spec.beard === 2 ? 3.5 : spec.beard >= 3 ? 2.5 : 0;
+  const dy = spec.beard >= 2 ? 5.5 : 0;
   out.push(dy ? `<g transform="translate(0 ${dy})">${mouth(spec)}</g>` : mouth(spec));
   if (style.shade) out.push(p(style.shade, `fill="${hairColor}" opacity=".55"`));
   if (style.front) {
