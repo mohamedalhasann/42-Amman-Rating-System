@@ -15,7 +15,7 @@ The eight examples below come from the main PDF. The detection methods are propo
 | Extreme voter | All 1-star or all 3-star ratings over an agreed minimum sample size. | This student used only 1-star ratings across the reviewed votes. |
 | Malicious serious vote | Flag suspicious 1-star submissions for staff verification; validate catalog IDs and inspect the required explanation. | This serious report needs staff verification; its claim may be unsupported. |
 
-An invalid label ID is rejected at submission, but a valid label can still contain a false accusation. Software cannot establish whether a real-world explanation was invented. Staff must assess context; do not advertise automatic truth detection. The agreed policy requires flags and an explanation for every 1-star vote; these votes are held independently of detector findings.
+An invalid label ID is rejected at submission, but a valid label can still contain a false accusation. Software cannot establish whether a real-world explanation was invented. Staff must assess context; do not advertise automatic truth detection. The agreed policy requires flags and an explanation for every 1-star vote, which provide context and evidence for staff when reviewing flagged abuse cases.
 
 ## Detection workflow
 
@@ -27,7 +27,7 @@ An invalid label ID is rejected at submission, but a valid label can still conta
 6. Staff confirm or dismiss the suspicion with a reason. Confirmation alone does not delete or invalidate every linked vote.
 7. Staff invalidate particular confirmed abusive votes. Record the decision and recalculate affected averages and valid totals.
 
-Agreed baseline: all 1-star submissions are held until staff approve or reject them. Their queue is distinct from abuse cases. Whether suspicious 2-star or 3-star votes can be held is deferred in D16; detection cannot silently introduce that behavior. No automatic student penalties or future-vote discounts are approved. Resolve D15 thresholds before implementing the rules.
+Agreed baseline: in accordance with the hackathon specification, all accepted votes count immediately without a pre-approval queue. Suspicion flags an open abuse case for staff review without altering ratings or student allowances. Staff can confirm abuse and invalidate specific votes. No automatic student penalties or future-vote discounts are approved. Resolve D15 thresholds before implementing the rules.
 
 ## Verification fixtures
 

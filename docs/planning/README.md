@@ -15,6 +15,7 @@ The source of truth is [the hackathon specification](../42_Amman_Rating_System_N
 7. [Abuse review](abuse-review.md): Detection coverage, evidence, and human review.
 8. [Implementation plan](implementation-plan.md): Order of work and completion checks.
 9. [Authentication](authentication.md): Imported roster, email password setup, and approval.
+10. [Vote lifecycle alignment report](vote-lifecycle-simplification-report.md): Architectural report on aligning vote lifecycle with the hackathon specification.
 
 ## How to read these plans
 

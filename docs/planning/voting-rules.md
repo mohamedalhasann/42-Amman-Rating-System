@@ -8,7 +8,7 @@ Status: Owner policies recorded in [decisions](decisions.md). Technical details 
 | --- | --- | --- | --- |
 | 3 | Helpful; Good teammate; Community contributor; Respectful | Labels optional, explanation optional | Counts immediately |
 | 2 | Helpful; Good teammate; Community contributor; Respectful; Unreliable teammate; Disruptive | Explanation optional; labels proposed optional | Counts immediately |
-| 1 | Aggressive behavior; Disrespectful; Disruptive; Unreliable teammate; Other | At least one flag and a nonblank explanation required | Held for staff |
+| 1 | Aggressive behavior; Disrespectful; Disruptive; Unreliable teammate; Other | At least one flag and a nonblank explanation required | Counts immediately |
 
 `Other` is a configured flag, not an arbitrary new label. Staff can manage the catalog. Exact label selection and explanation length limits remain open. Review this smaller initial catalog with staff.
 
@@ -17,8 +17,8 @@ Status: Owner policies recorded in [decisions](decisions.md). Technical details 
 1. Authenticate an active, verified, approved student and derive voter ID from the session.
 2. Resolve the single open window using server time and completed opening-roster capture.
 3. Verify voter and recipient membership and current account eligibility.
-4. Reject self-votes and existing submissions for the pair in that window, including held and invalidated votes; proposed including rejected votes.
-5. Check accepted submissions against the current maximum. Held and invalidated submissions consume allowance; proposed rejected submissions do too.
+4. Reject self-votes and existing submissions for the pair in that window, including invalidated votes.
+5. Check accepted submissions against the current maximum. Invalidated submissions also consume allowance.
 6. Validate stars, catalog IDs, allowed mappings, distinct selections, and required 1-star flag and explanation.
 7. Insert the vote and selections atomically, with concurrency protection against other submissions and configuration edits.
 8. Return confirmation, own submission state, and current allowance. Never return the recipient's score or received labels.
@@ -36,17 +36,17 @@ Keep a configurable minimum as a participation target for staff reporting, witho
 
 ## Average
 
-Student average is the arithmetic mean of counted received ratings across all windows. Exclude held, rejected, and invalidated votes. Proposed rounding: two decimals; no counted ratings means `null`. The average remains available when no voting window is open.
+Student average is the arithmetic mean of counted received ratings across all windows. Exclude invalidated votes. Proposed rounding: two decimals; no counted ratings means `null`. The average remains available when no voting window is open.
 
-Participation uses accepted submissions, not only counted votes. Staff see submitted, counted, held, rejected, and invalidated totals separately. Students do not receive received-label summaries, received vote counts, or individual received records.
+Participation uses accepted submissions. Staff see submitted, counted (valid), and invalidated totals separately. Students do not receive received-label summaries, received vote counts, or individual received records.
 
-## Staff review and invalidation
+## Abuse review and invalidation
 
-Every 1-star submission starts held and appears in a staff queue with flags and explanation. Staff approval makes it count; rejection keeps it excluded. Store reviewer, time, and reason. This is separate from confirming that a voter abused the system.
+All accepted votes count immediately toward student averages. 1-star votes require flags and an explanation, which provide vital context and evidence if a vote is flagged or investigated for abuse.
 
-Abuse cases describe suspicious behavior. Staff confirm abuse and invalidate specific linked votes, preserving original records and decision history. Approval, rejection, and invalidation must update averages consistently; repeated requests must not apply effects twice. Invalidation never restores allowance.
+Abuse cases describe suspicious voting patterns across the 8 required scenarios. Staff review open cases in one unified view, confirm abuse, and invalidate specific linked votes, preserving original records and decision history. Invalidation updates recipient averages immediately and never restores the voter's allowance.
 
-Whether suspicious 2-star or 3-star votes may be held is deferred. Baseline: count them immediately until staff invalidate confirmed abuse. Revisit D16 before detector implementation.
+
 
 ## Label changes
 

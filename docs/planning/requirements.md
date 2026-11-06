@@ -36,7 +36,7 @@ The PDF does not identify which positive labels are allowed at 2 stars. Do not s
 
 ## Team policies versus official examples
 
-The selected initial catalog is in voting-rules.md. It is smaller than the official examples above and adds `Other` at 1 star. Team choices allow unlabeled 3-star votes, require a flag and explanation for 1 star, hold 1-star submissions for staff, and use an all-window average. These are not additional claims about the PDF. Staff retain catalog controls. Review any interpretation concerns with staff.
+The selected initial catalog is in voting-rules.md. It is smaller than the official examples above and adds `Other` at 1 star. Team choices allow unlabeled 3-star votes, require a flag and explanation for 1 star, count all accepted votes immediately, and use an all-window average. In line with the hackathon specification, there is no pre-approval or "held" queue: all accepted votes count immediately, and votes confirmed as abuse are invalidated by staff. Staff retain catalog controls. Review any interpretation concerns with staff.
 
 ## Evaluation and delivery
 

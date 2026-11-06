@@ -19,7 +19,7 @@ erDiagram
     RATING ||--o{ RATING_LABEL : includes
     LABEL ||--o{ RATING_LABEL : selected
     LABEL ||--o{ LABEL_STAR : permits
-    RATING ||--o| RATING_REVIEW : reviewed_by
+
     ABUSE_CASE ||--o{ ABUSE_CASE_FINDING : explains
     ABUSE_CASE ||--o{ ABUSE_CASE_RATING : references
     RATING ||--o{ ABUSE_CASE_RATING : evidence
@@ -87,23 +87,23 @@ Snapshot approved, active, eligible 42 Amman students when the window opens, not
 | idempotency_key | Text | Retry reference scoped to voter |
 | request_fingerprint | Text | Detect reuse with changed content |
 
-Enforce unique `(window_id, voter_id, recipient_id)` across review states and unique `(voter_id, idempotency_key)`. Held and invalidated submissions retain their pair reservation; proposed rejected submissions do too. Contents are immutable under the proposed baseline.
+Enforce unique `(window_id, voter_id, recipient_id)` across all submissions and unique `(voter_id, idempotency_key)`. All accepted submissions consume allowance and retain their pair reservation, even if later invalidated. Contents are immutable under the proposed baseline.
 
 `RatingLabel(rating_id, label_id)` has a composite primary key. Require at least one permitted flag for 1 star, allow empty selections for 3 stars, and provisionally for 2 stars. Validate active catalog membership and star mapping at submission time, not retroactively against historical votes. Exact selection and text length limits remain open.
 
-## RatingReview and derived state
+## Rating state and invalidation
 
-`RatingReview(rating_id, decision, reviewed_by, reason, reviewed_at)`: one review per held 1-star vote under the proposed baseline. Decision is `approve` or `reject`. Reviewer must be staff. Vote-content review is separate from abuse-case review; a serious report is not automatically an abusive vote.
+All accepted ratings count immediately toward student averages upon submission. Vote invalidation is reserved for staff to negate votes confirmed as abuse, matching the hackathon specification.
 
 Derived state, in precedence order:
 
 1. Invalidation exists: `invalidated`.
-2. 1 star without review: `held`.
-3. 1 star with rejection: `rejected`.
-4. 1 star with approval: `counted`.
-5. 2 or 3 stars: `counted`.
+2. Otherwise: `counted`.
 
-Only counted votes affect averages. Do not store an independently editable counted flag. Lock related records during review or invalidation to prevent inconsistent concurrent decisions. Whether suspicious 2-star or 3-star votes can be held is deferred in D16.
+
+
+
+Only counted (non-invalidated) votes affect averages. Invalidation negates a vote's effect on recipient averages while preserving the original record and audit trail.
 
 ## AbuseCase and evidence
 
@@ -128,12 +128,12 @@ Fields: `id`, `rating_id` unique, `case_id`, `invalidated_by` staff User referen
 | Value | Calculation |
 | --- | --- |
 | Student average | Sum of counted received stars across all windows divided by counted received rating count; proposed `null` for none and two-decimal display |
-| Votes used | All accepted submissions by voter in the selected window, including held and invalidated; proposed including rejected |
+| Votes used | All accepted submissions by voter in the selected window, including invalidated |
 | Votes remaining | `max(0, max_votes - votes_used)` |
 | Below minimum | `votes_used < min_votes`, for participation reporting only |
 | Students who rated | Distinct roster members with at least one accepted submission |
 | Students who did not rate | Roster members minus those who rated |
-| Rating state totals | Separate submitted, counted, held, rejected, and invalidated totals |
+| Rating state totals | Separate submitted, counted (valid), and invalidated totals |
 
 A vote with several labels appears in multiple label groups; those group counts are not additive. Staff window analytics do not change the all-window student average.
 
@@ -141,4 +141,4 @@ A vote with several labels appears in multiple label groups; those group counts 
 
 Proposed submission transaction: lock relevant window configuration and voter allowance, verify completed roster capture, membership and current account eligibility, check allowance and pair uniqueness, validate labels and explanation, insert rating and selections, and persist reliable detection work before commit. Define lock order with configuration and catalog edits to avoid stale rules and overspending. Database constraints are the final retry and duplicate guards.
 
-Suggested indexes: normalized student username, first name, and last name for agreed search behavior, ratings by window/voter, window/recipient, recipient/time, window/stars, and submission time; label selections by label; case status/time; attempts by voter/time; held review lookup. Confirm query plans before adding indexes beyond actual needs.
+Suggested indexes: normalized student username, first name, and last name for agreed search behavior, ratings by window/voter, window/recipient, recipient/time, window/stars, and submission time; label selections by label; case status/time; attempts by voter/time. Confirm query plans before adding indexes beyond actual needs.

@@ -71,7 +71,7 @@ Submission body:
 }
 ```
 
-`explanation` is required and nonblank for 1 star, optional for 2 and 3. A 1-star request needs at least one permitted flag ID. A 3-star request can use an empty label list; proposed same for 2 stars. A first submission returns `201` with `{ "rating_id": "rating_example", "state": "counted", "submitted_at": "2026-11-04T10:00:00Z", "allowance": { "votes_used": 4, "votes_remaining": 6 } }`. For 1 star return `state: "held"`; 2 and 3 return `state: "counted"`. An identical retry returns `200`. No recipient statistics are included.
+`explanation` is required and nonblank for 1 star, optional for 2 and 3. A 1-star request needs at least one permitted flag ID. A 3-star request can use an empty label list; proposed same for 2 stars. All accepted submissions count immediately, returning `201` with `{ "rating_id": "rating_example", "state": "counted", "submitted_at": "2026-11-04T10:00:00Z", "allowance": { "votes_used": 4, "votes_remaining": 6 } }`. An identical retry returns `200`. No recipient statistics are included.
 
 Proposed error codes: `WINDOW_CLOSED`, `VOTE_LIMIT_REACHED`, `SELF_VOTE_NOT_ALLOWED`, `ALREADY_RATED`, `INVALID_LABEL_SELECTION`, `RECIPIENT_UNAVAILABLE`, `IDEMPOTENCY_CONFLICT`. Text and selection limits remain open. Add specific validation errors for missing 1-star flags or explanation without leaking private records.
 
@@ -94,7 +94,7 @@ Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/staff/overview?window_id=...` | `ratings_submitted`, `ratings_counted`, `ratings_held`, `ratings_rejected`, `ratings_invalidated`, `students_total`, `students_rated`, `students_not_rated` |
+| GET | `/staff/overview?window_id=...` | `ratings_submitted`, `ratings_counted`, `ratings_invalidated`, `students_total`, `students_rated`, `students_not_rated` |
 | GET | `/staff/participation?window_id=...&participation=all` | Student identity, submitted and counted votes given, minimum progress; filter `all`, `rated`, or `not_rated` |
 | GET | `/staff/students?query=...` | Staff student lookup |
 | GET | `/staff/students/{id}?window_id=...` | Student identity and average with explicit scope |
@@ -103,12 +103,12 @@ Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2
 | GET | `/staff/rating-groups?window_id=...&group_by=label` | Group by `label`, `stars`, or `student` |
 | GET | `/staff/labels` | Active and inactive labels with allowed stars |
 | GET | `/staff/windows` | Window configuration and versions |
-| GET | `/staff/rating-reviews?state=held` | Paginated held 1-star votes with identities, flags, and explanations |
+
 | GET | `/staff/abuse-cases?status=open` | Unified case queue with summaries, mechanisms, and involved students |
 | GET | `/staff/abuse-cases/{id}` | Findings, evidence, linked votes, and review decision |
 | GET | `/staff/ratings/export.csv?window_id=...` | Staff-only CSV export |
 
-All list routes follow collection pagination. Window-scoped analytics require `window_id`; do not silently mix windows. Rating lists default to all review states with an explicit `state`: `held`, `counted`, `rejected`, or `invalidated`. Group responses include separate submitted and counted counts. Staff window filters never change the all-window student dashboard average. A student grouping is by recipient; label grouping may count the same vote under several labels.
+All list routes follow collection pagination. Window-scoped analytics require `window_id`; do not silently mix windows. Rating lists default to all review states with an explicit `state`: `counted` or `invalidated`. Group responses include separate submitted and counted counts. Staff window filters never change the all-window student dashboard average. A student grouping is by recipient; label grouping may count the same vote under several labels.
 
 Before frontend implementation, agree example payloads for staff detail and grouped views using the model field names. This document defines their minimum contents, but does not claim every screen payload is finalized.
 
@@ -120,7 +120,7 @@ Before frontend implementation, agree example payloads for staff detail and grou
 | PATCH | `/staff/labels/{id}` | `active`, `allowed_stars`; renaming uses replacement under the proposed policy |
 | POST | `/staff/windows` | `name`, `starts_at`, `ends_at`, `min_votes`, `max_votes`; roster sourced under D10 |
 | PATCH | `/staff/windows/{id}` | Changed configuration fields and expected `version` |
-| POST | `/staff/ratings/{id}/review` | `decision` (`approve` or `reject`), `reason`; review a held 1-star submission |
+
 | PATCH | `/staff/abuse-cases/{id}` | `status` (`confirmed` or `dismissed`), `review_reason` |
 | POST | `/staff/ratings/{id}/invalidation` | Confirmed `case_id`, `reason` |
 
@@ -128,4 +128,4 @@ Creation returns `201`; updates return `200` with the updated staff representati
 
 ## CSV contract proposal
 
-Columns: `rating_id`, `window_id`, `voter_id`, `voter_name`, `recipient_id`, `recipient_name`, `stars`, `labels`, `submitted_at`, `state`, `explanation`, `review_reason`, `invalidation_reason`. Confirm identifying columns with staff. Quote values correctly, escape embedded quotes and separators, and neutralize spreadsheet formula prefixes in user-controlled cells. Record export access and prevent public caching.
+Columns: `rating_id`, `window_id`, `voter_id`, `voter_name`, `recipient_id`, `recipient_name`, `stars`, `labels`, `submitted_at`, `state`, `explanation`, `invalidation_reason`. Confirm identifying columns with staff. Quote values correctly, escape embedded quotes and separators, and neutralize spreadsheet formula prefixes in user-controlled cells. Record export access and prevent public caching.
