@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Wordmark } from './bits';
+import { Promises } from './Promises';
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,8 +12,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="auth__pitch">
           <h1>Peer ratings,<br />done fairly.</h1>
-          <p>Rate the people you learn with. Anonymous to everyone but staff.</p>
+          <p>Rate the people you learn with, and see where you stand.</p>
         </div>
+        <Promises className="auth__promises" />
       </section>
       <main className="auth__panel">
         <div className="auth__form rise">{children}</div>

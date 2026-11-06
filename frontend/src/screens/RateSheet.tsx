@@ -215,7 +215,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
             </div>
 
             <div className="stars" role="radiogroup" aria-label="Stars">
-              {([3, 2, 1] as Stars[]).map((n) => {
+              {([1, 2, 3] as Stars[]).map((n) => {
                 const active = stars === n;
                 return (
                   <button

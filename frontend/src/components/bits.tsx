@@ -74,7 +74,7 @@ export function useCountdown(endsAt: string | undefined, serverTime: string | un
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 
-export function Icon({ name, size = 20 }: { name: 'back' | 'close' | 'check' | 'logout' | 'search' | 'lock' | 'eye' | 'scale' | 'clock'; size?: number }) {
+export function Icon({ name, size = 20 }: { name: 'back' | 'close' | 'check' | 'logout' | 'search' | 'lock' | 'eye' | 'scale' | 'clock' | 'chevron-down'; size?: number }) {
   const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" {...p}>
@@ -87,6 +87,7 @@ export function Icon({ name, size = 20 }: { name: 'back' | 'close' | 'check' | '
       {name === 'eye' && <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z" />}
       {name === 'scale' && <path d="M12 3v18M7 21h10M4 7h16M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z" />}
       {name === 'clock' && <path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 7v5l3 2" />}
+      {name === 'chevron-down' && <path d="M6 9l6 6 6-6" />}
     </svg>
   );
 }

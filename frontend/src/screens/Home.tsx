@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Monogram } from '../components/Monogram';
 import { Icon, StarMeter, Wordmark, pad, starWord, useCountdown } from '../components/bits';
-import { api, type Dashboard, type GivenRating, type HistoryPoint, type Participation } from '../api';
+import { api, type Dashboard, type GivenRating, type HistoryPoint } from '../api';
 import { useSession } from '../session';
 import { ACCENTS } from './Onboarding';
 import { RateSheet } from './RateSheet';
@@ -14,30 +14,27 @@ const STATE_TEXT: Record<GivenRating['state'], string> = {
 };
 
 export function Home() {
-  const { me, logout, saveProfile, previewAccent } = useSession();
+  const { me } = useSession();
   const [dash, setDash] = useState<Dashboard | null>(null);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
-  const [part, setPart] = useState<Participation | null>(null);
   const [given, setGiven] = useState<GivenRating[]>([]);
   const [loadError, setLoadError] = useState('');
   const [rating, setRating] = useState(false);
-  const saveTimer = useRef<number>();
+  const [explain, setExplain] = useState(false);
 
   const load = useCallback(async () => {
     try {
       const d = await api.dashboard();
       setDash(d);
-      const [h, p, g] = await Promise.all([
+      const [h, g] = await Promise.all([
         api.history(),
-        api.participation(),
         d.window ? api.given(d.window.id) : Promise.resolve([]),
       ]);
       setHistory(h);
-      setPart(p);
       setGiven(g);
       setLoadError('');
     } catch {
-      setLoadError('Couldn’t load your dashboard. Check your connection and refresh.');
+      setLoadError('Couldn’t load your dashboard. Check your connection and try again.');
     }
   }, []);
 
@@ -48,8 +45,6 @@ export function Home() {
   const countdown = useCountdown(dash?.window?.ends_at, dash?.server_time);
   if (!me) return null;
 
-  const profile = me.profile!;
-  const accent = profile.accent;
   const average = dash?.own_rating.average ?? null;
   // The rating as it stood when each window closed. A window with too few raters adds nothing,
   // so the rating carries over unchanged from the window before.
@@ -59,9 +54,12 @@ export function Home() {
     if (h.average !== null) carry = h.average;
     return { ...h, value: carry, carried: h.average === null && carry !== null };
   });
-  const closed = points.filter((p) => p.value !== null);
-  const lastClosed = closed[closed.length - 1];
-  const delta = closed.length >= 2 ? closed[closed.length - 1].value! - closed[closed.length - 2].value! : null;
+  // Change since the last window that actually moved the rating; carried windows don't count.
+  const moved = points.filter((p) => p.state === 'closed' && p.value !== null && !p.carried);
+  const lastMoved = moved[moved.length - 1];
+  const prevMoved = moved[moved.length - 2];
+  const delta = lastMoved && prevMoved ? Math.round((lastMoved.value! - prevMoved.value!) * 10) / 10 : null;
+  const anyCarried = points.some((p) => p.carried);
   const win = dash?.window ?? null;
   const allowance = dash?.allowance ?? null;
   const used = allowance?.votes_used ?? 0;
@@ -69,65 +67,65 @@ export function Home() {
   const max = win?.max_votes ?? 0;
   const min = win?.min_votes ?? 0;
 
-  function changeAccent(hex: string) {
-    previewAccent(hex);
-    window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      saveProfile({ ...profile, accent: hex }).catch(() => previewAccent(accent));
-    }, 400);
-  }
-
   return (
     <div className="home">
       <header className="home__bar">
         <Wordmark size={26} />
-        <div className="home__who">
-          <span className="mono muted">{me.intra_username}</span>
-          <button className="icon-btn" aria-label="Sign out" onClick={() => logout()}>
-            <Icon name="logout" />
-          </button>
-        </div>
+        <UserMenu />
       </header>
 
-      {loadError && <p className="error home__error" role="alert">{loadError}</p>}
+      {loadError && (
+        <div className="home__error" role="alert">
+          <p>{loadError}</p>
+          <button className="btn btn--ghost" onClick={load}>Try again</button>
+        </div>
+      )}
 
       <div className="home__grid">
-        <section className="poster rise" aria-label="Your profile">
-          <div className="poster__figure">
-            <Monogram first={me.first_name} last={me.last_name} label={`${me.first_name} ${me.last_name}`} />
+        <section className="poster rise" aria-labelledby="poster-title">
+          <div className="poster__who">
+            <div className="poster__badge">
+              <Monogram first={me.first_name} last={me.last_name} />
+            </div>
+            <div className="poster__names">
+              <p className="poster__name">{me.first_name} {me.last_name}</p>
+              <p className="mono poster__login">{me.intra_username}</p>
+            </div>
           </div>
+
           <div className="poster__info">
-            <p className="mono poster__login">{me.first_name} {me.last_name}</p>
-            <div className="poster__rating">
-              <p className="poster__number">{average === null ? '–' : average.toFixed(1)}</p>
-              <div className="poster__meta">
-                {average !== null && <StarMeter value={average} size={24} emptyFill="#2E333A" stroke="transparent" />}
-                <p className="poster__sub">
-                  {average === null
-                    ? 'Not enough ratings yet'
-                    : delta === null
-                      ? 'your rating'
-                      : `your rating · ${delta >= 0 ? 'up' : 'down'} ${Math.abs(delta).toFixed(1)}`}
-                </p>
+            <h2 id="poster-title" className="poster__label">Your rating</h2>
+            {!dash ? (
+              <div className="poster__loading" aria-busy="true">
+                <div className="skeleton skeleton--ink" style={{ height: 92, width: '60%' }} />
+                <div className="skeleton skeleton--ink" style={{ height: 40 }} />
               </div>
-            </div>
+            ) : average === null ? (
+              <>
+                <p className="poster__number poster__number--none">–</p>
+                <p className="poster__sub">Not enough ratings yet. Your first rating appears when a window closes with enough people rating you.</p>
+              </>
+            ) : (
+              <>
+                <div className="poster__rating">
+                  <p className="poster__number">
+                    {average.toFixed(1)}<span className="poster__of">/ 3</span>
+                  </p>
+                  <StarMeter value={average} size={24} emptyFill="#2E333A" stroke="transparent" />
+                </div>
+                <p className="poster__sub">
+                  {delta === null || !prevMoved
+                    ? 'Your average across every window so far.'
+                    : delta === 0
+                      ? `No change since ${prevMoved.name}.`
+                      : `${delta > 0 ? 'Up' : 'Down'} ${Math.abs(delta).toFixed(1)} since ${prevMoved.name}.`}
+                </p>
+                {delta !== null && delta < 0 && (
+                  <p className="poster__care">It averages every window, so one window moves it only a little.</p>
+                )}
+              </>
+            )}
             <p className="poster__note">Updates when a voting window closes.</p>
-          </div>
-          <div className="poster__accent">
-            <span>Accent</span>
-            <div className="poster__swatches" role="radiogroup" aria-label="Accent color">
-              {ACCENTS.map((a) => (
-                <button
-                  key={a.hex}
-                  role="radio"
-                  aria-checked={accent === a.hex}
-                  aria-label={a.name}
-                  className="mini-swatch"
-                  style={{ background: a.hex }}
-                  onClick={() => changeAccent(a.hex)}
-                />
-              ))}
-            </div>
           </div>
         </section>
 
@@ -147,7 +145,7 @@ export function Home() {
                   <p className="mono window__live"><span className="window__dot" /> open</p>
                 </div>
                 {countdown && (
-                  <p className="countdown mono" aria-label={`${countdown.d} days ${countdown.h} hours ${countdown.m} minutes left`}>
+                  <p className="countdown mono" role="timer" aria-label={`${countdown.d} days ${countdown.h} hours ${countdown.m} minutes left`}>
                     <span>{countdown.d}<small>d</small></span>
                     <span>{pad(countdown.h)}<small>h</small></span>
                     <span>{pad(countdown.m)}<small>m</small></span>
@@ -172,60 +170,78 @@ export function Home() {
                     <p className="window__done">All votes used. See you next window.</p>
                   )}
                 </div>
+                <div className="window__given">
+                  <p className="window__given-title">You rated <span className="muted">· only you see this</span></p>
+                  {given.length === 0 ? (
+                    <p className="given__empty">Nobody yet this window.</p>
+                  ) : (
+                    <ul className="given">
+                      {given.map((g) => (
+                        <li key={g.rating_id}>
+                          <span>
+                            {g.recipient.first_name} {g.recipient.last_name}{' '}
+                            <span className="mono muted">{g.recipient.intra_username}</span>
+                          </span>
+                          <span className={`given__state given__state--${g.state}`}>
+                            {g.state === 'counted' ? starWord(g.stars) : STATE_TEXT[g.state]}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </>
             )}
           </section>
 
-          <section className="card history rise" style={{ animationDelay: '120ms' }} aria-label="Your rating over time">
+          <section className="card history rise" style={{ animationDelay: '120ms' }} aria-labelledby="history-title">
             <div className="card__head">
-              <h2>Your rating over time</h2>
+              <h2 id="history-title">Your rating over time</h2>
               <span className="muted">one bar per voting window</span>
             </div>
-            <div className="bars">
-              {points.map((h, i) => (
-                <div key={h.window_id} className="bars__col" title={h.carried ? `${h.name}: too few raters, so your rating didn’t change` : h.name}>
-                  <span className="mono bars__value">{h.state === 'open' ? '…' : h.value === null ? '–' : h.value.toFixed(1)}</span>
-                  <span
-                    className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastClosed && !h.carried ? 'bars__bar--last' : ''}`}
-                    style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 100) + 12}px` } : undefined}
-                  />
-                  <span className="mono bars__label">{h.state === 'open' ? 'Now' : `#${i + 1}`}</span>
-                </div>
-              ))}
+            <ol className="bars">
+              {points.map((h) => {
+                const text =
+                  h.state === 'open'
+                    ? `${h.name}: open now.`
+                    : h.carried
+                      ? `${h.name}: too few raters, so your rating stayed at ${h.value!.toFixed(1)}.`
+                      : h.value === null
+                        ? `${h.name}: too few raters, no rating yet.`
+                        : `${h.name}: ${h.value.toFixed(1)}.`;
+                return (
+                  <li key={h.window_id} className={`bars__col ${h.carried ? 'bars__col--carried' : ''}`}>
+                    <span className="mono bars__value" aria-hidden="true">
+                      {h.state === 'open' ? '…' : h.value === null ? '–' : h.value.toFixed(1)}
+                    </span>
+                    {h.carried && <span className="bars__kept" aria-hidden="true">kept</span>}
+                    <span
+                      aria-hidden="true"
+                      className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastMoved ? 'bars__bar--last' : ''}`}
+                      style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 84) + 12}px` } : undefined}
+                    />
+                    <span className="mono bars__label" aria-hidden="true">
+                      {h.state === 'open' ? 'Now' : <><span className="bars__word">Window </span>{h.name.replace(/^Window\s*/, '')}</>}
+                    </span>
+                    <span className="visually-hidden">{text}</span>
+                  </li>
+                );
+              })}
+            </ol>
+            {anyCarried && (
+              <p className="bars__legend">
+                <span className="bars__key" aria-hidden="true" /> Kept: too few people rated you, so your rating didn’t change.
+              </p>
+            )}
+            <button className="history__how" aria-expanded={explain} aria-controls="how-it-works" onClick={() => setExplain((v) => !v)}>
+              How this works <Icon name="chevron-down" size={16} />
+            </button>
+            <div id="how-it-works" className="history__explain" hidden={!explain}>
+              <p>When too few people rate you in a window, your rating stays as it was, so no change can be traced to one vote.</p>
+              <p>Students never see who rated them. Only staff can.</p>
             </div>
-            <p className="muted card__foot">When too few people rate you in a window, your rating stays as it was (lighter bar), so no change can be traced to one vote.</p>
           </section>
 
-          <section className="card part rise" style={{ animationDelay: '180ms' }} aria-label="Your participation">
-            <div className="part__stats">
-              <h2>Your participation</h2>
-              <div className="streak">
-                <span className="mono streak__n">{part?.streak ?? '–'}</span>
-                <span>windows in a row where you reached the minimum</span>
-              </div>
-              <div className="part__row">
-                <div><p className="mono part__num">{part ? `${part.windows_joined}/${part.windows_total}` : '–'}</p><p className="muted">windows joined</p></div>
-                <div><p className="mono part__num">{part?.votes_given_total ?? '–'}</p><p className="muted">votes given</p></div>
-              </div>
-            </div>
-            <div className="part__given">
-              <p className="muted">Rated this window{win ? ` · ${used}/${max}` : ''}</p>
-              {given.length === 0 ? (
-                <p className="part__empty">Nobody yet. Your votes will show up here, only for you.</p>
-              ) : (
-                <ul className="given">
-                  {given.map((g) => (
-                    <li key={g.rating_id}>
-                      <span className="mono">{g.recipient.intra_username}</span>
-                      <span className={`given__state given__state--${g.state}`}>
-                        {g.state === 'counted' ? starWord(g.stars) : STATE_TEXT[g.state]}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
         </div>
       </div>
 
@@ -242,6 +258,89 @@ export function Home() {
             api.given(win.id).then(setGiven).catch(() => undefined);
           }}
         />
+      )}
+    </div>
+  );
+}
+
+// The username opens a small menu: accent colour and sign out.
+function UserMenu() {
+  const { me, logout, saveProfile, previewAccent } = useSession();
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const saveTimer = useRef<number>();
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrap.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  if (!me) return null;
+  const profile = me.profile!;
+  const accent = profile.accent;
+
+  function changeAccent(hex: string) {
+    previewAccent(hex);
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      saveProfile({ ...profile, accent: hex }).catch(() => previewAccent(accent));
+    }, 400);
+  }
+
+  function onSwatchKey(e: KeyboardEvent<HTMLButtonElement>, i: number) {
+    const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const next = (i + dir + ACCENTS.length) % ACCENTS.length;
+    changeAccent(ACCENTS[next].hex);
+    (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
+  }
+
+  return (
+    <div className="menu" ref={wrap}>
+      <button ref={trigger} className="menu__trigger" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}>
+        <span className="menu__dot" aria-hidden="true" />
+        <span className="mono">{me.intra_username}</span>
+        <Icon name="chevron-down" size={16} />
+      </button>
+      {open && (
+        <div className="menu__panel">
+          <p className="menu__name">{me.first_name} {me.last_name}</p>
+          <p className="menu__label" id="accent-label">Accent</p>
+          <div className="menu__swatches" role="radiogroup" aria-labelledby="accent-label">
+            {ACCENTS.map((a, i) => (
+              <button
+                key={a.hex}
+                role="radio"
+                aria-checked={accent === a.hex}
+                aria-label={a.name}
+                tabIndex={accent === a.hex ? 0 : -1}
+                className="mini-swatch"
+                style={{ background: a.hex }}
+                onClick={() => changeAccent(a.hex)}
+                onKeyDown={(e) => onSwatchKey(e, i)}
+              />
+            ))}
+          </div>
+          <button className="menu__item" onClick={() => logout()}>
+            <Icon name="logout" size={18} /> Sign out
+          </button>
+        </div>
       )}
     </div>
   );

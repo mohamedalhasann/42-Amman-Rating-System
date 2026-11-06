@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Monogram } from '../components/Monogram';
+import { Promises } from '../components/Promises';
 import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
 import { DEFAULT_ACCENT, useSession } from '../session';
 import { ApiError } from '../api';
@@ -48,12 +49,16 @@ export function Onboarding() {
 
   return (
     <div className="onb">
-      <aside className={`onb__stage ${step >= 2 ? 'onb__stage--show' : ''}`}>
+      <aside className="onb__stage">
         <Wordmark size={26} onInk />
-        <div className="onb__figure">
-          <Monogram first={me.first_name} last={me.last_name} />
+        <div className="onb__preview">
+          <div className="onb__badge">
+            <Monogram first={me.first_name} last={me.last_name} />
+          </div>
+          <p className="onb__name">{me.first_name} {me.last_name}</p>
+          <p className="mono onb__tag">{me.intra_username} · 42 Amman</p>
         </div>
-        <p className="mono onb__tag">{me.intra_username}</p>
+        <Promises className="promises--on-ink" />
       </aside>
 
       <main className="onb__main">
