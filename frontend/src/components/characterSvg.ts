@@ -362,14 +362,14 @@ function mouth(spec: CharacterSpec, bearded: boolean) {
   }
   if (spec.mouth === 4) {
     return bearded
-      ? p('M72 83.5 C77 88 85 87.5 90 80.5 C85 83 77 84.5 72 83.5 Z', `fill="#C9746E" ${ink(2.6)}`)
+      ? p('M70 83 C77 91 87 90 91.5 79.5 C86 84 78 85.5 70 83 Z', `fill="#C65F66" ${ink(2.2)}`)
       : p('M73 84 C78 85.8 84 84.8 88 80.8', `fill="none" ${ink(3.2)}`);
   }
   if (bearded) {
     // a line would vanish into a beard, so draw a small open mouth instead
     return spec.mouth === 2
-      ? p('M72 84 C76 86.5 84 86.5 88 84 C86 89 74 89 72 84 Z', `fill="#C9746E" ${ink(2.6)}`)
-      : p('M67.5 82 C71 92 89 92 92.5 82 C88 84.5 72 84.5 67.5 82 Z', `fill="#C9746E" ${ink(2.8)}`);
+      ? p('M71 83.5 C76 85.5 84 85.5 89 83.5 C87.5 90.5 72.5 90.5 71 83.5 Z', `fill="#C65F66" ${ink(2.2)}`)
+      : p('M68.5 82.5 C72 91.5 88 91.5 91.5 82.5 C87 84.5 73 84.5 68.5 82.5 Z', `fill="#C65F66" ${ink(2.8)}`);
   }
   return spec.mouth === 2
     ? p('M75 84 C78 85.5 82 85.5 85 84', `fill="none" ${ink(3.2)}`)
@@ -460,7 +460,11 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
   if (!style.hidesEars) out.push(ears(skin));
   out.push(p(HEAD, `fill="${skin}" ${ink(4.5)}`));
   out.push(beard(spec, hairColor));
-  out.push(mouth(spec, spec.beard >= 2));
+  // A full beard would swallow a line, so it gets a filled mouth set below its mustache line.
+  // A mustache or goatee keeps the normal mouth, nudged down to clear the mustache.
+  const full = spec.beard === 2;
+  const dy = full ? 5 : spec.beard >= 3 ? 2.5 : 0;
+  out.push(dy ? `<g transform="translate(0 ${dy})">${mouth(spec, full)}</g>` : mouth(spec, full));
   if (style.shade) out.push(p(style.shade, `fill="${hairColor}" opacity=".55"`));
   if (style.front) {
     if (style.edge) {
