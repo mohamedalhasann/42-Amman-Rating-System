@@ -351,7 +351,7 @@ function brows(color: string, ex: number, style: number) {
   }
 }
 
-function mouth(spec: CharacterSpec, bearded: boolean) {
+function mouth(spec: CharacterSpec) {
   if (spec.mouth === 1) {
     return p('M68 82 C72 80 88 80 92 82 C91 90 86 94 80 94 C74 94 69 90 68 82 Z', `fill="#5A2A2A" ${ink(3)}`) +
       p('M69.5 82.6 C74 81.4 86 81.4 90.5 82.6 C90 85 88.5 86 80 86 C71.5 86 70 85 69.5 82.6 Z', 'fill="#FFFFFF"');
@@ -360,17 +360,7 @@ function mouth(spec: CharacterSpec, bearded: boolean) {
     return p('M72.5 82.5 C75.5 80.6 78.5 81 80 82.4 C81.5 81 84.5 80.6 87.5 82.5 C85.5 88 74.5 88 72.5 82.5 Z', `fill="#C65F66" ${ink(2.4)}`) +
       p('M73.5 82.8 C77 84.4 83 84.4 86.5 82.8', 'fill="none" stroke="#8E3B42" stroke-width="1.4" stroke-linecap="round"');
   }
-  if (spec.mouth === 4) {
-    return bearded
-      ? p('M70 83 C77 91 87 90 91.5 79.5 C86 84 78 85.5 70 83 Z', `fill="#C65F66" ${ink(2.2)}`)
-      : p('M73 84 C78 85.8 84 84.8 88 80.8', `fill="none" ${ink(3.2)}`);
-  }
-  if (bearded) {
-    // a line would vanish into a beard, so draw a small open mouth instead
-    return spec.mouth === 2
-      ? p('M71 83.5 C76 85.5 84 85.5 89 83.5 C87.5 90.5 72.5 90.5 71 83.5 Z', `fill="#C65F66" ${ink(2.2)}`)
-      : p('M68.5 82.5 C72 91.5 88 91.5 91.5 82.5 C87 84.5 73 84.5 68.5 82.5 Z', `fill="#C65F66" ${ink(2.8)}`);
-  }
+  if (spec.mouth === 4) return p('M73 84 C78 85.8 84 84.8 88 80.8', `fill="none" ${ink(3.2)}`);
   return spec.mouth === 2
     ? p('M75 84 C78 85.5 82 85.5 85 84', `fill="none" ${ink(3.2)}`)
     : p('M74 82 C78 85.5 82 85.5 86 82', `fill="none" ${ink(3.2)}`);
@@ -382,18 +372,22 @@ function cheeks(ex: number) {
 
 // ---------- beard ----------
 
-const BEARD_FULL = 'M48 62 C49 72 51 80 55 86 C60 99 69 106 80 106 C91 106 100 99 105 86 C109 80 111 72 112 62 C111 70 109 78 105 84 C101 85 97 83 93 80.5 C90 78.5 86 78 80 78.4 C74 78 70 78.5 67 80.5 C63 83 59 85 55 84 C51 78 49 70 48 62 Z';
-const MUSTACHE = 'M67 78.5 C70 74.5 75 74 80 75.8 C85 74 90 74.5 93 78.5 C90 80 85 79.2 80 78.6 C75 79.2 70 80 67 78.5 Z';
-const GOATEE = 'M71 94 C72 101 76 105 80 105 C84 105 88 101 89 94 C85 96.5 75 96.5 71 94 Z';
+// The beard follows the jaw from each sideburn to just under the chin. Its cheek line dips
+// toward the mouth, and an opening around the lips lets the normal mouths show through.
+const BEARD_FULL = 'M47.5 63 C47 80 52 93 61 101 C67 107 73 110.5 80 110.5 C87 110.5 93 107 99 101 C108 93 113 80 112.5 63 C110.5 70 107 76 101 80 C96 82.5 91 83 87 82 C84 81 76 81 73 82 C69 83 64 82.5 59 80 C53 76 49.5 70 47.5 63 Z';
+const MOUTH_GAP = 'M72 85 C72 83.5 76 83 80 83 C84 83 88 83.5 88 85 C88 89.5 84.5 92 80 92 C75.5 92 72 89.5 72 85 Z';
+const MUSTACHE = 'M69.5 81.5 C71 78 75 76.5 80 78 C85 76.5 89 78 90.5 81.5 C88 82.5 84.5 82 80 80.8 C75.5 82 72 82.5 69.5 81.5 Z';
+const GOATEE = 'M73 96 C73.5 102 76.5 106.5 80 106.5 C83.5 106.5 86.5 102 87 96 C84 97.5 76 97.5 73 96 Z';
 
-function beard(spec: CharacterSpec, color: string) {
-  const hi = scale(color, 1.9);
+function beard(spec: CharacterSpec, color: string, skin: string) {
+  const fill = `fill="${color}" ${ink(3)}`;
   switch (spec.beard) {
-    case 1: return p(BEARD_FULL, `fill="${color}" opacity=".32"`);
-    case 2: return p(BEARD_FULL, `fill="${color}" ${ink(3.5)}`) +
-      p('M60 92 C64 96 68 99 72 100 M100 92 C96 96 92 99 88 100', `fill="none" stroke="${hi}" stroke-width="1.6" stroke-linecap="round" opacity=".7"`);
-    case 3: return p(MUSTACHE, `fill="${color}" ${ink(2.6)}`);
-    case 4: return p(MUSTACHE, `fill="${color}" ${ink(2.6)}`) + p(GOATEE, `fill="${color}" ${ink(2.6)}`);
+    // a light shadow along the jaw and upper lip
+    case 1: return p(`${BEARD_FULL} ${MUSTACHE}`, `fill="${color}" opacity=".24"`);
+    // soft skin around the lips, no outline, so the mouth reads without a ring around it
+    case 2: return p(BEARD_FULL, `fill="${color}" ${ink(3.5)}`) + p(MOUTH_GAP, `fill="${skin}"`) + p(MUSTACHE, fill);
+    case 3: return p(MUSTACHE, fill);
+    case 4: return p(MUSTACHE, fill) + p(GOATEE, fill);
     default: return '';
   }
 }
@@ -442,7 +436,7 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
     out.push(hoodie(spec, accent));
     out.push(p(E(80, 68, 35, 35), `fill="${skin}"`));
     out.push(hijab(spec));
-    out.push(eyes(spec, ex), cheeks(ex), mouth(spec, false), glasses(spec, ex, true));
+    out.push(eyes(spec, ex), cheeks(ex), mouth(spec), glasses(spec, ex, true));
     return out.join('');
   }
 
@@ -459,12 +453,10 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
   out.push(neck(skin));
   if (!style.hidesEars) out.push(ears(skin));
   out.push(p(HEAD, `fill="${skin}" ${ink(4.5)}`));
-  out.push(beard(spec, hairColor));
-  // A full beard would swallow a line, so it gets a filled mouth set below its mustache line.
-  // A mustache or goatee keeps the normal mouth, nudged down to clear the mustache.
-  const full = spec.beard === 2;
-  const dy = full ? 5 : spec.beard >= 3 ? 2.5 : 0;
-  out.push(dy ? `<g transform="translate(0 ${dy})">${mouth(spec, full)}</g>` : mouth(spec, full));
+  out.push(beard(spec, hairColor, skin));
+  // Any beard sits around the mouth, so the mouth moves down a touch to clear the mustache.
+  const dy = spec.beard === 2 ? 3.5 : spec.beard >= 3 ? 2.5 : 0;
+  out.push(dy ? `<g transform="translate(0 ${dy})">${mouth(spec)}</g>` : mouth(spec));
   if (style.shade) out.push(p(style.shade, `fill="${hairColor}" opacity=".55"`));
   if (style.front) {
     if (style.edge) {
