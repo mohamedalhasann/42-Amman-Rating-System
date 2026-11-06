@@ -15,7 +15,7 @@ Completion: no unresolved policy blocks account creation, a rating submission, o
 ## 2. Build one complete rating flow
 
 - Set up the schema, imported roster, trusted staff records, email password setup, manual approval setting, one window, and agreed label catalog.
-- Capture eligibility at window opening. Add held 1-star submissions and staff approval/rejection before considering the rating flow complete.
+- Capture eligibility at window opening. Ensure all accepted submissions count immediately while requiring flags and explanation for 1-star votes.
 - Implement dashboard, peer selection, labels, and atomic rating submission.
 - Implement staff inspection of the stored rating.
 - Protect student privacy and staff routes from the first working version.
