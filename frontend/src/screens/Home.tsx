@@ -20,7 +20,6 @@ export function Home() {
   const [given, setGiven] = useState<GivenRating[]>([]);
   const [loadError, setLoadError] = useState('');
   const [rating, setRating] = useState(false);
-  const [explain, setExplain] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -178,10 +177,7 @@ export function Home() {
                     <ul className="given">
                       {given.map((g) => (
                         <li key={g.rating_id}>
-                          <span>
-                            {g.recipient.first_name} {g.recipient.last_name}{' '}
-                            <span className="mono muted">{g.recipient.intra_username}</span>
-                          </span>
+                          <span>{g.recipient.first_name} {g.recipient.last_name}</span>
                           <span className={`given__state given__state--${g.state}`}>
                             {g.state === 'counted' ? starWord(g.stars) : STATE_TEXT[g.state]}
                           </span>
@@ -230,16 +226,9 @@ export function Home() {
             </ol>
             {anyCarried && (
               <p className="bars__legend">
-                <span className="bars__key" aria-hidden="true" /> Kept: too few people rated you, so your rating didn’t change.
+                <span className="bars__key" aria-hidden="true" /> Kept: too few raters, so no change.
               </p>
             )}
-            <button className="history__how" aria-expanded={explain} aria-controls="how-it-works" onClick={() => setExplain((v) => !v)}>
-              How this works <Icon name="chevron-down" size={16} />
-            </button>
-            <div id="how-it-works" className="history__explain" hidden={!explain}>
-              <p>When too few people rate you in a window, your rating stays as it was, so no change can be traced to one vote.</p>
-              <p>Students never see who rated them. Only staff can.</p>
-            </div>
           </section>
 
         </div>
