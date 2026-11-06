@@ -7,7 +7,7 @@ function PanelHeading({title, children, description}) {return <div className="pa
 const displayAverage = value => value === null ? '—' : value.toFixed(2);
 
 export function Overview() {
-  const {db, windowId, go, setExplorerFilters} = useStaff();
+  const {db, windowId, go, setExplorerFilters, setRosterState} = useStaff();
   const rows = ratingsIn(db, windowId), summary = stats(db, windowId);
   const cases = db.cases.filter(c => c.window_id === windowId && c.status === 'open').sort((a,b)=>b.detected_at.localeCompare(a.detected_at));
   const series = activitySeries(db,windowId);
@@ -18,6 +18,7 @@ export function Overview() {
     <section className="overview-metrics" aria-label="Window totals">
       <article className="metric-primary"><span>Ratings submitted</span><strong>{summary.submitted}<Icon name="chart" size={36}/></strong><p><i className="dot green"/>{summary.counted} counted <span className="metric-divider">/</span> {summary.invalidated} invalidated</p></article>
       <article><span>Student participation</span><strong>{summary.total ? Math.round(summary.rated/summary.total*100) : 0}<small>%</small></strong><div className="participation-track"><i style={{width:`${summary.total ? summary.rated/summary.total*100 : 0}%`}}/></div><p>{summary.rated} of {summary.total} eligible students have rated</p></article>
+      <article className="metric-action"><span>Still to participate</span><strong>{Math.max(0,summary.total-summary.rated)}<Icon name="people" size={34}/></strong><p>{summary.total===summary.rated?'Everyone in this window has rated.':<button className="metric-link" onClick={()=>{setRosterState(state=>({...state,filter:'not',page:1}));go('students')}}>View students who have not rated <Icon name="arrow" size={15}/></button>}</p></article>
       <article><span>Open abuse cases</span><strong>{cases.length}<button className="circle-button" aria-label="Open abuse review" onClick={()=>go('review')}><Icon name="arrow"/></button></strong><p>{cases.length ? 'Ready for staff review' : 'No cases awaiting a decision'}</p></article>
     </section>
     <section className="panel"><PanelHeading title="Rating activity" description={grouped?"Accepted ratings, grouped across this window":"Accepted ratings by day"}><span className="chart-legend"><i/>Submitted</span></PanelHeading>{rows.length ? <><div className="activity-chart" role="img" aria-label={bars.map(b=>`${b.period}: ${b.count} ratings`).join('; ')}><div className="chart-y"><span>{max}</span><span>{Math.round(max/2)}</span><span>0</span></div><div className="chart-bars">{bars.map((b,i)=><div className="chart-day" key={i}><span className="bar-number">{b.count || ''}</span><div className={`bar ${b.count===max?'peak':''} ${b.count===0?'zero':''}`} title={`${b.period}: ${b.count} ratings`} style={{height:b.count?b.count/max*150:0}}/><span className="bar-label">{b.label}</span></div>)}</div></div><div className="chart-note">All accepted votes count immediately. Only invalidated votes are excluded from averages.</div></> : <Empty>This window has no ratings yet.</Empty>}</section>
@@ -151,5 +152,27 @@ export function AbuseReview() {
   const mechanisms=[...new Set(db.cases.flatMap(c=>c.findings.map(f=>f.mechanism)))];
   const cases=db.cases.filter(c=>(scope==='all'||c.window_id===windowId)&&(!status||c.status===status)&&(!mechanism||c.findings.some(f=>f.mechanism===mechanism))&&(c.title+' '+c.student_ids.map(id=>{const s=db.students.find(s=>s.id===id);return fullName(s)+' '+s.intra_username}).join(' ')).toLowerCase().includes(query.toLowerCase()));
   const safePage=Math.min(page,Math.max(1,Math.ceil(cases.length/6)));
-  return <section className="panel"><PanelHeading title="Review inbox" description="Flagged activity that needs a staff decision"><select aria-label="Case window scope" value={scope} onChange={e=>update('scope',e.target.value)}><option value="all">All windows</option><option value="window">Selected window</option></select></PanelHeading><div className="table-toolbar wrap"><Search value={query} onChange={value=>update('query',value)} label="Search abuse cases" placeholder="Search case or student"/><select aria-label="Case mechanism" value={mechanism} onChange={e=>update('mechanism',e.target.value)}><option value="">Every pattern</option>{mechanisms.map(m=><option key={m}>{m}</option>)}</select><select aria-label="Case status" value={status} onChange={e=>update('status',e.target.value)}><option value="open">Needs review</option><option value="confirmed">Abuse confirmed</option><option value="dismissed">Dismissed</option><option value="">All statuses</option></select></div><div className="case-list">{cases.slice((safePage-1)*6,safePage*6).map(c=><button key={c.id} data-case-id={c.id} className="case-item" onClick={()=>openCase(c.id)}><span className="case-icon"><Icon name="flag"/></span><div className="case-content"><div className="case-meta"><span>{c.id.toUpperCase()}</span><Badge tone={c.status==='open'?'amber':c.status==='confirmed'?'red':'neutral'}>{c.status==='open'?'Needs review':c.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge>{c.findings.map(f=><Badge key={f.mechanism}>{f.mechanism}</Badge>)}</div><h3>{c.title}</h3><p>{c.student_ids.map(id=>fullName(db.students.find(s=>s.id===id))).join(', ')}</p><small>{c.rating_ids.length} linked ratings{c.attempt_ids.length>0&&` · ${c.attempt_ids.length} blocked attempts`} · {dateTime(c.detected_at)}</small></div><Icon name="arrow"/></button>)}{!cases.length&&<Empty>No cases match these filters.</Empty>}</div><PageControls page={safePage} setPage={value=>update('page',value)} total={cases.length} size={6}/></section>;
+  const openCount=db.cases.filter(c=>c.status==='open').length;
+  const people = c => {
+    const names=c.student_ids.map(id=>fullName(db.students.find(s=>s.id===id)));
+    return names.length<3?names.join(' & '):`${names.slice(0,2).join(' & ')} +${names.length-2} more`;
+  };
+  return <section className="panel review-inbox">
+    <PanelHeading title="Review queue" description="Review suspicious activity, then decide whether any linked ratings need to be excluded.">
+      <div className="review-heading-state"><Badge tone={openCount?'amber':'green'}>{openCount} awaiting review</Badge><label><span>Show cases from</span><select aria-label="Case window scope" value={scope} onChange={e=>update('scope',e.target.value)}><option value="all">All voting windows</option><option value="window">Selected window</option></select></label></div>
+    </PanelHeading>
+    <div className="review-filters">
+      <Search value={query} onChange={value=>update('query',value)} label="Search abuse cases" placeholder="Search case or student"/>
+      <div className="review-filter-selects"><label><span>Pattern</span><select aria-label="Case mechanism" value={mechanism} onChange={e=>update('mechanism',e.target.value)}><option value="">Every pattern</option>{mechanisms.map(m=><option key={m}>{m}</option>)}</select></label><label><span>Decision status</span><select aria-label="Case status" value={status} onChange={e=>update('status',e.target.value)}><option value="open">Needs review</option><option value="confirmed">Abuse confirmed</option><option value="dismissed">Dismissed</option><option value="">All statuses</option></select></label></div>
+    </div>
+    <p className="review-results-summary" role="status">{cases.length} {cases.length===1?'case':'cases'} shown · {cases.filter(c=>c.status==='open').length} awaiting a decision in this view</p>
+    <div className="case-list">
+      {cases.slice((safePage-1)*6,safePage*6).map(c=><button key={c.id} data-case-id={c.id} className="case-item" onClick={()=>openCase(c.id)}>
+        <div className="case-item-top"><span className="case-id">Case {c.id.toUpperCase()}</span><Badge tone={c.status==='open'?'amber':c.status==='confirmed'?'red':'neutral'}>{c.status==='open'?'Needs review':c.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge><time dateTime={c.detected_at}>Flagged {dateTime(c.detected_at)} · Amman</time></div>
+        <div className="case-item-body"><div><h3>{c.title}</h3><p className="case-explanation-preview">{c.findings.map(f=>f.explanation).join(' ')}</p><p className="case-people-preview"><span>Involves</span> {people(c)}</p><div className="case-facts"><span>{c.findings.length} {c.findings.length===1?'pattern':'patterns'} matched</span><span>{c.rating_ids.length} linked {c.rating_ids.length===1?'rating':'ratings'}</span>{c.attempt_ids.length>0&&<span>{c.attempt_ids.length} blocked {c.attempt_ids.length===1?'attempt':'attempts'}</span>}</div></div><span className="case-open">Review case <Icon name="arrow" size={17}/></span></div>
+      </button>)}
+      {!cases.length&&<Empty>No cases match these filters.</Empty>}
+    </div>
+    {cases.length>0&&<PageControls page={safePage} setPage={value=>update('page',value)} total={cases.length} size={6}/>} 
+  </section>;
 }

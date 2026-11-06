@@ -88,6 +88,34 @@ test('invalidation requires confirmation, updates scores/totals, preserves allow
   assert.equal(applyAction(db,request),db);
   assert.ok(db.audit.some(e=>e.action==='Votes invalidated'));
 });
+test('one resolution confirms abuse and excludes only selected ratings atomically', () => {
+  const db=createData(), original=structuredClone(db);
+  const action={type:'resolve-case',id:'c1',status:'confirmed',ids:['r1'],reason:'Evidence supports retaliation in this rating.'};
+  assert.throws(()=>applyAction(db,{...action,ids:[]}),/Select/);
+  assert.throws(()=>applyAction(db,{...action,ids:['old0']}),/linked/);
+  assert.throws(()=>applyAction(db,{...action,reason:' '}),/reason/);
+  assert.deepEqual(db,original);
+  const next=applyAction(db,action);
+  assert.equal(next.cases.find(c=>c.id==='c1').status,'confirmed');
+  assert.ok(next.cases.find(c=>c.id==='c1').resolved_at);
+  assert.equal(next.ratings.find(r=>r.id==='r1').invalidation.reason,action.reason);
+  assert.equal(next.ratings.find(r=>r.id==='r2').invalidation,null);
+  assert.equal(next.audit.length,db.audit.length+1);
+  assert.equal(next.audit[0].action,'Case resolved');
+  assert.equal(participation(next,'w7').find(p=>p.student.id==='s3').remaining,participation(db,'w7').find(p=>p.student.id==='s3').remaining);
+  assert.throws(()=>applyAction(next,action),/already/);
+});
+test('one resolution dismisses without changing scores and handles attempt-only cases', () => {
+  const db=createData();
+  const next=applyAction(db,{type:'resolve-case',id:'c1',status:'dismissed',ids:[],reason:'Independent, supported reports.'});
+  assert.deepEqual(next.ratings,db.ratings);
+  assert.ok(next.cases.find(c=>c.id==='c1').resolved_at);
+  assert.throws(()=>applyAction(db,{type:'resolve-case',id:'c1',status:'dismissed',ids:['r1'],reason:'Dismiss'}),/cannot exclude/);
+  db.cases.find(c=>c.id==='c3').rating_ids=[];
+  const attempts=applyAction(db,{type:'resolve-case',id:'c3',status:'confirmed',ids:[],reason:'Repeated abusive attempts confirmed.'});
+  assert.equal(attempts.cases.find(c=>c.id==='c3').status,'confirmed');
+  assert.deepEqual(attempts.ratings,db.ratings);
+});
 test('dismissal leaves ratings and allowances untouched', () => {
   const db=createData(); const next=applyAction(db,{type:'review',id:'c1',status:'dismissed',reason:'Legitimate independent reports.'});
   assert.deepEqual(next.ratings,db.ratings); assert.deepEqual(participation(db,'w7'),participation(next,'w7'));

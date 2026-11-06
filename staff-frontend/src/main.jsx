@@ -82,11 +82,11 @@ function App(){
     </div>
     <div className="page-heading-actions">
       <span className="topbar-logo campus-symbol" role="img" aria-label="42"><img src={campusLogo} alt="" width="300" height="100"/></span>
-      {view!=='explorer'&&view!=='rating-group'&&view!=='case-review'&&<button className="button primary" disabled={!ratingsIn(db,currentWindowId).length} title="Export all ratings in the selected window" onClick={()=>exportRows(ratingsIn(db,currentWindowId))}><Icon name="download" size={18}/>Export ratings</button>}
+      {['overview','students'].includes(view)&&<button className="button primary" disabled={!ratingsIn(db,currentWindowId).length} title="Export all ratings in the selected window" onClick={()=>exportRows(ratingsIn(db,currentWindowId))}><Icon name="download" size={18}/>Export ratings</button>}
     </div>
   </header>
   {storageError&&<p className="storage-warning" role="alert">{storageError}</p>}
-  {view!=='case-review'&&<section className="window-toolbar" aria-label="Voting window context">
+  {['overview','students','student-record','explorer','rating-group','review'].includes(view)&&<section className="window-toolbar" aria-label="Voting window context">
     <div className="window-context">
       <div className="window-selector">
         <label className="window-label" htmlFor="selected-window">Voting window</label>

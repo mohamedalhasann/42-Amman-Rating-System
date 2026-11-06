@@ -72,6 +72,20 @@ export function validateWindow(db, w) {
 }
 const audit = (db, action, target, detail, now) => ({...db, audit: [{id: crypto.randomUUID(), actor: 'Demo staff', action, target, detail, at: now}, ...db.audit]});
 export function applyAction(db, action, now = new Date().toISOString()) {
+  if (action.type === 'resolve-case') {
+    const c = db.cases.find(c => c.id === action.id);
+    if (!c || c.status === 'dismissed' || c.resolved_at) throw new Error('This case has already been resolved.');
+    if (!['confirmed', 'dismissed'].includes(action.status) || !action.reason?.trim()) throw new Error('Choose an outcome and enter a reason.');
+    const ids = [...new Set(action.ids || [])];
+    if (action.status === 'dismissed' && ids.length) throw new Error('Dismissing a case cannot exclude ratings.');
+    if (ids.some(id => !c.rating_ids.includes(id) || !db.ratings.some(r => r.id === id && counted(r)))) throw new Error('Select only counted ratings linked to this case.');
+    if (action.status === 'confirmed' && !ids.length && db.ratings.some(r => c.rating_ids.includes(r.id) && counted(r))) throw new Error('Select the abusive ratings to exclude, or dismiss the case.');
+    const reason = action.reason.trim();
+    return audit({...db,
+      cases: db.cases.map(item => item.id === c.id ? {...item, status: action.status, resolved_at: now, review: {reason, by: 'Demo staff', at: now}} : item),
+      ratings: db.ratings.map(r => ids.includes(r.id) ? {...r, invalidation: {case_id: c.id, reason, by: 'Demo staff', at: now}} : r),
+    }, 'Case resolved', c.id, action.status === 'dismissed' ? `Dismissed · ${reason}` : `${ids.length} ratings excluded (${ids.join(', ')}) · ${reason}`, now);
+  }
   if (action.type === 'capture-rosters') {
     const eligible = db.students.filter(s => s.active && s.approved_at && s.email_verified_at).map(s => s.id);
     return {...db, windows: db.windows.map(w => Date.parse(w.starts_at) <= Date.parse(now) && !w.roster_captured_at ? {...w, roster: w.roster.length ? w.roster : eligible, roster_captured_at: now} : w)};
