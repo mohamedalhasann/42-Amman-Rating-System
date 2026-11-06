@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Character, DEFAULT_CHARACTER } from '../components/Character';
-import { Icon, StarMeter, Wordmark, pad, starWord, useCountdown } from '../components/bits';
+import { Icon, StarIcon, StarMeter, Wordmark, pad, starWord, useCountdown } from '../components/bits';
 import { api, type Dashboard, type GivenRating, type HistoryPoint, type Participation } from '../api';
 import { useSession } from '../session';
 import { ACCENTS } from './Onboarding';
@@ -8,8 +8,6 @@ import { RateSheet } from './RateSheet';
 
 const STATE_TEXT: Record<GivenRating['state'], string> = {
   counted: 'Counted',
-  held: 'Under review',
-  rejected: 'Not counted',
   invalidated: 'Not counted',
 };
 
@@ -54,6 +52,14 @@ export function Home() {
   const closed = history.filter((h) => h.state === 'closed' && h.average !== null);
   const delta = closed.length >= 2 ? closed[closed.length - 1].average! - closed[closed.length - 2].average! : null;
   const win = dash?.window ?? null;
+  const usedNow = dash?.allowance?.votes_used ?? 0;
+  const seenRef = useRef<number | null>(null);
+  const seenUsed = seenRef.current ?? usedNow;
+  useEffect(() => {
+    if (!dash) return;
+    const t = window.setTimeout(() => { seenRef.current = usedNow; }, 1200);
+    return () => window.clearTimeout(t);
+  }, [dash, usedNow]);
   const allowance = dash?.allowance ?? null;
   const used = allowance?.votes_used ?? 0;
   const left = allowance?.votes_remaining ?? 0;
@@ -145,14 +151,23 @@ export function Home() {
                     <span className="countdown__s">{pad(countdown.s)}<small>s</small></span>
                   </p>
                 )}
-                <div className="slots" aria-hidden="true">
-                  {Array.from({ length: Math.min(max, 12) }, (_, i) => (
-                    <span key={i} className={`slot ${i < used ? 'slot--used' : i < min ? 'slot--min' : ''}`} />
-                  ))}
+                <div className="ballots" aria-hidden="true">
+                  <div className="ballots__row">
+                    {Array.from({ length: Math.min(max, 12) }, (_, i) => (
+                      <span
+                        key={i}
+                        className={`slip ${i < used ? 'slip--in' : i < min ? 'slip--min' : ''} ${i < used && i >= seenUsed ? 'slip--new' : ''}`}
+                        style={i < used && i >= seenUsed ? { animationDelay: `${(i - seenUsed) * 120 + 300}ms` } : undefined}
+                      >
+                        {i < used && <StarIcon size={12} fill="currentColor" stroke="currentColor" />}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="ballots__lip"><span /></div>
                 </div>
                 <div className="window__bottom">
                   <div>
-                    <p className="window__left">{left} of {max} votes left</p>
+                    <p className="window__left">{used === 0 ? `${max} ballots to give` : `${used} in the box, ${left} left`}</p>
                     <p className="muted window__min">
                       {min === 0 ? 'No minimum this window' : used >= min ? 'Minimum reached' : `${min - used} more to reach the minimum of ${min}`}
                     </p>

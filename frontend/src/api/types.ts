@@ -76,7 +76,7 @@ export interface SubmitRatingInput {
 
 export interface SubmitRatingResult {
   rating_id: string;
-  state: 'counted' | 'held';
+  state: 'counted'; // every accepted vote counts immediately
   submitted_at: string;
   allowance: { votes_used: number; votes_remaining: number };
 }
@@ -102,7 +102,7 @@ export interface GivenRating {
   rating_id: string;
   recipient: Peer;
   stars: Stars;
-  state: 'counted' | 'held' | 'rejected' | 'invalidated';
+  state: 'counted' | 'invalidated';
   submitted_at: string;
 }
 

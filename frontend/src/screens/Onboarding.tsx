@@ -106,7 +106,6 @@ export function Onboarding() {
 
         {step === 0 && (
           <section className="onb__step rise" key="you">
-            <p className="eyebrow">Welcome to Fairly</p>
             <h1 className="onb__title">Hi {me.first_name}.</h1>
             <div className="idcard">
               <div className="idcard__avatar mono" aria-hidden="true">
@@ -117,33 +116,32 @@ export function Onboarding() {
                 <p className="mono muted">{me.intra_username} · 42 Amman</p>
               </div>
             </div>
-            <p className="muted onb__lead">Your name comes from 42 intra, so other students can find you when they want to rate you. Let’s set you up in under a minute.</p>
+            <p className="muted onb__lead">Your name comes from 42 intra, so classmates can find you when they rate. Setup takes a minute.</p>
             <button className="btn btn--accent btn--block" onClick={next}>That’s me</button>
           </section>
         )}
 
         {step === 1 && (
           <section className="onb__step rise" key="how">
-            <p className="eyebrow">How it works</p>
-            <h1 className="onb__title">Four things to know.</h1>
-            <ul className="rules">
-              <li>
-                <span className="rules__icon"><Icon name="lock" size={22} /></span>
-                <div><b>Your votes are anonymous.</b><p className="muted">Students never see who rated them. Only staff can.</p></div>
-              </li>
-              <li>
-                <span className="rules__icon"><StarIcon fill="var(--accent)" size={24} /></span>
-                <div><b>Three stars, three meanings.</b><p className="muted">3 is positive, 2 is mixed, 1 is a serious issue.</p></div>
-              </li>
-              <li>
-                <span className="rules__icon"><Icon name="scale" size={22} /></span>
-                <div><b>1 star goes to staff first.</b><p className="muted">It needs a reason and a short explanation, and only counts after staff review it.</p></div>
-              </li>
-              <li>
-                <span className="rules__icon"><Icon name="clock" size={22} /></span>
-                <div><b>Voting happens in windows.</b><p className="muted">Each window has a deadline and a set number of votes. You see your own rating, nothing else.</p></div>
-              </li>
-            </ul>
+            <h1 className="onb__title">This is a ballot.</h1>
+            <div className="ballot ballot--demo" aria-hidden="true">
+              <div className="ballot__head"><span>Window 7</span><span>Ballot 1 of 5</span></div>
+              <span className="ballot__label">For</span>
+              <p className="ballot__name">Someone you worked with</p>
+              <div className="demo-stamps">
+                {([3, 2, 1] as const).map((n) => (
+                  <span key={n} className={`demo-stamp${n === 3 ? ' is-on' : ''}`}>
+                    {Array.from({ length: n }, (_, i) => <StarIcon key={i} size={12} fill="currentColor" stroke="currentColor" />)}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <ol className="howto">
+              <li>Pick someone you worked with this window.</li>
+              <li>Stamp it: 3 stars is positive, 2 is mixed, 1 is a serious issue. A 1-star ballot needs a reason that staff read.</li>
+              <li>Drop it in the box before the window closes.</li>
+            </ol>
+            <p className="muted onb__lead">Only staff can see who sent a ballot. You only ever see your own rating.</p>
             <button className="btn btn--accent btn--block" onClick={next}>Make my character</button>
           </section>
         )}
@@ -155,7 +153,6 @@ export function Onboarding() {
             </div>
             <div className="onb__row">
               <div>
-                <p className="eyebrow">Your character</p>
                 <h1 className="onb__title">Make it yours.</h1>
               </div>
               <button className="btn btn--ghost" onClick={shuffle}>Shuffle</button>
@@ -215,9 +212,8 @@ export function Onboarding() {
             <div className="onb__mobile-figure" aria-hidden="true">
                             <Character spec={spec} accent={accent} size="100%" className="bob" />
             </div>
-            <p className="eyebrow">Your color</p>
             <h1 className="onb__title">Pick your accent.</h1>
-            <p className="muted onb__lead">It colors the whole app, only for you, and your hoodie if you set it to Accent. 42 cyan is the default. You can change it anytime.</p>
+            <p className="muted onb__lead">It colors the app for you only. You can change it anytime from home.</p>
             <div className="swatches" role="radiogroup" aria-label="Accent color">
               {ACCENTS.map((a) => (
                 <button
