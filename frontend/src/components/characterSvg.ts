@@ -277,7 +277,7 @@ const both = (markup: string) => markup + `<g ${MIRROR}>${markup}</g>`;
 let logoCache = '';
 function logo(fill: string) {
   if (!logoCache) logoCache = LOGO_ART.map(([x, y, d]) => `<path d="${d}" transform="translate(${x},${y})"/>`).join('');
-  return `<g transform="translate(112 136) scale(0.0155)" fill="${fill}">${logoCache}</g>`;
+  return `<g transform="translate(105 129) scale(0.0155)" fill="${fill}">${logoCache}</g>`;
 }
 
 function hoodie(spec: CharacterSpec, accent: string) {
