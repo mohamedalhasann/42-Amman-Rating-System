@@ -51,8 +51,17 @@ export function Home() {
   const profile = me.profile!;
   const accent = profile.accent;
   const average = dash?.own_rating.average ?? null;
-  const closed = history.filter((h) => h.state === 'closed' && h.average !== null);
-  const delta = closed.length >= 2 ? closed[closed.length - 1].average! - closed[closed.length - 2].average! : null;
+  // The rating as it stood when each window closed. A window with too few raters adds nothing,
+  // so the rating carries over unchanged from the window before.
+  let carry: number | null = null;
+  const points = history.map((h) => {
+    if (h.state !== 'closed') return { ...h, value: null, carried: false };
+    if (h.average !== null) carry = h.average;
+    return { ...h, value: carry, carried: h.average === null && carry !== null };
+  });
+  const closed = points.filter((p) => p.value !== null);
+  const lastClosed = closed[closed.length - 1];
+  const delta = closed.length >= 2 ? closed[closed.length - 1].value! - closed[closed.length - 2].value! : null;
   const win = dash?.window ?? null;
   const allowance = dash?.allowance ?? null;
   const used = allowance?.votes_used ?? 0;
@@ -173,18 +182,18 @@ export function Home() {
               <span className="muted">one bar per voting window</span>
             </div>
             <div className="bars">
-              {history.map((h, i) => (
-                <div key={h.window_id} className="bars__col" title={h.name}>
-                  <span className="mono bars__value">{h.state === 'open' ? '…' : h.average === null ? '–' : h.average.toFixed(1)}</span>
+              {points.map((h, i) => (
+                <div key={h.window_id} className="bars__col" title={h.carried ? `${h.name}: too few raters, so your rating didn’t change` : h.name}>
+                  <span className="mono bars__value">{h.state === 'open' ? '…' : h.value === null ? '–' : h.value.toFixed(1)}</span>
                   <span
-                    className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.average === null ? 'bars__bar--none' : ''} ${h === closed[closed.length - 1] ? 'bars__bar--last' : ''}`}
-                    style={h.average !== null ? { height: `${Math.round(((h.average - 1) / 2) * 100) + 12}px` } : undefined}
+                    className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastClosed && !h.carried ? 'bars__bar--last' : ''}`}
+                    style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 100) + 12}px` } : undefined}
                   />
                   <span className="mono bars__label">{h.state === 'open' ? 'Now' : `#${i + 1}`}</span>
                 </div>
               ))}
             </div>
-            <p className="muted card__foot">Windows with too few raters show no bar, so no change can be traced to one vote.</p>
+            <p className="muted card__foot">When too few people rate you in a window, your rating stays as it was (lighter bar), so no change can be traced to one vote.</p>
           </section>
 
           <section className="card part rise" style={{ animationDelay: '180ms' }} aria-label="Your participation">

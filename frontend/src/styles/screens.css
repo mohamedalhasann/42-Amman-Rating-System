@@ -190,6 +190,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   transform-origin: bottom; animation: grow 700ms var(--ease) both;
 }
 .bars__bar--last { background: var(--accent); }
+.bars__bar--carried { background: var(--line); border-style: dashed; border-color: var(--line-strong); }
 .bars__bar--none { height: 4px; border: none; background: var(--line); animation: none; }
 .bars__bar--open { height: 34px; background: transparent; border: 2px dashed var(--line-strong); animation: none; }
 .bars__value, .bars__label { font-size: 12px; color: var(--muted); }
