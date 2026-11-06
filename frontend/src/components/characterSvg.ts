@@ -55,48 +55,48 @@ const PART = 'M80 31 L80 36 M70 32 C63 36 57 43 54 52 M90 32 C97 36 103 43 106 5
 
 export const HAIRSTYLES: HairStyle[] = [
   // ----- boys -----
+  // Short styles come down into a sideburn in front of each ear (x 47-53, to y 68).
   {
-    name: 'Textured', for: 'boy',
-    front: 'M46 62 C44 48 50 34 62 28 C66 22 74 20 80 22 C86 19 95 21 99 26 C110 30 117 44 114 62 C112 54 110 49 106 46 C104 48 101 48 99 46 C96 48 92 48 90 45 C86 47 81 47 79 44 C75 47 70 47 68 44 C65 47 61 47 59 45 C56 47 53 49 51 52 C49 55 47 58 46 62 Z',
-    hi: 'M62 34 C64 31 67 31 69 33 M74 28 C76 25 80 25 82 28 M88 30 C90 27 94 28 95 31 M100 36 C103 35 105 37 105 40 M56 41 C57 38 60 37 62 39 M80 36 C82 34 85 34 86 37',
+    name: 'Crop', for: 'boy',
+    front: 'M47 68 C44 54 46 42 53 34 C60 25 70 21 80 21 C91 21 101 25 107 33 C114 42 116 54 113 68 L108 68 C108 61 107 55 105 50 Q101 44 98 43 Q97 48 93 51 Q90 45 86 43 Q85 48 81 51 Q78 45 74 43 Q73 48 69 51 Q66 45 62 44 Q61 49 57 51 Q55 51 55 50 C53 55 52 61 52 68 Z',
+    hi: 'M60 34 C66 30 72 28 78 28 M86 28 C92 29 98 31 103 36',
   },
   {
     name: 'Buzz', for: 'boy',
-    front: 'M47 60 C46 42 60 29 80 29 C100 29 114 42 113 60 C110 52 104 46 96 44.5 C88 43 72 43 64 44.5 C56 46 50 52 47 60 Z',
-    hi: 'M60 36 L61 37 M68 33 L69 34 M78 32 L79 33 M88 33 L89 34 M97 35 L98 36 M64 40 L65 41 M74 37 L75 38 M84 37 L85 38 M94 39 L95 40 M104 41 L105 42',
+    shade: 'M49 66 C48 45 61 32 80 32 C99 32 112 45 111 66 L108 66 C107 57 105 52 101 48.5 C93 45.5 67 45.5 59 48.5 C55 52 53 57 52 66 Z',
   },
   {
     name: 'Side part', for: 'boy',
-    front: 'M46 64 C42 42 58 25 80 25 C104 25 118 40 114 64 C112 56 108 50 102 47 C92 50 76 49 64 43 C58 48 50 55 46 64 Z',
-    hi: 'M66 40 C72 34 82 30 94 30 M60 46 C64 40 70 36 76 34',
+    front: 'M47 68 C44 52 48 38 58 30 C66 24 74 22 82 22 C96 22 108 30 112 42 C115 50 115 60 113 68 L108 68 C108 61 107 55 104 50 C96 50 84 47 75 42 C71 40 68 38 66 35 C62 39 58 44 56 49 C53 55 52 61 52 68 Z',
+    hi: 'M66 35 L61 28 M70 33 C80 29 94 30 105 39 M73 39 C82 42 92 44 101 46',
   },
   {
     name: 'Quiff', for: 'boy',
-    front: 'M47 60 C46 44 54 33 66 30 C70 22 82 16 96 19 C108 22 112 32 106 38 C112 44 114 52 113 60 C110 52 104 47 96 45 C88 43 72 43 64 45 C56 47 50 52 47 60 Z',
-    hi: 'M74 26 C82 21 92 21 100 24 M78 33 C86 29 94 29 100 32',
+    front: 'M47 68 C44 54 46 42 52 36 C54 28 60 23 66 21 C68 15 76 12 86 13 C97 14 106 19 106 25 C112 31 115 45 113 68 L108 68 C108 61 107 55 104 50 C96 47 88 46 80 47 C72 46 63 47 56 50 C53 55 52 61 52 68 Z',
+    hi: 'M64 37 C64 28 72 21 84 19 M76 41 C78 32 88 26 99 26 M92 42 C96 36 102 32 108 34',
   },
   {
-    name: 'Curtains', for: 'boy',
-    front: 'M46 66 C43 42 58 26 80 26 C102 26 117 42 114 66 C111 56 106 50 98 46 C91 44 85 41 80 36 C75 41 69 44 62 46 C54 50 49 56 46 66 Z',
-    hi: 'M70 31 C64 35 58 41 54 49 M90 31 C96 35 102 41 106 49',
+    name: 'Slick back', for: 'boy',
+    front: 'M47 66 C44 50 50 34 62 27 C68 23 74 21 80 21 C86 21 92 23 98 27 C110 34 116 50 113 66 L108 66 C108 58 106 50 102 45 C96 41 88 39 80 40 C72 39 64 41 58 45 C54 50 52 58 52 66 Z',
+    hi: 'M67 41 C65 34 67 29 71 26 M80 39 C79 33 80 28 82 25 M93 41 C95 34 93 29 89 26',
   },
   {
     name: 'Curly', for: 'boy',
-    front: 'M44 70 C36 66 36 56 42 51 C38 43 44 33 53 34 C55 24 66 18 75 22 C81 14 94 16 98 22 C108 18 120 26 118 36 C126 40 126 52 120 56 C124 62 122 70 116 72 C114 60 110 52 104 48 C96 52 86 50 80 46 C72 52 62 52 56 48 C50 54 46 62 44 70 Z',
-    hi: 'M52 42 C53 39 56 38 58 40 M64 30 C66 27 70 27 71 30 M82 25 C84 22 88 22 89 25 M98 30 C100 28 104 29 104 32 M110 42 C112 40 115 41 115 44 M72 38 C73 36 76 36 77 38 M90 38 C91 36 94 36 95 38',
+    front: 'M46 70 C38 66 38 56 43 51 C38 43 44 33 53 34 C55 24 66 18 75 22 C81 14 94 16 98 22 C108 18 120 26 117 36 C124 41 124 52 118 56 C121 62 120 68 114 70 C113 62 110 55 105 51 C99 54 91 53 86 49 C80 54 70 54 65 50 C60 54 54 54 52 52 C49 57 47 63 46 70 Z',
+    hi: 'M50 44 a3.5 3.5 0 1 1 5 3 M64 30 a3.5 3.5 0 1 1 5 3 M82 24 a3.5 3.5 0 1 1 5 3 M100 30 a3.5 3.5 0 1 1 5 3 M108 45 a3.5 3.5 0 1 1 5 3 M72 40 a3.5 3.5 0 1 1 5 3 M90 38 a3.5 3.5 0 1 1 5 3',
   },
   {
-    name: 'Curly fade', for: 'boy',
-    shade: 'M47 70 C46 60 47 54 50 50 L58 50 C53 55 52 62 52 72 Z M113 70 C114 60 113 54 110 50 L102 50 C107 55 108 62 108 72 Z',
-    front: 'M50 54 C47 42 53 31 62 29 C63 22 72 18 78 21 C83 15 93 16 97 22 C105 20 111 28 109 36 C113 40 113 48 110 54 C104 49 98 47 92 48 C86 50 74 50 68 48 C62 47 55 49 50 54 Z',
-    hi: 'M60 34 C61 31 64 30 66 32 M74 26 C76 23 80 23 81 26 M90 25 C92 22 96 23 96 26 M101 33 C103 31 106 32 106 35 M82 34 C83 32 86 32 87 34 M66 41 C67 39 70 39 71 41',
+    name: 'Curly top', for: 'boy',
+    shade: 'M48 68 C46 58 47 50 51 44 L57 46 C54 53 53 60 52 68 Z M112 68 C114 58 113 50 109 44 L103 46 C106 53 107 60 108 68 Z',
+    front: 'M52 50 C47 42 51 32 60 31 C61 22 71 17 78 21 C83 13 95 15 98 22 C106 19 114 27 111 35 C116 40 115 48 108 51 C103 47 98 46 93 49 C88 46 82 46 77 49 C72 46 66 46 62 49 C59 47 55 47 52 50 Z',
+    hi: 'M58 37 a3.5 3.5 0 1 1 5 3 M72 27 a3.5 3.5 0 1 1 5 3 M88 25 a3.5 3.5 0 1 1 5 3 M100 33 a3.5 3.5 0 1 1 5 3 M80 37 a3.5 3.5 0 1 1 5 3',
   },
   {
     name: 'Afro', for: 'boy',
     back: 'M40 82 C30 78 27 66 33 59 C25 51 29 37 39 34 C39 22 51 13 62 17 C68 7 92 7 98 17 C109 13 121 22 121 34 C131 37 135 51 127 59 C133 66 130 78 120 82 Z',
     front: 'M44 64 C42 40 58 26 80 26 C102 26 118 40 116 64 C110 54 98 49 80 49 C62 49 50 54 44 64 Z',
     edge: 'M46 60 C52 53 63 49 80 49 C97 49 108 53 114 60',
-    hi: 'M44 28 C45 25 48 24 50 26 M60 18 C62 15 66 15 67 18 M84 14 C86 11 90 11 91 14 M104 20 C106 18 109 19 110 22 M118 36 C120 34 123 35 123 38 M36 50 C37 47 40 47 41 49 M70 32 C71 30 74 30 75 32 M92 34 C93 32 96 32 97 34',
+    hi: 'M42 30 a3.5 3.5 0 1 1 5 3 M60 18 a3.5 3.5 0 1 1 5 3 M84 14 a3.5 3.5 0 1 1 5 3 M104 22 a3.5 3.5 0 1 1 5 3 M118 40 a3.5 3.5 0 1 1 5 3 M34 52 a3.5 3.5 0 1 1 5 3 M70 32 a3.5 3.5 0 1 1 5 3 M92 34 a3.5 3.5 0 1 1 5 3',
   },
   { name: 'Bald', for: 'boy' },
 
@@ -148,10 +148,29 @@ export const HAIRSTYLES: HairStyle[] = [
     front: 'M44 94 C38 60 48 28 80 27 C110 28 122 60 116 94 C112 86 110 72 108 60 C104 50 94 46 84 46 C74 46 64 42 60 36 C56 44 52 52 52 62 C50 74 48 86 44 94 Z',
     hi: 'M60 34 C70 30 84 30 96 34 M66 40 C76 43 90 43 102 46',
   },
+  // ----- more boys, kept at the end so saved indices don't move -----
+  {
+    name: 'Fade', for: 'boy',
+    shade: 'M48 68 C46 55 47 44 53 37 L62 42 C57 49 54 58 53 68 Z M112 68 C114 55 113 44 107 37 L98 42 C103 49 106 58 107 68 Z',
+    front: 'M53 46 C50 32 63 20 80 20 C97 20 110 32 107 46 Q103 42 99 44 Q96 41 91 43 Q87 40 82 42 Q78 40 73 42 Q68 40 64 43 Q60 41 57 44 Q55 44 53 46 Z',
+    hi: 'M63 31 C69 27 76 26 84 26 M90 28 C95 29 100 32 103 36',
+  },
+  {
+    name: 'Spiky', for: 'boy',
+    front: 'M47 68 C45 56 46 46 50 40 L43 33 L55 31 L52 20 L65 25 L69 12 L78 22 L88 10 L92 23 L104 14 L104 27 L117 27 L110 40 C114 48 115 58 113 68 L108 68 C108 61 107 55 104 50 C96 47 88 46 80 46 C72 46 64 47 56 50 C53 55 52 61 52 68 Z',
+    hi: 'M60 34 L56 26 M72 30 L70 20 M86 28 L88 17 M98 31 L101 22',
+  },
+  {
+    name: 'Man bun', for: 'boy',
+    back: 'M68 20 C68 9 92 9 92 20 C92 29 68 29 68 20 Z',
+    front: 'M47 68 C44 52 50 36 62 29 C68 26 74 25 80 25 C86 25 92 26 98 29 C110 36 116 52 113 68 L108 68 C108 60 106 52 102 47 C96 44 88 43 80 44 C72 43 64 44 58 47 C54 52 52 60 52 68 Z',
+    hi: 'M66 44 C68 37 72 32 76 29 M80 43 L80 28 M94 44 C92 37 88 32 84 29 M74 15 C78 13 84 13 87 15',
+  },
 ];
 
 export const HAIR_FOR: Record<Gender, number[]> = {
-  boy: HAIRSTYLES.flatMap((h, i) => (h.for === 'boy' ? [i] : [])),
+  boy: ['Crop', 'Fade', 'Side part', 'Quiff', 'Slick back', 'Spiky', 'Curly', 'Curly top', 'Afro', 'Man bun', 'Buzz', 'Bald']
+    .map((name) => HAIRSTYLES.findIndex((h) => h.name === name)),
   girl: HAIRSTYLES.flatMap((h, i) => (h.for === 'girl' ? [i] : [])),
 };
 
@@ -165,12 +184,12 @@ const hair = (name: string) => HAIRSTYLES.findIndex((h) => h.name === name);
 
 export const PRESETS: Record<Gender, CharacterSpec[]> = {
   boy: [
-    preset('boy', { skin: 1, hair: hair('Textured') }),
+    preset('boy', { skin: 1, hair: hair('Crop') }),
     preset('boy', { skin: 3, hair: hair('Curly'), beard: 2, brows: 1, mouth: 1 }),
     preset('boy', { skin: 0, hair: hair('Side part'), hairColor: 2, glasses: 1, eyes: 4 }),
     preset('boy', { skin: 4, hair: hair('Afro'), brows: 1, mouth: 4, beard: 1 }),
-    preset('boy', { skin: 2, hair: hair('Curly fade'), hairColor: 1, beard: 4, brows: 2 }),
-    preset('boy', { skin: 1, hair: hair('Quiff'), hairColor: 1, eyes: 1, mouth: 1, glasses: 2 }),
+    preset('boy', { skin: 2, hair: hair('Curly top'), hairColor: 1, beard: 4, brows: 2 }),
+    preset('boy', { skin: 1, hair: hair('Fade'), hairColor: 1, eyes: 1, mouth: 1, glasses: 2 }),
   ],
   girl: [
     preset('girl', { skin: 1, hair: hair('Long'), hairColor: 1, eyes: 5, brows: 3, mouth: 3 }),
@@ -440,8 +459,8 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
   out.push(p(HEAD, `fill="${skin}" ${ink(4.5)}`));
   out.push(beard(spec, hairColor));
   out.push(mouth(spec, spec.beard >= 2));
+  if (style.shade) out.push(p(style.shade, `fill="${hairColor}" opacity=".55"`));
   if (style.front) {
-    if (style.shade) out.push(p(style.shade, `fill="${hairColor}" opacity=".45"`));
     if (style.edge) {
       // blends into the hair behind, so only the hairline gets an outline
       out.push(p(style.front, `fill="${hairColor}"`), p(style.edge, `fill="none" ${ink(4.5)}`));
@@ -452,11 +471,11 @@ export function renderCharacter(raw: Partial<CharacterSpec>, accent: string): st
       const [x, y] = style.tie;
       out.push(`<rect x="${x - 3.5}" y="${y - 5.5}" width="7" height="11" rx="3" fill="${accent}" ${ink(2.6)} transform="rotate(-35 ${x} ${y})"/>`);
     }
-    if (style.hi) out.push(p(style.hi, `fill="none" stroke="${scale(hairColor, 1.9)}" stroke-width="2" stroke-linecap="round"`));
-  } else {
+  } else if (!style.shade) {
     out.push(p('M62 40 C66 36 72 34 76 34', 'fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".35"'));
   }
-  out.push(brows(style.front ? hairColor : scale(skin, 0.55), ex, spec.brows));
+  if (style.hi) out.push(p(style.hi, `fill="none" stroke="${scale(hairColor, 1.9)}" stroke-width="2" stroke-linecap="round" opacity=".8"`));
+  out.push(brows(style.front || style.shade ? hairColor : scale(skin, 0.55), ex, spec.brows));
   out.push(eyes(spec, ex), cheeks(ex), glasses(spec, ex, false));
   return out.join('');
 }
