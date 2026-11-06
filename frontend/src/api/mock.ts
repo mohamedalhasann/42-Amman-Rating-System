@@ -233,13 +233,13 @@ export const mockApi: Api = {
 
   async history() {
     return wait([
-      { window_id: 'win_1', name: 'W1', average: null, state: 'closed' as const },
-      { window_id: 'win_2', name: 'W2', average: 2.2, state: 'closed' as const },
-      { window_id: 'win_3', name: 'W3', average: 2.4, state: 'closed' as const },
-      { window_id: 'win_4', name: 'W4', average: null, state: 'closed' as const },
-      { window_id: 'win_5', name: 'W5', average: 2.3, state: 'closed' as const },
-      { window_id: 'win_6', name: 'W6', average: 2.6, state: 'closed' as const },
-      { window_id: 'win_7', name: 'W7', average: null, state: 'open' as const },
+      { window_id: 'win_1', name: 'Window 1', average: null, state: 'closed' as const },
+      { window_id: 'win_2', name: 'Window 2', average: 2.2, state: 'closed' as const },
+      { window_id: 'win_3', name: 'Window 3', average: 2.4, state: 'closed' as const },
+      { window_id: 'win_4', name: 'Window 4', average: null, state: 'closed' as const },
+      { window_id: 'win_5', name: 'Window 5', average: 2.3, state: 'closed' as const },
+      { window_id: 'win_6', name: 'Window 6', average: 2.6, state: 'closed' as const },
+      { window_id: 'win_7', name: 'Window 7', average: null, state: 'open' as const },
     ]);
   },
   async participation() {

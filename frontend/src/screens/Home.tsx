@@ -170,17 +170,17 @@ export function Home() {
           <section className="card history rise" style={{ animationDelay: '120ms' }} aria-label="Your rating over time">
             <div className="card__head">
               <h2>Your rating over time</h2>
-              <span className="muted">per closed window</span>
+              <span className="muted">one bar per voting window</span>
             </div>
             <div className="bars">
-              {history.map((h) => (
-                <div key={h.window_id} className="bars__col">
+              {history.map((h, i) => (
+                <div key={h.window_id} className="bars__col" title={h.name}>
                   <span className="mono bars__value">{h.state === 'open' ? '…' : h.average === null ? '–' : h.average.toFixed(1)}</span>
                   <span
                     className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.average === null ? 'bars__bar--none' : ''} ${h === closed[closed.length - 1] ? 'bars__bar--last' : ''}`}
                     style={h.average !== null ? { height: `${Math.round(((h.average - 1) / 2) * 100) + 12}px` } : undefined}
                   />
-                  <span className="mono bars__label">{h.name}</span>
+                  <span className="mono bars__label">{h.state === 'open' ? 'Now' : `#${i + 1}`}</span>
                 </div>
               ))}
             </div>
