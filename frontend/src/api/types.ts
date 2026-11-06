@@ -3,26 +3,8 @@
 
 export type Stars = 1 | 2 | 3;
 
-// Each field is an index into the option lists in components/characterSvg.ts.
-export interface CharacterSpec {
-  gender: number; // 0 = boy, 1 = girl
-  skin: number;
-  hair: number;
-  hairColor: number;
-  beard: number;
-  eyes: number;
-  brows: number;
-  mouth: number;
-  glasses: number;
-  hijab: number; // 0 = none
-  hijabColor: number;
-  capColor: number; // undercap band
-  hoodie: number; // 0 = black
-}
-
 // added: saved by PATCH /me/profile
 export interface Profile {
-  character: CharacterSpec;
   accent: string;
   onboarded: boolean;
 }

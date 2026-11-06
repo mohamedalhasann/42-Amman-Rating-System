@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Character, DEFAULT_CHARACTER } from '../components/Character';
+import { Monogram } from '../components/Monogram';
 import { Icon, StarMeter, Wordmark, pad, starWord, useCountdown } from '../components/bits';
 import { api, type Dashboard, type GivenRating, type HistoryPoint, type Participation } from '../api';
 import { useSession } from '../session';
@@ -85,7 +85,7 @@ export function Home() {
       <div className="home__grid">
         <section className="poster rise" aria-label="Your profile">
           <div className="poster__figure">
-                        <Character spec={profile.character ?? DEFAULT_CHARACTER} accent={accent} size="100%" className="bob" label="Your character" />
+            <Monogram first={me.first_name} last={me.last_name} label={`${me.first_name} ${me.last_name}`} />
           </div>
           <div className="poster__info">
             <p className="mono poster__login">{me.first_name} {me.last_name}</p>

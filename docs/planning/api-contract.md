@@ -82,13 +82,13 @@ The student frontend (`frontend/`) uses these additions. They expose only the si
 | Method | Path | Purpose |
 | --- | --- | --- |
 | GET | `/me` | Add `status` (`active` or `pending`) and `profile` (`null` until onboarding is saved) |
-| PATCH | `/me/profile` | Save `{ "character": { "skin": 1, "hair": 0, "hairColor": 0, "beard": 0, "eyes": 0, "mouth": 0, "glasses": 0, "hijab": 0, "hijabColor": 0, "capColor": 0, "hoodie": 0 }, "accent": "#00BABC", "onboarded": true }`. Returns the updated `/me`. Validate each index against the frontend's part lists and `accent` against the six allowed colors |
+| PATCH | `/me/profile` | Save `{ "accent": "#00BABC", "onboarded": true }`. Returns the updated `/me`. Validate `accent` against the six allowed colors |
 | GET | `/student/labels?stars=3` | Add `tone` to each label: `positive`, `concern` or `flag`. Lets the UI style labels by meaning |
 | GET | `/student/history` | Own average per window, oldest first: `{ "items": [{ "window_id", "name", "average", "state" }] }`. `average` is `null` when that window had fewer counted ratings from distinct raters than the minimum (proposed: 5), so no change can be traced to one vote. `state` is `closed` or `open`; the open window always has `average: null` |
 | GET | `/student/participation` | `{ "streak", "windows_joined", "windows_total", "votes_given_total" }`. `streak` counts consecutive closed windows, ending with the latest, where the student reached that window's minimum |
 | GET | `/student/ratings/given?window_id=...` | The student's own submissions in that window: `rating_id`, `recipient` (peer item), `stars`, `state`, `submitted_at`. Never includes other students' ratings or anything the student received |
 
-Character values (integer indexes, see `frontend/src/components/characterSvg.ts`): `skin` 0–5, `hair` 0–7, `hairColor` 0–7, `beard` 0–4, `eyes` 0–3, `mouth` 0–2, `glasses` 0–3, `hijab` 0–2 (0 = none), `hijabColor` 0–7, `capColor` 0–4, `hoodie` 0–3 (0 = black, the default). Store the object as given; the frontend fills in missing fields with defaults, so older saved profiles keep working. Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2`.
+Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2`.
 
 ## Staff read routes
 
