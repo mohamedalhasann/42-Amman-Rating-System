@@ -75,6 +75,21 @@ Submission body:
 
 Proposed error codes: `WINDOW_CLOSED`, `VOTE_LIMIT_REACHED`, `SELF_VOTE_NOT_ALLOWED`, `ALREADY_RATED`, `INVALID_LABEL_SELECTION`, `RECIPIENT_UNAVAILABLE`, `IDEMPOTENCY_CONFLICT`. Text and selection limits remain open. Add specific validation errors for missing 1-star flags or explanation without leaking private records.
 
+## Student interface additions (proposed by the student frontend)
+
+The student frontend (`frontend/`) uses these additions. They expose only the signed-in student's own data. The frontend's mock API (`frontend/src/api/mock.ts`) implements them with example values.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/me` | Add `status` (`active` or `pending`) and `profile` (`null` until onboarding is saved) |
+| PATCH | `/me/profile` | Save `{ "accent": "#00BABC", "onboarded": true }`. Returns the updated `/me`. Validate `accent` against the six allowed colors |
+| GET | `/student/labels?stars=3` | Add `tone` to each label: `positive`, `concern` or `flag`. Lets the UI style labels by meaning |
+| GET | `/student/history` | Own overall rating as it stood when each window closed, oldest first: `{ "items": [{ "window_id", "name", "average", "state" }] }`. `average` is `null` when that window had fewer counted ratings from distinct raters than the minimum (proposed: 5), so no change can be traced to one vote; the frontend then repeats the previous window's value. `state` is `closed` or `open`; the open window always has `average: null` |
+| GET | `/student/participation` | `{ "streak", "windows_joined", "windows_total", "votes_given_total" }`. `streak` counts consecutive closed windows, ending with the latest, where the student reached that window's minimum |
+| GET | `/student/ratings/given?window_id=...` | The student's own submissions in that window: `rating_id`, `recipient` (peer item), `stars`, `state`, `submitted_at`. Never includes other students' ratings or anything the student received |
+
+Allowed accents: `#00BABC`, `#5BA4FF`, `#8FD16A`, `#F2A541`, `#FF8A80`, `#B79CF2`.
+
 ## Staff read routes
 
 | Method | Path | Purpose |

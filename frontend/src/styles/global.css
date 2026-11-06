@@ -1,0 +1,125 @@
+/* Fairly design tokens.
+   The look: thick ink outlines (like the characters), paper ground with a faint
+   dot grid, one accent the student picks, and hard offset shadows on things you press. */
+
+:root {
+  --ink: #121417;
+  --ink-2: #2a2e34;
+  --paper: #f4f5f2;
+  --card: #ffffff;
+  --line: #dadfd8;
+  --line-strong: #b8bec6;
+  --muted: #555b63;
+  --muted-on-ink: #b8bec6;
+  --danger: #b3261e;
+  --accent: #00babc;
+  --accent-soft: color-mix(in srgb, var(--accent) 22%, #ffffff);
+  --accent-deep: color-mix(in srgb, var(--accent) 45%, var(--ink));
+
+  --font: 'Space Grotesk', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 28px;
+  --stroke: 2px solid var(--ink);
+  --shadow: 0 4px 0 var(--ink);
+  --ease: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { min-height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image: radial-gradient(circle at 1px 1px, rgba(18, 20, 23, 0.09) 1px, transparent 0);
+  background-size: 22px 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--accent-deep); outline-offset: 2px; }
+
+h1, h2, h3, p { margin: 0; }
+.mono { font-family: var(--mono); }
+.muted { color: var(--muted); }
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 52px; padding: 0 24px;
+  border: var(--stroke); border-radius: var(--r-md);
+  font-size: 17px; font-weight: 600;
+  background: var(--card); box-shadow: var(--shadow);
+  transition: transform 120ms ease, box-shadow 120ms ease, background 200ms ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--ink); }
+.btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--ink); }
+.btn[aria-busy='true'] { opacity: 0.7; pointer-events: none; }
+.btn--accent { background: var(--accent); }
+.btn--ink { background: var(--ink); color: var(--paper); }
+.btn--ghost { border-color: var(--line-strong); box-shadow: none; background: transparent; }
+.btn--ghost:hover, .btn--ghost:active { box-shadow: none; transform: none; background: rgba(18, 20, 23, 0.04); }
+.btn--block { width: 100%; }
+
+.icon-btn {
+  width: 44px; height: 44px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--card);
+}
+
+/* Fields */
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field label { font-size: 14px; font-weight: 500; }
+.input {
+  height: 54px; padding: 0 16px;
+  border: var(--stroke); border-radius: var(--r-md); background: var(--card);
+  font-size: 16px;
+}
+.input--mono { font-family: var(--mono); }
+.textarea { height: auto; padding: 14px 16px; resize: none; line-height: 1.5; }
+.input::placeholder { color: #8a9099; }
+.error { color: var(--danger); font-size: 14px; }
+
+/* Cards */
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg);
+  padding: 22px;
+}
+.card--strong { border: var(--stroke); box-shadow: var(--shadow); }
+.card--ink { background: var(--ink); color: var(--paper); border: none; }
+
+/* Chips */
+.chip {
+  min-height: 44px; padding: 0 16px;
+  border-radius: 999px; border: 1.5px solid var(--line-strong); background: var(--card);
+  font-size: 14px; font-weight: 500;
+  transition: transform 160ms var(--ease), background 160ms ease, border-color 160ms ease;
+}
+.chip:active { transform: scale(0.94); }
+.chip--concern, .chip--flag { border-style: dashed; }
+.chip[aria-pressed='true'] { background: var(--accent); border: var(--stroke); border-style: solid; }
+.chip--flag[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+
+/* Motion */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(0.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
+@keyframes slide-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+.rise { animation: rise 520ms var(--ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
