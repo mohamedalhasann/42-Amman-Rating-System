@@ -216,9 +216,6 @@ export function Home() {
                       className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastMoved ? 'bars__bar--last' : ''}`}
                       style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 84) + 12}px` } : undefined}
                     />
-                    <span className="mono bars__label" aria-hidden="true">
-                      {h.state === 'open' ? 'Now' : <><span className="bars__word">Window </span>{h.name.replace(/^Window\s*/, '')}</>}
-                    </span>
                     <span className="visually-hidden">{text}</span>
                   </li>
                 );
