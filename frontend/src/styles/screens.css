@@ -343,3 +343,21 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 .colors__dot[aria-checked='true'] { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
 .onb__main, .onb__step, .parts__group { min-width: 0; }
 .tabs--scroll { max-width: 100%; }
+
+/* character builder v2: boy/girl switch, presets, pinned preview on phones */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--card); border: var(--stroke); border-radius: 16px; }
+.seg__btn { height: 46px; border: none; border-radius: 12px; background: transparent; font-weight: 600; font-size: 16px; }
+.seg__btn[aria-checked='true'] { background: var(--ink); color: var(--paper); }
+.parts--md { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+.parts--sm { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.parts--sm .parts__option { border-radius: 14px; padding: 6px; }
+.parts--sm .parts__name { font-size: 11px; }
+.parts--presets { grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 560px) { .parts--presets { grid-template-columns: repeat(6, 1fr); } }
+/* phones: keep the character in view while picking parts */
+.onb__pinned {
+  position: sticky; top: 0; z-index: 5; margin: -8px -20px 0; padding: 10px 0;
+  display: flex; justify-content: center; background: var(--paper); border-bottom: 1px solid var(--line);
+}
+.onb__pinned .onb__mobile-figure { width: 120px; }
+@media (min-width: 960px) { .onb__pinned { display: none; } }

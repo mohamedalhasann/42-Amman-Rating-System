@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BEARDS, CAP_COLORS, Character, EYES, GLASSES, HAIRS, HAIR_COLORS, HIJABS, HIJAB_COLORS, HOODIES, MOUTHS, SKINS,
-  normalizeSpec, randomSpec,
+  BEARDS, BROWS, CAP_COLORS, Character, EYES, FACE_OPTIONS, GLASSES, HAIRSTYLES, HAIR_COLORS, HAIR_FOR, HIJABS,
+  HIJAB_COLORS, HOODIES, MOUTHS, PRESETS, SKINS, genderOf, normalizeSpec, randomSpec, type Gender,
 } from '../components/Character';
 import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
 import { DEFAULT_ACCENT, useSession } from '../session';
@@ -18,29 +18,52 @@ export const ACCENTS: { hex: string; name: string }[] = [
 ];
 
 type Part = keyof CharacterSpec;
-interface Group { key: Part; label?: string; options: string[]; colors?: string[] }
-interface Tab { id: string; label: string; groups: Group[]; hiddenByHijab?: boolean }
+type TabId = 'hair' | 'face' | 'skin' | 'extras';
+const TABS: { id: TabId; label: string }[] = [
+  { id: 'hair', label: 'Hair' },
+  { id: 'face', label: 'Face' },
+  { id: 'skin', label: 'Skin' },
+  { id: 'extras', label: 'Extras' },
+];
 
 const named = (colors: string[], prefix: string) => colors.map((_, i) => `${prefix} ${i + 1}`);
-const TABS: Tab[] = [
-  { id: 'hair', label: 'Hair', hiddenByHijab: true, groups: [
-    { key: 'hair', options: HAIRS },
-    { key: 'hairColor', label: 'Color', options: named(HAIR_COLORS, 'Hair color'), colors: HAIR_COLORS },
-  ] },
-  { id: 'beard', label: 'Beard', hiddenByHijab: true, groups: [{ key: 'beard', options: BEARDS }] },
-  { id: 'hijab', label: 'Hijab', groups: [
-    { key: 'hijab', options: HIJABS },
-    { key: 'hijabColor', label: 'Color', options: named(HIJAB_COLORS, 'Hijab color'), colors: HIJAB_COLORS },
-    { key: 'capColor', label: 'Undercap', options: named(CAP_COLORS, 'Undercap color'), colors: CAP_COLORS },
-  ] },
-  { id: 'face', label: 'Face', groups: [
-    { key: 'eyes', label: 'Eyes', options: EYES },
-    { key: 'mouth', label: 'Mouth', options: MOUTHS },
-  ] },
-  { id: 'glasses', label: 'Glasses', groups: [{ key: 'glasses', options: GLASSES }] },
-  { id: 'skin', label: 'Skin', groups: [{ key: 'skin', options: named(SKINS, 'Skin tone'), colors: SKINS }] },
-  { id: 'hoodie', label: 'Hoodie', groups: [{ key: 'hoodie', options: HOODIES }] },
-];
+const sameSpec = (a: CharacterSpec, b: CharacterSpec) => (Object.keys(a) as Part[]).every((k) => a[k] === b[k]);
+const all = (list: string[]) => list.map((_, i) => i);
+
+interface Choice { id: string; name: string; spec: CharacterSpec; selected: boolean }
+
+function Choices({ label, choices, crop, accent, onPick, size = 'md', hideNames }: {
+  label: string; choices: Choice[]; crop: 'full' | 'head' | 'face'; accent: string;
+  onPick(spec: CharacterSpec): void; size?: 'sm' | 'md' | 'presets'; hideNames?: boolean;
+}) {
+  return (
+    <div className="parts__group">
+      <p className="parts__label">{label}</p>
+      <div className={`parts parts--${size}`} role="radiogroup" aria-label={label}>
+        {choices.map((c) => (
+          <button key={c.id} role="radio" aria-checked={c.selected} aria-label={c.name} className="parts__option" onClick={() => onPick(c.spec)}>
+            <Character spec={c.spec} accent={accent} size="100%" crop={crop} />
+            {!hideNames && <span className="parts__name">{c.name}</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Swatches({ label, colors, value, onPick }: { label: string; colors: string[]; value: number; onPick(i: number): void }) {
+  const names = named(colors, label);
+  return (
+    <div className="parts__group">
+      <p className="parts__label">{label}</p>
+      <div className="colors" role="radiogroup" aria-label={label}>
+        {colors.map((c, i) => (
+          <button key={c} role="radio" aria-checked={value === i} aria-label={names[i]} className="colors__dot" style={{ background: c }} onClick={() => onPick(i)} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const STEPS = ['You', 'How it works', 'Character', 'Color'];
 
@@ -50,7 +73,7 @@ export function Onboarding() {
   const [step, setStep] = useState(0);
   const [spec, setSpec] = useState<CharacterSpec>(() => normalizeSpec(me?.profile?.character));
   const [accent, setAccent] = useState(me?.profile?.accent ?? DEFAULT_ACCENT);
-  const [tabId, setTabId] = useState('hair');
+  const [tabId, setTabId] = useState<TabId>('hair');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -61,8 +84,17 @@ export function Onboarding() {
     previewAccent(hex);
   }
 
+  const gender = genderOf(spec);
+  const set = (patch: Partial<CharacterSpec>) => setSpec({ ...spec, ...patch });
+  const variants = (key: Part, list: number[], names: string[]): Choice[] =>
+    list.map((i) => ({ id: `${key}-${i}`, name: names[i], spec: { ...spec, [key]: i }, selected: spec[key] === i }));
+
+  function chooseGender(g: Gender) {
+    if (g !== gender) setSpec(PRESETS[g][0]);
+  }
+
   function shuffle() {
-    setSpec(randomSpec());
+    setSpec(randomSpec(gender));
   }
 
   async function finish() {
@@ -79,7 +111,6 @@ export function Onboarding() {
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
-  const tab = TABS.find((t) => t.id === tabId)!;
 
   return (
     <div className="onb">
@@ -150,8 +181,10 @@ export function Onboarding() {
 
         {step === 2 && (
           <section className="onb__step rise" key="char">
-            <div className="onb__mobile-figure" aria-hidden="true">
-                            <Character spec={spec} accent={accent} size="100%" className="bob" />
+            <div className="onb__pinned" aria-hidden="true">
+              <div className="onb__mobile-figure">
+                <Character spec={spec} accent={accent} size="100%" />
+              </div>
             </div>
             <div className="onb__row">
               <div>
@@ -160,52 +193,89 @@ export function Onboarding() {
               </div>
               <button className="btn btn--ghost" onClick={shuffle}>Shuffle</button>
             </div>
-            <div className="tabs tabs--scroll" role="tablist">
-              {TABS.map((t) => (
-                <button key={t.id} role="tab" aria-selected={tabId === t.id} className="tabs__tab" onClick={() => setTabId(t.id)}>
-                  {t.label}
+
+            <div className="seg" role="radiogroup" aria-label="Character type">
+              {(['boy', 'girl'] as Gender[]).map((g) => (
+                <button key={g} role="radio" aria-checked={gender === g} className="seg__btn" onClick={() => chooseGender(g)}>
+                  {g === 'boy' ? 'Boy' : 'Girl'}
                 </button>
               ))}
             </div>
-            {tab.hiddenByHijab && spec.hijab > 0 && (
-              <p className="muted parts__note">Hidden under your hijab. Set Hijab to None to change it.</p>
-            )}
-            {!(tab.hiddenByHijab && spec.hijab > 0) && tab.groups.map((g) => (
-              <div key={g.key} className="parts__group">
-                {g.label && <p className="parts__label">{g.label}</p>}
-                {g.colors ? (
-                  <div className="colors" role="radiogroup" aria-label={g.label ?? tab.label}>
-                    {g.colors.map((c, i) => (
-                      <button
-                        key={c}
-                        role="radio"
-                        aria-checked={spec[g.key] === i}
-                        aria-label={g.options[i]}
-                        className="colors__dot"
-                        style={{ background: c }}
-                        onClick={() => setSpec({ ...spec, [g.key]: i })}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="parts" role="radiogroup" aria-label={g.label ?? tab.label}>
-                    {g.options.map((name, i) => (
-                      <button
-                        key={name}
-                        role="radio"
-                        aria-checked={spec[g.key] === i}
-                        aria-label={name}
-                        className="parts__option"
-                        onClick={() => setSpec({ ...spec, [g.key]: i })}
-                      >
-                        <Character spec={{ ...spec, [g.key]: i }} accent={accent} size="100%" crop={g.key === 'hoodie' ? 'full' : 'head'} />
-                        <span className="parts__name">{name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+
+            <Choices
+              label="Start from one"
+              crop="head"
+              accent={accent}
+              onPick={setSpec}
+              size="presets"
+              hideNames
+              choices={PRESETS[gender].map((s, i) => ({ id: `preset-${i}`, name: `Starting look ${i + 1}`, spec: s, selected: sameSpec(s, spec) }))}
+            />
+
+            <div className="parts__group">
+              <p className="parts__label">Then make it yours</p>
+              <div className="tabs" role="tablist">
+                {TABS.map((t) => (
+                  <button key={t.id} role="tab" aria-selected={tabId === t.id} className="tabs__tab" onClick={() => setTabId(t.id)}>
+                    {t.label}
+                  </button>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {tabId === 'hair' && (
+              <>
+                <Choices
+                  label={gender === 'girl' ? 'Hair or hijab' : 'Style'}
+                  crop="head"
+                  accent={accent}
+                  onPick={setSpec}
+                  choices={[
+                    ...HAIR_FOR[gender].map((i) => ({
+                      id: `hair-${i}`, name: HAIRSTYLES[i].name, spec: { ...spec, hair: i, hijab: 0 }, selected: !spec.hijab && spec.hair === i,
+                    })),
+                    ...(gender === 'girl'
+                      ? all(HIJABS).slice(1).map((h) => ({
+                        id: `hijab-${h}`, name: `Hijab · ${HIJABS[h]}`, spec: { ...spec, hijab: h }, selected: spec.hijab === h,
+                      }))
+                      : []),
+                  ]}
+                />
+                {spec.hijab ? (
+                  <>
+                    <Swatches label="Hijab color" colors={HIJAB_COLORS} value={spec.hijabColor} onPick={(i) => set({ hijabColor: i })} />
+                    <Swatches label="Undercap" colors={CAP_COLORS} value={spec.capColor} onPick={(i) => set({ capColor: i })} />
+                  </>
+                ) : (
+                  <Swatches label="Hair color" colors={HAIR_COLORS} value={spec.hairColor} onPick={(i) => set({ hairColor: i })} />
+                )}
+              </>
+            )}
+
+            {tabId === 'face' && (
+              <>
+                <Choices label="Eyes" crop="face" size="sm" accent={accent} onPick={setSpec} choices={variants('eyes', FACE_OPTIONS[gender].eyes, EYES)} />
+                {!spec.hijab && (
+                  <Choices label="Brows" crop="face" size="sm" accent={accent} onPick={setSpec} choices={variants('brows', FACE_OPTIONS[gender].brows, BROWS)} />
+                )}
+                <Choices label="Mouth" crop="face" size="sm" accent={accent} onPick={setSpec} choices={variants('mouth', FACE_OPTIONS[gender].mouth, MOUTHS)} />
+                {gender === 'boy' && (
+                  <Choices label="Beard" crop="face" size="sm" accent={accent} onPick={setSpec} choices={variants('beard', all(BEARDS), BEARDS)} />
+                )}
+              </>
+            )}
+
+            {tabId === 'skin' && (
+              <Swatches label="Skin tone" colors={SKINS} value={spec.skin} onPick={(i) => set({ skin: i })} />
+            )}
+
+            {tabId === 'extras' && (
+              <>
+                <Choices label="Glasses" crop="head" accent={accent} onPick={setSpec} choices={variants('glasses', all(GLASSES), GLASSES)} />
+                <Choices label="Hoodie" crop="full" accent={accent} onPick={setSpec} choices={variants('hoodie', all(HOODIES), HOODIES)} />
+              </>
+            )}
+
             <button className="btn btn--accent btn--block" onClick={next}>Next: pick a color</button>
           </section>
         )}

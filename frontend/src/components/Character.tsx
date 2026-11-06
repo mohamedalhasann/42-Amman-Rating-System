@@ -3,16 +3,17 @@ import type { CharacterSpec } from '../api';
 import { renderCharacter, VIEWBOX } from './characterSvg';
 
 export {
-  BEARDS, CAP_COLORS, DEFAULT_CHARACTER, EYES, GLASSES, HAIRS, HAIR_COLORS, HIJABS, HIJAB_COLORS,
-  HOODIES, MOUTHS, SKINS, normalizeSpec, randomSpec,
+  BEARDS, BROWS, CAP_COLORS, DEFAULT_CHARACTER, EYES, FACE_OPTIONS, GLASSES, HAIRSTYLES, HAIR_COLORS, HAIR_FOR, HIJABS,
+  HIJAB_COLORS, HOODIES, MOUTHS, PRESETS, SKINS, genderOf, normalizeSpec, randomSpec,
 } from './characterSvg';
+export type { Gender } from './characterSvg';
 
 interface Props {
   spec?: Partial<CharacterSpec> | null;
   /** used when the hoodie is set to "Accent" */
   accent?: string;
   size?: number | string;
-  crop?: 'full' | 'head';
+  crop?: 'full' | 'head' | 'face';
   className?: string;
   label?: string;
 }
