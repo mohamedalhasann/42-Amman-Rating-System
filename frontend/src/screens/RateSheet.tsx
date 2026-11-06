@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon, StarIcon, initials, starWord } from '../components/bits';
 import { ApiError, api, type Label, type Peer, type Stars, type SubmitRatingResult, type VotingWindow } from '../api';
 
@@ -44,9 +44,21 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
   const panelRef = useRef<HTMLDivElement>(null);
   const labelCache = useRef(new Map<Stars, Label[]>());
 
+  // While a vote is sending, the sheet can't be closed: the result has to land somewhere.
+  const busyRef = useRef(false);
+  busyRef.current = busy;
+  const close = useCallback(() => {
+    if (!busyRef.current) onClose();
+  }, [onClose]);
+
+  // A retry of the same vote reuses its key; any change to the vote makes it a new submission.
+  useEffect(() => {
+    idempotency.current = crypto.randomUUID();
+  }, [target, stars, picked, explanation]);
+
   // Close with Escape, keep the page behind from scrolling.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
     window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -54,7 +66,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose]);
+  }, [close]);
 
   // Search with a short debounce.
   useEffect(() => {
@@ -139,20 +151,20 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
 
   return (
     <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-      <button className="sheet__backdrop" aria-label="Close" onClick={onClose} />
+      <button className="sheet__backdrop" aria-label="Close" onClick={close} />
       <div className="sheet__panel" ref={panelRef}>
         <div className="sheet__head">
           {step === 'form' ? (
-            <button className="icon-btn" aria-label="Back to search" onClick={() => setStep('search')}>
+            <button className="icon-btn" aria-label="Back to search" disabled={busy} onClick={() => setStep('search')}>
               <Icon name="back" />
             </button>
           ) : (
             <span />
           )}
           <h2 id="sheet-title" className="sheet__title">
-            {step === 'search' ? 'Who do you want to rate?' : step === 'form' ? 'Your vote' : result?.state === 'held' ? 'Sent for review' : 'Vote counted'}
+            {step === 'search' ? 'Who do you want to rate?' : step === 'form' ? 'Your vote' : 'Vote counted'}
           </h2>
-          <button className="icon-btn" aria-label="Close" onClick={onClose}>
+          <button className="icon-btn" aria-label="Close" disabled={busy} onClick={close}>
             <Icon name="close" />
           </button>
         </div>
@@ -267,7 +279,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
                   className="input textarea"
                   rows={stars === 1 ? 4 : 2}
                   maxLength={1000}
-                  placeholder={stars === 1 ? 'Describe what happened so staff can review it.' : 'Only staff can read this.'}
+                  placeholder={stars === 1 ? 'Describe what happened. Only staff read it.' : 'Only staff can read this.'}
                   value={explanation}
                   onChange={(e) => {
                     setExplanation(e.target.value);
@@ -276,7 +288,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
                 />
                 {stars === 1 && (
                   <p className="notice">
-                    <Icon name="scale" size={18} /> A 1-star vote is held until staff review it. They won’t tell {target.first_name} who sent it.
+                    <Icon name="scale" size={18} /> A 1-star vote counts right away. Staff read your explanation if they look into it, and never tell {target.first_name} who sent it.
                   </p>
                 )}
               </div>
@@ -294,12 +306,10 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
         {step === 'done' && result && target && (
           <div className="sheet__body done">
             <div className="done__badge pop" aria-hidden="true">
-              <Icon name={result.state === 'held' ? 'scale' : 'check'} size={40} />
+              <Icon name="check" size={40} />
             </div>
             <p className="done__text">
-              {result.state === 'held'
-                ? `Staff will review your vote for ${target.first_name} before it counts. They won’t share who sent it.`
-                : `Your vote for ${target.first_name} counts. Nobody but staff can see it came from you.`}
+              {`Your vote for ${target.first_name} counts. Nobody but staff can see it came from you.`}
             </p>
             <p className="mono done__left">
               {result.allowance.votes_remaining} vote{result.allowance.votes_remaining === 1 ? '' : 's'} left in this window

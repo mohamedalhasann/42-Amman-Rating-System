@@ -218,7 +218,7 @@ export const mockApi: Api = {
       voter: me.intra_username,
       recipient: strip(recipient),
       stars: input.stars,
-      state: (input.stars === 1 ? 'held' : 'counted') as 'held' | 'counted',
+      state: 'counted' as const,
       submitted_at: new Date().toISOString(),
     };
     s.given.push(rating);

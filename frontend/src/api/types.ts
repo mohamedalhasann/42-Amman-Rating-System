@@ -60,7 +60,7 @@ export interface SubmitRatingInput {
 
 export interface SubmitRatingResult {
   rating_id: string;
-  state: 'counted' | 'held';
+  state: 'counted';
   submitted_at: string;
   allowance: { votes_used: number; votes_remaining: number };
 }
@@ -86,7 +86,7 @@ export interface GivenRating {
   rating_id: string;
   recipient: Peer;
   stars: Stars;
-  state: 'counted' | 'held' | 'rejected' | 'invalidated';
+  state: 'counted' | 'invalidated'; // invalidated: staff confirmed abuse
   submitted_at: string;
 }
 

@@ -107,7 +107,7 @@ export function Onboarding() {
               </li>
               <li>
                 <span className="rules__icon"><Icon name="scale" size={22} /></span>
-                <div><b>1 star goes to staff first.</b><p className="muted">It needs a reason and a short explanation, and only counts after staff review it.</p></div>
+                <div><b>1 star needs a reason.</b><p className="muted">Pick what happened and explain it briefly. Only staff read it, if they look into a vote.</p></div>
               </li>
               <li>
                 <span className="rules__icon"><Icon name="clock" size={22} /></span>

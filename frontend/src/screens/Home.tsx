@@ -8,8 +8,6 @@ import { RateSheet } from './RateSheet';
 
 const STATE_TEXT: Record<GivenRating['state'], string> = {
   counted: 'Counted',
-  held: 'Under review',
-  rejected: 'Not counted',
   invalidated: 'Not counted',
 };
 
