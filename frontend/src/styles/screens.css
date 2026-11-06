@@ -254,8 +254,12 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 @media (min-width: 1024px) {
   .home__grid { grid-template-columns: minmax(380px, 0.82fr) 1.18fr; gap: 24px; align-items: start; }
   .home__col { gap: 24px; }
-  .poster { position: sticky; top: 24px; padding: 30px; gap: 34px; border-radius: 34px; }
-  .poster__badge { width: 60px; height: 60px; }
+  /* stretch to the height of the cards beside it; the rating sits at the bottom */
+  .poster { align-self: stretch; display: flex; flex-direction: column; padding: 30px; gap: 34px; border-radius: 34px; }
+  .poster__who { flex: 1; flex-direction: column; justify-content: center; gap: 16px; text-align: center; }
+  .poster__badge { width: min(200px, 50%); height: auto; aspect-ratio: 1; border: 3px solid var(--paper); }
+  .poster__name { font-size: 26px; letter-spacing: -0.02em; }
+  .poster__login { font-size: 15px; }
   .poster__number { font-size: 120px; }
   .bars__word { display: inline; }
   .card { padding: 26px 28px; }
