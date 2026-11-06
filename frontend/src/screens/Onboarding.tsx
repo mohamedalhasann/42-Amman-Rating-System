@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Character, DEFAULT_CHARACTER, EYES, HAIRS, ITEMS, SKINS } from '../components/Character';
+import {
+  BEARDS, CAP_COLORS, Character, EYES, GLASSES, HAIRS, HAIR_COLORS, HIJABS, HIJAB_COLORS, HOODIES, MOUTHS, SKINS,
+  normalizeSpec, randomSpec,
+} from '../components/Character';
 import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
 import { DEFAULT_ACCENT, useSession } from '../session';
 import { ApiError, type CharacterSpec } from '../api';
@@ -15,11 +18,28 @@ export const ACCENTS: { hex: string; name: string }[] = [
 ];
 
 type Part = keyof CharacterSpec;
-const PARTS: { key: Part; label: string; options: string[] }[] = [
-  { key: 'hair', label: 'Hair', options: HAIRS },
-  { key: 'eyes', label: 'Eyes', options: EYES },
-  { key: 'skin', label: 'Skin', options: SKINS.map((_, i) => `Tone ${i + 1}`) },
-  { key: 'item', label: 'Extras', options: ITEMS },
+interface Group { key: Part; label?: string; options: string[]; colors?: string[] }
+interface Tab { id: string; label: string; groups: Group[]; hiddenByHijab?: boolean }
+
+const named = (colors: string[], prefix: string) => colors.map((_, i) => `${prefix} ${i + 1}`);
+const TABS: Tab[] = [
+  { id: 'hair', label: 'Hair', hiddenByHijab: true, groups: [
+    { key: 'hair', options: HAIRS },
+    { key: 'hairColor', label: 'Color', options: named(HAIR_COLORS, 'Hair color'), colors: HAIR_COLORS },
+  ] },
+  { id: 'beard', label: 'Beard', hiddenByHijab: true, groups: [{ key: 'beard', options: BEARDS }] },
+  { id: 'hijab', label: 'Hijab', groups: [
+    { key: 'hijab', options: HIJABS },
+    { key: 'hijabColor', label: 'Color', options: named(HIJAB_COLORS, 'Hijab color'), colors: HIJAB_COLORS },
+    { key: 'capColor', label: 'Undercap', options: named(CAP_COLORS, 'Undercap color'), colors: CAP_COLORS },
+  ] },
+  { id: 'face', label: 'Face', groups: [
+    { key: 'eyes', label: 'Eyes', options: EYES },
+    { key: 'mouth', label: 'Mouth', options: MOUTHS },
+  ] },
+  { id: 'glasses', label: 'Glasses', groups: [{ key: 'glasses', options: GLASSES }] },
+  { id: 'skin', label: 'Skin', groups: [{ key: 'skin', options: named(SKINS, 'Skin tone'), colors: SKINS }] },
+  { id: 'hoodie', label: 'Hoodie', groups: [{ key: 'hoodie', options: HOODIES }] },
 ];
 
 const STEPS = ['You', 'How it works', 'Character', 'Color'];
@@ -28,9 +48,9 @@ export function Onboarding() {
   const { me, saveProfile, previewAccent } = useSession();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [spec, setSpec] = useState<CharacterSpec>(me?.profile?.character ?? DEFAULT_CHARACTER);
+  const [spec, setSpec] = useState<CharacterSpec>(() => normalizeSpec(me?.profile?.character));
   const [accent, setAccent] = useState(me?.profile?.accent ?? DEFAULT_ACCENT);
-  const [part, setPart] = useState<Part>('hair');
+  const [tabId, setTabId] = useState('hair');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,8 +62,7 @@ export function Onboarding() {
   }
 
   function shuffle() {
-    const r = (n: number) => Math.floor(Math.random() * n);
-    setSpec({ skin: r(SKINS.length), hair: r(HAIRS.length), eyes: r(EYES.length), item: r(ITEMS.length) });
+    setSpec(randomSpec());
   }
 
   async function finish() {
@@ -60,7 +79,7 @@ export function Onboarding() {
 
   const next = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
-  const activePart = PARTS.find((p) => p.key === part)!;
+  const tab = TABS.find((t) => t.id === tabId)!;
 
   return (
     <div className="onb">
@@ -141,35 +160,52 @@ export function Onboarding() {
               </div>
               <button className="btn btn--ghost" onClick={shuffle}>Shuffle</button>
             </div>
-            <div className="tabs" role="tablist">
-              {PARTS.map((p) => (
-                <button key={p.key} role="tab" aria-selected={part === p.key} className="tabs__tab" onClick={() => setPart(p.key)}>
-                  {p.label}
+            <div className="tabs tabs--scroll" role="tablist">
+              {TABS.map((t) => (
+                <button key={t.id} role="tab" aria-selected={tabId === t.id} className="tabs__tab" onClick={() => setTabId(t.id)}>
+                  {t.label}
                 </button>
               ))}
             </div>
-            <div className="parts" role="radiogroup" aria-label={activePart.label}>
-              {activePart.options.map((name, i) => {
-                const selected = spec[part] === i;
-                return (
-                  <button
-                    key={name}
-                    role="radio"
-                    aria-checked={selected}
-                    aria-label={name}
-                    className="parts__option"
-                    onClick={() => setSpec({ ...spec, [part]: i })}
-                  >
-                    {part === 'skin' ? (
-                      <span className="parts__swatch" style={{ background: SKINS[i] }} />
-                    ) : (
-                      <Character spec={{ ...spec, [part]: i }} accent={accent} size="100%" crop="head" />
-                    )}
-                    <span className="parts__name">{name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {tab.hiddenByHijab && spec.hijab > 0 && (
+              <p className="muted parts__note">Hidden under your hijab. Set Hijab to None to change it.</p>
+            )}
+            {!(tab.hiddenByHijab && spec.hijab > 0) && tab.groups.map((g) => (
+              <div key={g.key} className="parts__group">
+                {g.label && <p className="parts__label">{g.label}</p>}
+                {g.colors ? (
+                  <div className="colors" role="radiogroup" aria-label={g.label ?? tab.label}>
+                    {g.colors.map((c, i) => (
+                      <button
+                        key={c}
+                        role="radio"
+                        aria-checked={spec[g.key] === i}
+                        aria-label={g.options[i]}
+                        className="colors__dot"
+                        style={{ background: c }}
+                        onClick={() => setSpec({ ...spec, [g.key]: i })}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="parts" role="radiogroup" aria-label={g.label ?? tab.label}>
+                    {g.options.map((name, i) => (
+                      <button
+                        key={name}
+                        role="radio"
+                        aria-checked={spec[g.key] === i}
+                        aria-label={name}
+                        className="parts__option"
+                        onClick={() => setSpec({ ...spec, [g.key]: i })}
+                      >
+                        <Character spec={{ ...spec, [g.key]: i }} accent={accent} size="100%" crop={g.key === 'hoodie' ? 'full' : 'head'} />
+                        <span className="parts__name">{name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
             <button className="btn btn--accent btn--block" onClick={next}>Next: pick a color</button>
           </section>
         )}
@@ -181,7 +217,7 @@ export function Onboarding() {
             </div>
             <p className="eyebrow">Your color</p>
             <h1 className="onb__title">Pick your accent.</h1>
-            <p className="muted onb__lead">It colors your hoodie and the whole app, only for you. 42 cyan is the default. You can change it anytime.</p>
+            <p className="muted onb__lead">It colors the whole app, only for you, and your hoodie if you set it to Accent. 42 cyan is the default. You can change it anytime.</p>
             <div className="swatches" role="radiogroup" aria-label="Accent color">
               {ACCENTS.map((a) => (
                 <button

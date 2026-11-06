@@ -326,3 +326,20 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   .sheet__body { padding: 22px 24px 28px; }
   .sheet__foot { margin: auto -24px -28px; padding: 14px 24px 24px; }
 }
+
+/* character builder: scrolling tabs, groups and colour dots */
+.tabs--scroll { overflow-x: auto; scrollbar-width: none; }
+.tabs--scroll::-webkit-scrollbar { display: none; }
+.tabs--scroll .tabs__tab { flex: 1 0 auto; padding: 0 14px; }
+.parts__group { display: flex; flex-direction: column; gap: 8px; }
+.parts__label { font-size: 13px; font-weight: 600; color: var(--muted); }
+.parts__note { font-size: 14px; }
+.colors { display: flex; flex-wrap: wrap; gap: 10px; }
+.colors__dot {
+  width: 40px; height: 40px; border-radius: 50%; border: var(--stroke); cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.colors__dot:hover { transform: translateY(-2px); }
+.colors__dot[aria-checked='true'] { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
+.onb__main, .onb__step, .parts__group { min-width: 0; }
+.tabs--scroll { max-width: 100%; }
