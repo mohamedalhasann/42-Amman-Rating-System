@@ -365,20 +365,3 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
 }
 .onb__brand { display: flex; justify-content: space-between; align-items: center; color: var(--paper); }
-
-/* The sign-in screen slowly moves through the accent colours students can pick. The colour is
-   animated as a registered property and fed into --accent, so the stage, the sign-in button and
-   links all change together, with text switching to light on the dark navy. */
-@property --stage { syntax: '<color>'; inherits: true; initial-value: #00ced1; }
-@property --on-stage { syntax: '<color>'; inherits: true; initial-value: #121417; }
-.auth { --accent: var(--stage); --on-accent: var(--on-stage); animation: stage-colors 30s ease-in-out infinite; }
-@keyframes stage-colors {
-  0%, 13% { --stage: #00ced1; --on-stage: #121417; }
-  17%, 30% { --stage: #5ba4ff; --on-stage: #121417; }
-  34%, 46% { --stage: #ff7ab6; --on-stage: #121417; }
-  50%, 63% { --stage: #24387a; --on-stage: #f4f5f2; }
-  67%, 80% { --stage: #ff8a80; --on-stage: #121417; }
-  84%, 96% { --stage: #b79cf2; --on-stage: #121417; }
-  100% { --stage: #00ced1; --on-stage: #121417; }
-}
-@media (prefers-reduced-motion: reduce) { .auth { animation: none; } }

@@ -88,7 +88,7 @@ The student frontend (`frontend/`) uses these additions. They expose only the si
 | GET | `/student/participation` | `{ "streak", "windows_joined", "windows_total", "votes_given_total" }`. `streak` counts consecutive closed windows, ending with the latest, where the student reached that window's minimum |
 | GET | `/student/ratings/given?window_id=...` | The student's own submissions in that window: `rating_id`, `recipient` (peer item), `stars`, `state`, `submitted_at`. Never includes other students' ratings or anything the student received |
 
-Allowed accents: `#00CED1`, `#5BA4FF`, `#FF7AB6`, `#24387A`, `#FF8A80`, `#B79CF2`.
+Allowed accents: `#00CED1`, `#5BA4FF`, `#FF6EC7`, `#24387A`, `#EF4444`, `#B79CF2`.
 
 ## Staff read routes
 

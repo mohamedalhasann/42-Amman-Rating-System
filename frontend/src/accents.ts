@@ -3,9 +3,9 @@
 export const ACCENTS: { hex: string; name: string; on: 'ink' | 'paper'; onInk?: string }[] = [
   { hex: '#00CED1', name: '42 cyan', on: 'ink' },
   { hex: '#5BA4FF', name: 'Sky', on: 'ink' },
-  { hex: '#FF7AB6', name: 'Pink', on: 'ink' },
+  { hex: '#FF6EC7', name: 'Pink', on: 'ink' },
   { hex: '#24387A', name: 'Navy', on: 'paper', onInk: '#8EA5EE' },
-  { hex: '#FF8A80', name: 'Coral', on: 'ink' },
+  { hex: '#EF4444', name: 'Red', on: 'ink' },
   { hex: '#B79CF2', name: 'Lilac', on: 'ink' },
 ];
 
