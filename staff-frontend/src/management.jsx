@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useStaff} from './context';
 import {Badge, dateTime, Empty, Icon, Modal, PageControls, Person, Search} from './components';
 import {fullName, stateOfWindow} from './model';
@@ -9,6 +9,9 @@ const toUTC=value=>new Date(value+':00+03:00').toISOString();
 export function Configuration() {
   const {db,windowId,setWindowId,dispatch,notify,now,saving}=useStaff();
   const [editWindow,setEditWindow]=useState(null),[editLabel,setEditLabel]=useState(null),[error,setError]=useState('');
+  const {newWindowRequest,setNewWindowRequest}=useStaff();
+  // arriving from the overview's "plan the next window" prompt opens the form straight away
+  useEffect(()=>{if(newWindowRequest){setNewWindowRequest(false);openWindow(null);}},[newWindowRequest]);
   function openWindow(window) {
     setError('');
     setEditWindow(window?{...window,start:toLocalInput(window.starts_at),end:toLocalInput(window.ends_at)}:

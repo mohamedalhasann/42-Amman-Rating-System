@@ -1,0 +1,174 @@
+/* Staff theme: the same identity as the student app (ink, paper, 42 cyan, Space Grotesk with
+   JetBrains Mono for data) without the playful parts. Thin crisp lines instead of thick outlines
+   and hard offset shadows, a quiet ink sidebar, and colour reserved for meaning.
+   Scoped under .app-shell so it layers over styles.css without !important. */
+
+:root {
+  --ink: #121417;
+  --ink-2: #1d2025;
+  --paper: #f4f5f2;
+  --card: #ffffff;
+  --muted: #555b63;
+  --muted-on-ink: #9aa1a9;
+  --line: #e2e5e0;
+  --line-strong: #c9cec7;
+  --accent: #00ced1;
+  --accent-text: #00777a; /* accent for text and icons on white: 5.2:1 */
+  --accent-soft: #e3f8f8;
+  --good: #1f7a4d;
+  --warn: #a15c00;
+  --bad: #b3261e;
+  --radius: 12px;
+}
+
+body { background-color: var(--paper); background-image: radial-gradient(#d5dad4 0.6px, transparent 0.6px); background-size: 20px 20px; }
+
+/* ---------- sidebar: ink, pinned, cyan only marks where you are ---------- */
+.app-shell .sidebar { width: 232px; background: var(--ink); color: var(--paper); border-right: 0; padding: 28px 14px 18px; }
+.app-shell .main-shell { margin-left: 232px; }
+.app-shell .brand { color: var(--paper); font-size: 27px; padding-left: 12px; }
+.app-shell .brand span { color: var(--accent); }
+.app-shell .workspace { border: 1px solid #2b3036; border-radius: var(--radius); margin: 26px 0 28px; padding: 12px; background: var(--ink-2); }
+.app-shell .workspace { display: flex; align-items: center; gap: 12px; }
+/* the vector 42 Amman mark, drawn in the sidebar's text colour through a mask */
+.app-shell .campus-mark-svg { display: block; flex: none; width: 64px; height: 50px; background: var(--paper);
+  -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
+.app-shell .workspace strong { color: var(--paper); }
+.app-shell .workspace small { color: var(--muted-on-ink); }
+.app-shell .nav-caption { color: #6c737b; }
+.app-shell nav { gap: 2px; }
+.app-shell nav a { position: relative; border: 0; color: var(--muted-on-ink); padding: 10px 12px; border-radius: 9px; font-size: 14px; }
+.app-shell nav a:hover { background: #ffffff0d; color: var(--paper); }
+.app-shell nav a.active { background: #ffffff12; color: var(--paper); font-weight: 600; }
+.app-shell nav a.active::after { content: ''; position: absolute; left: -14px; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.app-shell nav a b { border: 0; background: var(--accent); color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 7px; }
+.app-shell nav a.active b { background: var(--accent); }
+.app-shell .nav-divider::before { border-color: #2b3036; }
+.app-shell .staff-identity strong { color: var(--paper); }
+.app-shell .staff-identity small { color: var(--muted-on-ink); }
+.app-shell .sidebar-footer .text-button { color: var(--muted-on-ink); }
+.app-shell .sidebar-footer .text-button:hover { color: var(--paper); }
+
+/* ---------- page heading with the window picker inline ---------- */
+.app-shell .page-heading { align-items: flex-end; margin-bottom: 24px; }
+.app-shell .page-heading h1 { font-size: 32px; letter-spacing: -1px; }
+.app-shell .page-heading-actions { gap: 10px; }
+.app-shell .window-pill { display: inline-flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 14px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 999px; }
+.app-shell .window-pill .window-pill-label { font-size: 12px; color: var(--muted); }
+.app-shell .window-pill select { border: 0; min-height: 0; padding: 4px 22px 4px 2px; font-weight: 600; background-color: transparent; }
+.app-shell .window-pill select:focus-visible { outline-offset: 2px; border-radius: 6px; }
+.app-shell .window-pill .window-pill-dates { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); padding-right: 8px; border-left: 1px solid var(--line); padding-left: 10px; }
+.app-shell .icon-only { width: 44px; height: 44px; padding: 0; border-radius: 999px; }
+.app-shell .icon-only.spinning svg { animation: staff-spin 0.9s linear infinite; }
+@keyframes staff-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .app-shell .icon-only.spinning svg { animation: none; } }
+
+/* ---------- surfaces ---------- */
+.app-shell .panel,
+.app-shell .overview-metrics article { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 0 #1214170a; background: var(--card); }
+.app-shell .panel-heading { padding: 20px 22px; }
+.app-shell .panel-note { background: #fafbf9; border-top: 1px solid var(--line); color: var(--muted); }
+.app-shell .overview-metrics .metric-primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.app-shell .overview-metrics .metric-primary strong svg { color: var(--accent); }
+.app-shell .overview-metrics article.metric-action { background: var(--card); border-color: var(--line); }
+.app-shell .overview-metrics .metric-primary > span,
+.app-shell .overview-metrics .metric-primary p { color: var(--muted-on-ink); }
+.app-shell .overview-metrics .metric-primary .dot { background: var(--accent); }
+.app-shell .metric-link { color: var(--accent-text); }
+
+/* ---------- controls ---------- */
+.app-shell .button { border: 1px solid var(--line-strong); border-radius: 10px; background: var(--card); box-shadow: none; transform: none; font-weight: 600; }
+.app-shell .button:hover:not(:disabled) { border-color: var(--ink); background: var(--card); box-shadow: none; transform: none; }
+.app-shell .button:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+.app-shell .button.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.app-shell .button.primary:hover:not(:disabled) { background: var(--ink-2); border-color: var(--ink-2); }
+.app-shell .button.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+.app-shell .text-button { color: var(--accent-text); }
+.app-shell input:not([type=checkbox]),
+.app-shell select,
+.app-shell textarea { border: 1px solid var(--line-strong); border-radius: 10px; }
+.app-shell .search-box { border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: none; }
+.app-shell .search-box input { border: 0; min-height: 0; box-shadow: none; }
+.app-shell .search-box input:focus-visible { outline: none; }
+.app-shell .search-box:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px #00ced133; }
+.app-shell .tabs { background: #eceee9; border: 0; border-radius: 10px; padding: 3px; }
+.app-shell .tabs button { border: 0; border-radius: 8px; color: var(--muted); font-weight: 500; }
+.app-shell .tabs button.active { background: var(--card); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px #12141714; border: 0; }
+
+/* ---------- statuses: a coloured dot and plain text, not a pale pill ---------- */
+.app-shell .badge { background: transparent; border: 0; padding: 0; gap: 7px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--muted); }
+.app-shell .badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); flex: none; }
+.app-shell .badge.green { color: var(--good); background: transparent; }
+.app-shell .badge.green::before { background: #2fa36b; }
+.app-shell .badge.amber { color: var(--warn); background: transparent; }
+.app-shell .badge.amber::before { background: #e39a1b; }
+.app-shell .badge.red { color: var(--bad); background: transparent; }
+.app-shell .badge.red::before { background: var(--bad); }
+
+/* ---------- tables ---------- */
+.app-shell thead { background: #fafbf9; }
+.app-shell th { font-size: 12px; font-weight: 600; color: var(--muted); border-block: 1px solid var(--line); }
+.app-shell td { border-bottom: 1px solid var(--line); }
+.app-shell tbody tr:hover td { background: #fafbf9; }
+.app-shell .inline-labels > span { border: 1px solid var(--line); background: #fafbf9; border-radius: 6px; }
+.app-shell .avatar { border-radius: 50%; }
+
+/* ---------- dialogs and toasts ---------- */
+.app-shell .modal { border: 1px solid var(--line-strong); border-radius: 16px; box-shadow: 0 24px 60px #12141729; }
+.app-shell .toast { border-radius: 12px; box-shadow: 0 10px 30px #12141733; }
+.app-shell .case-workspace .case-resolution { border: 1px solid var(--line-strong); box-shadow: 0 8px 24px #1214170f; }
+
+/* ---------- collapsed sidebar on narrow screens ---------- */
+@media (max-width: 1000px) {
+  .app-shell .sidebar { width: 72px; padding-inline: 10px; }
+  .app-shell .main-shell { margin-left: 72px; }
+  .app-shell .workspace, .app-shell .nav-caption, .app-shell .staff-identity { display: none; }
+  .app-shell nav a.active::after { left: -10px; }
+  .app-shell .window-pill .window-pill-dates { display: none; }
+}
+
+/* ---------- overview cards: one language, the whole card is the target ---------- */
+.app-shell .overview-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.app-shell .overview-cards .metric-card { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 20px 22px; background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1px 0 #1214170a; transition: border-color 0.15s ease; }
+.app-shell .overview-cards .metric-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.app-shell .overview-cards .metric-label svg { margin-left: auto; color: var(--line-strong); transition: color 0.15s ease, transform 0.15s ease; }
+.app-shell .overview-cards .metric-attention { width: 8px; height: 8px; border-radius: 50%; background: #e39a1b; flex: none; }
+.app-shell .overview-cards .metric-value { display: block; font-size: 42px; font-weight: 600; letter-spacing: -1.5px; line-height: 1; margin: 4px 0 0; }
+.app-shell .overview-cards .metric-value small { font-size: 22px; font-weight: 500; color: var(--muted); margin-left: 3px; letter-spacing: 0; }
+.app-shell .overview-cards .participation-track { height: 6px; border-radius: 3px; background: var(--paper); overflow: hidden; }
+.app-shell .overview-cards .participation-track i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.app-shell .overview-cards .metric-note { margin-top: auto; font-size: 13px; color: var(--muted); line-height: 1.4; }
+.app-shell .overview-cards .metric-cover { position: absolute; inset: 0; z-index: 1; border-radius: inherit; background: none; border: 0; cursor: pointer; }
+.app-shell .overview-cards .metric-cover:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.app-shell .overview-cards .metric-card:has(.metric-cover:hover) { border-color: var(--ink); }
+.app-shell .overview-cards .metric-card:has(.metric-cover:hover) .metric-label svg,
+.app-shell .overview-cards .metric-card:has(.metric-cover:focus-visible) .metric-label svg { color: var(--ink); transform: translateX(2px); }
+@media (max-width: 1150px) { .app-shell .overview-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---------- activity chart: complete days solid, today's unfinished day lighter ---------- */
+.app-shell .chart-day { background: none; border: 0; padding: 0; font: inherit; color: inherit; border-radius: 8px 8px 0 0; }
+.app-shell .chart-day:not(:disabled) { cursor: pointer; }
+.app-shell .chart-day:disabled { opacity: 1; cursor: default; }
+.app-shell .chart-day:not(:disabled):hover .bar { filter: brightness(0.92); }
+.app-shell .chart-day.selected .bar { background: var(--ink); border-color: var(--ink); }
+.app-shell .chart-day.selected .bar-number { color: var(--ink); font-weight: 700; }
+.app-shell .day-voters { margin: 0 22px 18px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.app-shell .day-voters-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #fafbf9; border-bottom: 1px solid var(--line); font-size: 14px; }
+.app-shell .day-voters ul { list-style: none; margin: 0; padding: 0; max-height: 296px; overflow-y: auto; }
+.app-shell .day-voters li { display: grid; grid-template-columns: 1fr auto 120px; align-items: center; gap: 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.app-shell .day-voters li:last-child { border-bottom: 0; }
+.app-shell .day-voters-count { font-size: 13px; font-weight: 600; }
+.app-shell .day-voters-time { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); text-align: right; }
+.app-shell .bar { background: var(--accent); border: 1px solid var(--ink); border-bottom: 0; }
+.app-shell .bar.today { background: color-mix(in srgb, var(--accent) 30%, #ffffff); border-style: dashed; }
+.app-shell .chart-legend i { background: var(--accent); }
+
+/* ---------- one quiet refresh, in the sidebar ---------- */
+.app-shell .updated-button { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 14px; padding: 4px 0; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #6c737b; background: none; border: 0; }
+.app-shell .updated-button:hover:not(:disabled) { color: var(--paper); }
+.app-shell .updated-button:disabled { opacity: 1; cursor: default; }
+@media (max-width: 1000px) { .app-shell .updated-button { font-size: 0; gap: 0; } .app-shell .updated-button svg { width: 16px; height: 16px; } }
+
+/* ---------- overview: plan the next window, only when nothing is open or scheduled ---------- */
+.app-shell .plan-window { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 22px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--radius); }
+.app-shell .plan-window p { margin-top: 4px; font-size: 13px; color: var(--muted); }

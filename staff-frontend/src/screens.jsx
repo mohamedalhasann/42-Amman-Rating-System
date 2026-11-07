@@ -1,27 +1,79 @@
 import React, {useEffect, useState} from 'react';
 import {useStaff} from './context';
-import {activitySeries, average, counted, filterRatings, fullName, groupsFor, participation, ratingsIn, searchReceivedRatings, stats} from './model';
+import {activitySeries, average, counted, filterRatings, fullName, groupsFor, participation, ratingsIn, searchReceivedRatings, stateOfWindow, stats} from './model';
 import {Avatar, Badge, dateTime, Empty, Icon, PageControls, Person, RatingTable, Search, shortDate, Tabs} from './components';
 
 function PanelHeading({title, children, description}) {return <div className="panel-heading"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{children}</div>;}
 const displayAverage = value => value === null ? '—' : value.toFixed(2);
 
+const ammanDay = value => new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Amman', year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date(value));
+const ammanTime = value => new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Amman', hour:'2-digit', minute:'2-digit'}).format(new Date(value));
+
+// Who voted on one day of the chart: one row per voter, with their votes and time span that day.
+function DayVoters({rows, period, onClose}) {
+  const voters = Object.values(rows.reduce((acc, r) => {
+    const v = acc[r.voter_id] ||= {id: r.voter_id, count: 0, first: r.submitted_at, last: r.submitted_at};
+    v.count++;
+    if (r.submitted_at < v.first) v.first = r.submitted_at;
+    if (r.submitted_at > v.last) v.last = r.submitted_at;
+    return acc;
+  }, {})).sort((a, b) => b.count - a.count || a.first.localeCompare(b.first));
+  return <div className="day-voters">
+    <div className="day-voters-head">
+      <p><strong>{period}</strong> · {rows.length} rating{rows.length===1?'':'s'} from {voters.length} student{voters.length===1?'':'s'}</p>
+      <button className="text-button" onClick={onClose}>Close</button>
+    </div>
+    <ul>
+      {voters.map(v => <li key={v.id}>
+        <Person id={v.id}/>
+        <span className="day-voters-count">{v.count} vote{v.count===1?'':'s'}</span>
+        <span className="day-voters-time">{v.count===1 ? ammanTime(v.first) : `${ammanTime(v.first)}–${ammanTime(v.last)}`}</span>
+      </li>)}
+    </ul>
+  </div>;
+}
+
+function MetricCard({label, value, note, action, onOpen, attention = false, children}) {
+  return <article className="metric-card">
+    <button className="metric-cover" aria-label={action} onClick={onOpen}/>
+    <span className="metric-label">{attention && <i className="metric-attention" aria-hidden="true"/>}{label}<Icon name="arrow" size={16}/></span>
+    <strong className="metric-value">{value}</strong>
+    {children}
+    <p className="metric-note">{note}</p>
+  </article>;
+}
+
 export function Overview() {
-  const {db, windowId, go, setExplorerFilters, setRosterState} = useStaff();
+  const {db, windowId, go, setExplorerFilters, setRosterState, setNewWindowRequest, now} = useStaff();
+  // Only when nothing is open or scheduled does the overview ask staff to plan the next window.
+  const nothingPlanned = !db.windows.some(w => ['Open', 'Upcoming'].includes(stateOfWindow(w, now)));
   const rows = ratingsIn(db, windowId), summary = stats(db, windowId);
   const cases = db.cases.filter(c => c.window_id === windowId && c.status === 'open').sort((a,b)=>b.detected_at.localeCompare(a.detected_at));
   const series = activitySeries(db,windowId);
   const grouped = series.some(b => b.startDay !== b.endDay);
   const bars = series.map(b => {const label=shortDate(`${b.startDay}T12:00:00Z`);return {...b,label,period:b.startDay===b.endDay?label:`${label} – ${shortDate(`${b.endDay}T12:00:00Z`)}`};});
   const max = Math.max(1, ...bars.map(b=>b.count));
+  // today's day in Amman, to draw the unfinished day lighter than complete ones
+  const todayKey = ammanDay(new Date());
+  // Clicking a day opens who voted on it; a new window starts closed.
+  const [day, setDay] = useState(null);
+  useEffect(() => setDay(null), [windowId]);
+  const picked = day === null ? null : bars[day];
   return <>
-    <section className="overview-metrics" aria-label="Window totals">
-      <article className="metric-primary"><span>Ratings submitted</span><strong>{summary.submitted}<Icon name="chart" size={36}/></strong><p><i className="dot green"/>{summary.counted} counted <span className="metric-divider">/</span> {summary.invalidated} invalidated</p></article>
-      <article><span>Student participation</span><strong>{summary.total ? Math.round(summary.rated/summary.total*100) : 0}<small>%</small></strong><div className="participation-track"><i style={{width:`${summary.total ? summary.rated/summary.total*100 : 0}%`}}/></div><p>{summary.rated} of {summary.total} eligible students have rated</p></article>
-      <article className="metric-action"><span>Still to participate</span><strong>{Math.max(0,summary.total-summary.rated)}<Icon name="people" size={34}/></strong><p>{!summary.total?'No students in this window’s roster.':summary.total===summary.rated?'Everyone in this window has rated.':<button className="metric-link" onClick={()=>{setRosterState(state=>({...state,scope:'window',filter:'not',page:1}));go('students')}}>View students who have not rated <Icon name="arrow" size={15}/></button>}</p></article>
-      <article><span>Open abuse cases</span><strong>{cases.length}<button className="circle-button" aria-label="Open abuse review" onClick={()=>go('review')}><Icon name="arrow"/></button></strong><p>{cases.length ? 'Ready for staff review' : 'No cases awaiting a decision'}</p></article>
+    {nothingPlanned && <section className="plan-window" aria-label="Next voting window">
+      <div><strong>No voting window is open or scheduled.</strong><p>Students can’t vote until you plan the next one.</p></div>
+      <button className="button primary" onClick={()=>{setNewWindowRequest(true);go('settings');}}>Plan the next window <Icon name="arrow" size={16}/></button>
+    </section>}
+    <section className="overview-metrics overview-cards" aria-label="Window totals">
+      {/* One card language: label, number, one line of context, and the same arrow. Each card opens its list. */}
+      <MetricCard label="Ratings submitted" value={summary.submitted} note={`${summary.counted} counted · ${summary.invalidated} invalidated`} action="Browse ratings in this window" onOpen={()=>{setExplorerFilters({});go('explorer')}}/>
+      <MetricCard label="Student participation" value={<>{summary.total ? Math.round(summary.rated/summary.total*100) : 0}<small>%</small></>} note={`${summary.rated} of ${summary.total} students have rated`} action="See who rated in this window" onOpen={()=>{setRosterState(state=>({...state,scope:'window',filter:'all',page:1}));go('students')}}>
+        <div className="participation-track" aria-hidden="true"><i style={{width:`${summary.total ? summary.rated/summary.total*100 : 0}%`}}/></div>
+      </MetricCard>
+      <MetricCard label="Still to participate" value={Math.max(0,summary.total-summary.rated)} note={!summary.total?'No students in this window’s roster':summary.total===summary.rated?'Everyone has rated':'Students who haven’t rated yet'} action="See students who have not rated" onOpen={()=>{setRosterState(state=>({...state,scope:'window',filter:'not',page:1}));go('students')}}/>
+      <MetricCard label="Open abuse cases" attention={cases.length>0} value={cases.length} note={cases.length ? 'Waiting for a staff decision' : 'Nothing waiting for review'} action="Open abuse review" onOpen={()=>go('review')}/>
     </section>
-    <section className="panel"><PanelHeading title="Rating activity" description={grouped?"Accepted ratings, grouped across this window":"Accepted ratings by day"}><span className="chart-legend"><i/>Submitted</span></PanelHeading>{rows.length ? <><div className="activity-chart" role="img" aria-label={bars.map(b=>`${b.period}: ${b.count} ratings`).join('; ')}><div className="chart-y"><span>{max}</span><span>{Math.round(max/2)}</span><span>0</span></div><div className="chart-bars">{bars.map((b,i)=><div className="chart-day" key={i}><span className="bar-number">{b.count || ''}</span><div className={`bar ${b.count===max?'peak':''} ${b.count===0?'zero':''}`} title={`${b.period}: ${b.count} ratings`} style={{height:b.count?b.count/max*150:0}}/><span className="bar-label">{b.label}</span></div>)}</div></div><div className="chart-note">All accepted votes count immediately. Only invalidated votes are excluded from averages.</div></> : <Empty>This window has no ratings yet.</Empty>}</section>
+    <section className="panel"><PanelHeading title="Rating activity" description={grouped?"Accepted ratings, grouped across this window":"Accepted ratings by day"}><span className="chart-legend"><i/>Submitted</span></PanelHeading>{rows.length ? <><div className="activity-chart" role="img" aria-label={bars.map(b=>`${b.period}: ${b.count} ratings`).join('; ')}><div className="chart-y"><span>{max}</span><span>{Math.round(max/2)}</span><span>0</span></div><div className="chart-bars">{bars.map((b,i)=><button type="button" className={`chart-day ${day===i?'selected':''}`} key={i} disabled={!b.count} aria-pressed={day===i} aria-label={`${b.period}: ${b.count} ratings. Show who voted`} onClick={()=>setDay(day===i?null:i)}><span className="bar-number">{b.count || ''}</span><div className={`bar ${b.startDay<=todayKey&&todayKey<=b.endDay?'today':''} ${b.count===0?'zero':''}`} title={`${b.period}: ${b.count} ratings`} style={{height:b.count?b.count/max*150:0}}/><span className="bar-label">{b.label}</span></button>)}</div></div>{picked && <DayVoters rows={rows.filter(r=>{const k=ammanDay(r.submitted_at);return picked.startDay<=k&&k<=picked.endDay;})} period={picked.period} onClose={()=>setDay(null)}/>}<div className="chart-note">All accepted votes count immediately. Only invalidated votes are excluded from averages.</div></> : <Empty>This window has no ratings yet.</Empty>}</section>
     <section className="panel"><PanelHeading title="Recent ratings" description="Latest accepted ratings in this window"><button className="text-button" onClick={()=>{setExplorerFilters({});go('explorer')}}>Browse ratings <Icon name="arrow" size={17}/></button></PanelHeading><RatingTable rows={[...rows].sort((a,b)=>b.submitted_at.localeCompare(a.submitted_at)).slice(0,5)} pageSize={5}/></section>
   </>;
 }
@@ -173,7 +225,7 @@ export function AbuseReview() {
     </div>
     <div className="case-list">
       {cases.slice((safePage-1)*6,safePage*6).map(c=><button key={c.id} data-case-id={c.id} className="case-item" onClick={()=>openCase(c.id)}>
-        <div className="case-item-top"><span className="case-id">Case {c.id.toUpperCase()}</span>{c.status!=='open'&&<Badge tone={c.status==='confirmed'?'red':'neutral'}>{c.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge>}<time dateTime={c.detected_at}>Flagged {dateTime(c.detected_at)} · Amman</time></div>
+        <div className="case-item-top"><span className="case-id">{c.findings.map(f=>f.mechanism).join(' · ')}</span>{c.status!=='open'&&<Badge tone={c.status==='confirmed'?'red':'neutral'}>{c.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge>}<time dateTime={c.detected_at}>Flagged {dateTime(c.detected_at)} · Amman</time></div>
         <div className="case-item-body"><div><h3>{c.title}</h3><p className="case-explanation-preview">{c.findings.map(f=>f.explanation).join(' ')}</p><p className="case-people-preview"><span>Involves</span> {people(c)}</p><div className="case-facts"><span>{c.findings.length} {c.findings.length===1?'pattern':'patterns'} matched</span><span>{c.rating_ids.length} linked {c.rating_ids.length===1?'rating':'ratings'}</span>{c.attempt_ids.length>0&&<span>{c.attempt_ids.length} blocked {c.attempt_ids.length===1?'attempt':'attempts'}</span>}</div></div><span className="case-open">Review case <Icon name="arrow" size={17}/></span></div>
       </button>)}
       {!cases.length&&<Empty>No cases match these filters.</Empty>}

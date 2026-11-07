@@ -8,9 +8,18 @@ import {Badge, Icon, Modal, RatingDetail, shortDate} from './components';
 import {AbuseReview, Explorer, Overview, RatingGroup, StudentRecord, Students} from './screens';
 import {CaseDetail} from './case-review';
 import {Accounts, AuditLog, Configuration} from './management';
-import './fonts.css';
+// Fonts ship as real files: the server's CSP allows fonts from 'self' only, not data: URLs.
+import '@fontsource/space-grotesk/400.css';
+import '@fontsource/space-grotesk/500.css';
+import '@fontsource/space-grotesk/600.css';
+import '@fontsource/space-grotesk/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+import '@fontsource/jetbrains-mono/500.css';
+import '@fontsource/jetbrains-mono/700.css';
 import '../styles.css';
+import './theme.css';
 import campusLogo from '../../docs/42-logo.jpeg';
+import campusMark from './assets/logo-42-amman.svg';
 
 const navigation=[['overview','Overview','grid'],['students','Students','people'],['explorer','Ratings','chart'],['review','Abuse review','flag'],['settings','Configuration','settings'],['accounts','Accounts','lock'],['activity','Activity log','clock']];
 const routeView = value => /^students\/[^/]+$/.test(value)?'student-record':/^explorer\/(student|stars|label)\/[^/]+$/.test(value)?'rating-group':/^review\/[^/]+$/.test(value)?'case-review':value==='participation'?'students':navigation.some(item=>item[0]===value)?value:'overview';
@@ -30,7 +39,8 @@ function App({db:initialDb,identity}){
  const [recordDirection,setRecordDirection]=useState('received'),[recordScope,setRecordScope]=useState('window');
  const ref=useRef(db), headingRef=useRef(null), previousView=useRef(view), rosterScroll=useRef(0), rosterStudent=useRef(null), ratingsScroll=useRef(0), ratingsGroup=useRef(null), inboxScroll=useRef(0), inboxCase=useRef(null);
  const notify=useCallback(text=>setMessage(text),[]);
- const commit=useCallback(next=>{if(mounted.current){ref.current=next;setDb(next);setLoadError('');}},[]);
+ const [updatedAt,setUpdatedAt]=useState(()=>Date.now()),[newWindowRequest,setNewWindowRequest]=useState(false);
+ const commit=useCallback(next=>{if(mounted.current){ref.current=next;setDb(next);setLoadError('');setUpdatedAt(Date.now());}},[]);
  const refresh=useCallback(async()=>{
    if(busy.current)return;
    const sequence=++requestSequence.current;
@@ -96,7 +106,7 @@ function App({db:initialDb,identity}){
    }catch(error){setExportError(error.message);}
    finally{busy.current=false;if(mounted.current){setSaving(false);setRefreshing(false);}}
  }
- const context={db,dispatch,saving,notify,go,windowId:currentWindowId,setWindowId,selectedStudent,setSelectedStudent,goStudent,openCase,openRating:setRatingId,explorerFilters,setExplorerFilters,exportRows,now,recordDirection,setRecordDirection,recordScope,setRecordScope,rosterState,setRosterState,ratingBrowseState,setRatingBrowseState,selectedRatingGroup,goRatingGroup,reviewInboxState,setReviewInboxState};
+ const context={db,dispatch,saving,notify,go,windowId:currentWindowId,setWindowId,selectedStudent,setSelectedStudent,goStudent,openCase,openRating:setRatingId,explorerFilters,setExplorerFilters,exportRows,now,recordDirection,setRecordDirection,recordScope,setRecordScope,rosterState,setRosterState,ratingBrowseState,setRatingBrowseState,selectedRatingGroup,goRatingGroup,reviewInboxState,setReviewInboxState,newWindowRequest,setNewWindowRequest};
  const openCount=db.cases.filter(c=>c.status==='open').length;
  const groupStudent=db.students.find(student=>student.id===selectedRatingGroup?.id);
  const groupTitle=selectedRatingGroup?.category==='student'?fullName(groupStudent):selectedRatingGroup?.category==='stars'?selectedRatingGroup.id+'-star ratings':selectedRatingGroup?.id==='none'?'No labels':db.labels.find(label=>label.id===selectedRatingGroup?.id)?.name||'Unknown label';
@@ -107,7 +117,7 @@ function App({db:initialDb,identity}){
  const subtitles={overview:'Ratings and participation for the selected voting window.',students:'Track participation and open an individual student’s record.','student-record':'Ratings, labels, and voting history for this student.',explorer:'Review individual ratings or compare them by label, stars, or recipient.','rating-group':groupSubtitle,review:'Review unusual voting and decide which ratings need action.',settings:'Manage voting windows, vote limits, and labels.',accounts:'Review verified student accounts and approval settings.',activity:'A record of staff actions in this workspace.'};
  const pages={overview:<Overview/>,students:<Students/>,'student-record':<StudentRecord id={selectedStudent}/>,explorer:<Explorer/>,'rating-group':<RatingGroup key={selectedRatingGroup?.category+'/'+selectedRatingGroup?.id}/>,review:<AbuseReview/>,'case-review':<CaseDetail key={caseId} id={caseId}/>,settings:<Configuration/>,accounts:<Accounts/>,activity:<AuditLog/>};
  return <StaffContext.Provider value={context}><div className="app-shell"><a className="skip-link" href="#main-content">Skip to content</a>
-  <aside className="sidebar"><a href="#overview" aria-label="Fairly overview" className="brand" onClick={()=>go('overview')}>Fairly<span>.</span></a><div className="workspace"><span className="campus-symbol" role="img" aria-label="42"><img src={campusLogo} alt="" width="300" height="100"/></span><div className="campus-caption"><strong>Amman</strong><small>Staff workspace</small></div></div><span className="nav-caption">Workspace</span><nav aria-label="Staff navigation">{navigation.map(([id,label,icon])=><a key={id} className={(activeNav===id?'active ':'')+(id==='settings'?'nav-divider':'')} href={'#'+id} aria-current={activeNav===id?'page':undefined} title={label} onClick={e=>{e.preventDefault();go(id)}}><Icon name={icon} size={19}/><span>{label}</span>{id==='review'&&openCount>0&&<b>{openCount}</b>}</a>)}</nav><div className="sidebar-footer"><div className="staff-identity"><strong>{fullName(identity).trim()||identity.intra_username}</strong><small>@{identity.intra_username}</small></div><button className="text-button" disabled={saving} onClick={signOut}><Icon name="logout" size={17}/>Sign out</button></div></aside>
+  <aside className="sidebar"><a href="#overview" aria-label="Fairly overview" className="brand" onClick={()=>go('overview')}>Fairly<span>.</span></a><div className="workspace"><span className="campus-mark-svg" role="img" aria-label="42 Amman" style={{'--logo':`url(${campusMark})`}}/><div className="campus-caption"><small>Staff workspace</small></div></div><nav aria-label="Staff navigation">{navigation.map(([id,label,icon])=><a key={id} className={(activeNav===id?'active ':'')+(id==='settings'?'nav-divider':'')} href={'#'+id} aria-current={activeNav===id?'page':undefined} title={label} onClick={e=>{e.preventDefault();go(id)}}><Icon name={icon} size={19}/><span>{label}</span>{id==='review'&&openCount>0&&<b>{openCount}</b>}</a>)}</nav><div className="sidebar-footer"><button className="updated-button" disabled={saving||refreshing} onClick={refresh} title="Data refreshes every minute. Click to refresh now.">{refreshing?'Updating…':'Updated '+new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Amman'}).format(updatedAt)}<Icon name="refresh" size={13}/></button><div className="staff-identity"><strong>{fullName(identity).trim()||identity.intra_username}</strong><small>@{identity.intra_username}</small></div><button className="text-button" disabled={saving} onClick={signOut}><Icon name="logout" size={17}/>Sign out</button></div></aside>
   <div className="main-shell">
   <main id="main-content" tabIndex={-1}>
   <header className={'page-heading'+(view==='case-review'?' case-page-heading':'')}>
@@ -116,30 +126,22 @@ function App({db:initialDb,identity}){
       {view==='rating-group'&&<button className="text-button record-header-back" onClick={()=>go('explorer')}><span className="back-arrow"><Icon name="arrow" size={17}/></span>Back to ratings</button>}
       {view==='case-review'&&<button className="text-button record-header-back" onClick={()=>go('review')}><span className="back-arrow"><Icon name="arrow" size={17}/></span>Back to review inbox</button>}
       <h1 ref={headingRef} tabIndex={-1}>{title}</h1>
-      {view==='case-review'&&activeCase?<div className="case-page-meta"><span>Case {activeCase.id.toUpperCase()}</span><Badge tone={activeCase.status==='open'?'amber':activeCase.status==='confirmed'?'red':'neutral'}>{activeCase.status==='open'?'Needs review':activeCase.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge></div>:view!=='overview'&&view!=='case-review'&&<p>{subtitles[view]}</p>}
+      {view==='case-review'&&activeCase?<div className="case-page-meta"><Badge tone={activeCase.status==='open'?'amber':activeCase.status==='confirmed'?'red':'neutral'}>{activeCase.status==='open'?'Needs review':activeCase.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge></div>:view!=='overview'&&view!=='case-review'&&<p>{subtitles[view]}</p>}
     </div>
     <div className="page-heading-actions">
       <span className="topbar-logo campus-symbol" role="img" aria-label="42"><img src={campusLogo} alt="" width="300" height="100"/></span>
-      <button className="button" disabled={saving||refreshing} onClick={refresh}>{refreshing?'Refreshing…':'Refresh'}</button>
+      {w&&['overview','students','student-record','explorer','rating-group','review'].includes(view)&&<div className="window-pill">
+        <label className="window-pill-label" htmlFor="selected-window">Window</label>
+        <select id="selected-window" value={currentWindowId} onChange={e=>{setWindowId(e.target.value);setExplorerFilters({});setRatingBrowseState(state=>({...state,selectedGroup:null,groupPage:1}));setReviewInboxState(state=>({...state,page:1}))}}>
+          {[...db.windows].sort((a,b)=>b.starts_at.localeCompare(a.starts_at)).map(window=><option key={window.id} value={window.id}>{window.name}</option>)}
+        </select>
+        <Badge tone={stateOfWindow(w,now)==='Open'?'green':'neutral'}>{stateOfWindow(w,now)}</Badge>
+        <span className="window-pill-dates">{shortDate(w.starts_at)} – {shortDate(w.ends_at)}</span>
+      </div>}
       {['overview','students'].includes(view)&&<button className="button primary" disabled={!ratingsIn(db,currentWindowId).length} title="Export all ratings in the selected window" onClick={()=>exportRows(ratingsIn(db,currentWindowId))}><Icon name="download" size={18}/>Export ratings</button>}
     </div>
   </header>
   {loadError&&<div className="storage-warning" role="alert">{loadError} <button className="text-button" disabled={saving||refreshing} onClick={refresh}>Retry</button></div>}
-  {w&&['overview','students','student-record','explorer','rating-group','review'].includes(view)&&<section className="window-toolbar" aria-label="Voting window context">
-    <div className="window-context">
-      <div className="window-selector">
-        <label className="window-label" htmlFor="selected-window">Voting window</label>
-        <div className="window-value">
-          <select id="selected-window" value={currentWindowId} onChange={e=>{setWindowId(e.target.value);setExplorerFilters({});setRatingBrowseState(state=>({...state,selectedGroup:null,groupPage:1}));setReviewInboxState(state=>({...state,page:1}))}}>
-            {[...db.windows].sort((a,b)=>b.starts_at.localeCompare(a.starts_at)).map(window=><option key={window.id} value={window.id}>{window.name}</option>)}
-          </select>
-          <Badge tone={stateOfWindow(w,now)==='Open'?'green':'neutral'}>{stateOfWindow(w,now)}</Badge>
-        </div>
-      </div>
-      <div className="window-dates"><span className="context-label">Dates</span><span className="window-range">{shortDate(w.starts_at)} – {shortDate(w.ends_at)}</span></div>
-    </div>
-    <button className="text-button window-manage" onClick={()=>go('settings')}><Icon name="settings" size={17}/>Manage windows</button>
-  </section>}
   <div className="page-content" key={view}>{!w&&['overview','explorer','rating-group'].includes(view)?<section className="panel no-window"><Icon name="clock" size={30}/><h2>No voting windows yet</h2><p>Create a window to start tracking ratings and participation.</p><button className="button primary" onClick={()=>go('settings')}>Configure a voting window</button></section>:pages[view]}</div><footer><span>Fairly / 42 Amman</span><span>{saving?'Saving…':'Connected to your campus database'}</span></footer></main></div>
   {ratingId&&<RatingDetail id={ratingId} onClose={closeRating}/>}
   {exportIds&&<Modal title="Export ratings" onClose={saving?()=>{}:closeExport}><p className="export-description">Download {exportIds.length} rating records from <strong>{w?.name}</strong>. The export includes voter and recipient identities, stars, labels, explanations, status, and invalidation reasons.</p><div className="export-summary"><Icon name="download" size={28}/><div><strong>Ratings · CSV</strong><small>{exportIds.length} records · {db.ratings.filter(r=>exportIds.includes(r.id)&&!counted(r)).length} invalidated</small></div></div><p className="muted">This file contains staff-only records. Export activity is recorded in the activity log.</p>{exportError&&<p className="form-error" role="alert">{exportError}</p>}<div className="modal-actions"><button className="button" disabled={saving} onClick={closeExport}>Cancel</button><button className="button primary" disabled={saving} onClick={download}>{saving?'Exporting…':'Download CSV'}</button></div></Modal>}
