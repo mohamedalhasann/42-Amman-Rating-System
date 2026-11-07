@@ -54,9 +54,12 @@ Proposed dashboard response. Values are illustrative, not approved limits:
     "max_votes": 10
   },
   "own_rating": { "average": 2.5, "scope": "all_windows" },
+  "campus_average": 2.3,
   "allowance": { "votes_used": 3, "votes_remaining": 7 }
 }
 ```
+
+`campus_average` is the mean of all active students' all-window averages (null until anyone has one). The history chart shows it for windows before the student's first rating. It is a campus-wide aggregate, never per cohort or group.
 
 If there is no open window, return `window: null` and `allowance: null` while preserving the all-window own average. No counted received ratings means a null average. Never reuse an earlier window's allowance. Proposed baseline: return only an open window; upcoming or closed-window display is optional.
 

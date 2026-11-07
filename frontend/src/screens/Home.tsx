@@ -18,6 +18,14 @@ export function Home() {
   const [given, setGiven] = useState<GivenRating[]>([]);
   const [loadError, setLoadError] = useState('');
   const [rating, setRating] = useState(false);
+  // The rated list has a fixed height; fade its bottom edge while more names sit below.
+  const givenRef = useRef<HTMLUListElement>(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+  const checkMore = useCallback(() => {
+    const el = givenRef.current;
+    setMoreBelow(!!el && el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  }, []);
+  useEffect(checkMore, [given, checkMore]);
 
   const load = useCallback(async () => {
     try {
@@ -39,20 +47,22 @@ export function Home() {
     load();
   }, [load]);
 
-  const countdown = useCountdown(dash?.window?.ends_at, dash?.server_time);
   if (!me) return null;
 
   const average = dash?.own_rating.average ?? null;
   // The rating as it stood when each window closed. A window with too few raters adds nothing,
   // so the rating carries over unchanged from the window before.
+  // Windows before the student's first rating show the campus average instead, marked as such.
+  const campus = dash?.campus_average ?? null;
   let carry: number | null = null;
   const points = history.map((h) => {
-    if (h.state !== 'closed') return { ...h, value: null, carried: false };
+    if (h.state !== 'closed') return { ...h, value: null, carried: false, campus: false };
     if (h.average !== null) carry = h.average;
-    return { ...h, value: carry, carried: h.average === null && carry !== null };
+    if (carry === null) return { ...h, value: campus, carried: false, campus: campus !== null };
+    return { ...h, value: carry, carried: h.average === null, campus: false };
   });
-  // Change since the last window that actually moved the rating; carried windows don't count.
-  const moved = points.filter((p) => p.state === 'closed' && p.value !== null && !p.carried);
+  // Change since the last window that actually moved the rating; carried and campus bars don't count.
+  const moved = points.filter((p) => p.state === 'closed' && p.value !== null && !p.carried && !p.campus);
   const lastMoved = moved[moved.length - 1];
   const prevMoved = moved[moved.length - 2];
   const delta = lastMoved && prevMoved ? Math.round((lastMoved.value! - prevMoved.value!) * 10) / 10 : null;
@@ -78,14 +88,14 @@ export function Home() {
         </div>
       )}
 
-      <div className="home__grid">
+      <main className="home__grid">
         <section className="poster rise" aria-labelledby="poster-title">
           <div className="poster__who">
             <div className="poster__badge">
               <Monogram first={me.first_name} last={me.last_name} />
             </div>
             <div className="poster__names">
-              <p className="poster__name">{me.first_name} {me.last_name}</p>
+              <h1 className="poster__name">{me.first_name} {me.last_name}</h1>
               <p className="mono poster__login">{me.intra_username}</p>
             </div>
           </div>
@@ -94,8 +104,8 @@ export function Home() {
             <h2 id="poster-title" className="poster__label">Your rating</h2>
             {!dash ? (
               <div className="poster__loading" aria-busy="true">
-                <div className="skeleton skeleton--ink" style={{ height: 92, width: '60%' }} />
-                <div className="skeleton skeleton--ink" style={{ height: 40 }} />
+                <div className="skeleton skeleton--on-accent" style={{ height: 92, width: '60%' }} />
+                <div className="skeleton skeleton--on-accent" style={{ height: 40 }} />
               </div>
             ) : average === null ? (
               <>
@@ -108,7 +118,7 @@ export function Home() {
                   <p className="poster__number">
                     {average.toFixed(1)}<span className="poster__of">/ 3</span>
                   </p>
-                  <StarMeter value={average} size={24} emptyFill="#2E333A" stroke="transparent" />
+                  <StarMeter value={average} size={24} emptyFill="color-mix(in srgb, var(--on-accent) 38%, transparent)" stroke="transparent" />
                 </div>
                 <p className="poster__sub">
                   {delta === null || !prevMoved
@@ -122,44 +132,39 @@ export function Home() {
                 )}
               </>
             )}
-            <p className="poster__note">Updates when a voting window closes.</p>
           </div>
         </section>
 
         <div className="home__col">
-          <section className="card card--strong window rise" style={{ animationDelay: '60ms' }} aria-label="Voting window">
+          <section className="card card--strong window rise" style={{ animationDelay: '60ms' }} aria-labelledby="window-title">
             {!dash ? (
               <div className="skeleton" style={{ height: 180 }} />
             ) : !win ? (
               <div className="window__closed">
-                <p className="window__label">No voting window is open</p>
+                <h2 id="window-title" className="window__label">No voting window is open</h2>
                 <p className="muted">Staff will open the next one. Your rating stays here in the meantime.</p>
               </div>
             ) : (
               <>
                 <div className="window__top">
-                  <p className="window__label">{win.name} closes in</p>
+                  <h2 id="window-title" className="window__label">{win.name} closes in</h2>
                   <p className="mono window__live"><span className="window__dot" /> open</p>
                 </div>
-                {countdown && (
-                  <p className="countdown mono" role="timer" aria-label={`${countdown.d} days ${countdown.h} hours ${countdown.m} minutes left`}>
-                    <span>{countdown.d}<small>d</small></span>
-                    <span>{pad(countdown.h)}<small>h</small></span>
-                    <span>{pad(countdown.m)}<small>m</small></span>
-                    <span className="countdown__s">{pad(countdown.s)}<small>s</small></span>
-                  </p>
-                )}
+                <Countdown endsAt={win.ends_at} serverTime={dash.server_time} />
                 <div className="slots" aria-hidden="true">
                   {Array.from({ length: Math.min(max, 12) }, (_, i) => (
-                    <span key={i} className={`slot ${i < used ? 'slot--used' : i < min ? 'slot--min' : ''}`} />
+                    <span key={i} className={`slot ${i < used ? 'slot--used' : ''}`} />
                   ))}
                 </div>
                 <div className="window__bottom">
                   <div>
                     <p className="window__left">{left} of {max} votes left</p>
-                    <p className="muted window__min">
-                      {min === 0 ? 'No minimum this window' : used >= min ? 'Minimum reached' : `${min - used} more to reach the minimum of ${min}`}
-                    </p>
+                    {/* the staff minimum only shows while there's something to do about it */}
+                    {min > used && (
+                      <p className="muted window__min">
+                        {used === 0 ? `Vote for at least ${min} people this window.` : `${min - used} more to reach the minimum.`}
+                      </p>
+                    )}
                   </div>
                   {left > 0 ? (
                     <button className="btn btn--accent window__cta" onClick={() => setRating(true)}>Rate someone</button>
@@ -169,10 +174,11 @@ export function Home() {
                 </div>
                 <div className="window__given">
                   <p className="window__given-title">You rated <span className="muted">· only you see this</span></p>
+                  <div className="window__given-box">
                   {given.length === 0 ? (
                     <p className="given__empty">Nobody yet this window.</p>
                   ) : (
-                    <ul className="given">
+                    <ul ref={givenRef} onScroll={checkMore} className={`given ${moreBelow ? 'given--more' : ''}`} tabIndex={0} aria-label="People you rated this window">
                       {given.map((g) => (
                         <li key={g.rating_id}>
                           <span>{g.recipient.first_name} {g.recipient.last_name}</span>
@@ -183,12 +189,13 @@ export function Home() {
                       ))}
                     </ul>
                   )}
+                  </div>
                 </div>
               </>
             )}
           </section>
 
-          <section className="card history rise" style={{ animationDelay: '120ms' }} aria-labelledby="history-title">
+          <section className="card card--strong history rise" style={{ animationDelay: '120ms' }} aria-labelledby="history-title">
             <div className="card__head">
               <h2 id="history-title">Your rating over time</h2>
               <span className="muted">one bar per voting window</span>
@@ -198,21 +205,22 @@ export function Home() {
                 const text =
                   h.state === 'open'
                     ? `${h.name}: open now.`
-                    : h.carried
+                    : h.campus
+                      ? `${h.name}: no rating for you yet. Campus average ${h.value!.toFixed(1)}.`
+                      : h.carried
                       ? `${h.name}: too few raters, so your rating stayed at ${h.value!.toFixed(1)}.`
                       : h.value === null
                         ? `${h.name}: too few raters, no rating yet.`
                         : `${h.name}: ${h.value.toFixed(1)}.`;
                 return (
-                  <li key={h.window_id} className={`bars__col ${h.carried ? 'bars__col--carried' : ''}`}>
+                  <li key={h.window_id} className="bars__col">
                     <span className="mono bars__value" aria-hidden="true">
                       {h.state === 'open' ? '…' : h.value === null ? '–' : h.value.toFixed(1)}
                     </span>
-                    {h.carried && <span className="bars__kept" aria-hidden="true">kept</span>}
                     <span
                       aria-hidden="true"
-                      className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastMoved ? 'bars__bar--last' : ''}`}
-                      style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 84) + 12}px` } : undefined}
+                      className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : ''}`}
+                      style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 150) + 12}px` } : undefined}
                     />
                     <span className="visually-hidden">{text}</span>
                   </li>
@@ -221,13 +229,13 @@ export function Home() {
             </ol>
             {anyCarried && (
               <p className="bars__legend">
-                <span className="bars__key" aria-hidden="true" /> Kept: too few raters, so no change.
+                Hint: If there aren’t enough votes, no change will be displayed.
               </p>
             )}
           </section>
 
         </div>
-      </div>
+      </main>
 
       {rating && win && (
         <RateSheet
@@ -244,6 +252,20 @@ export function Home() {
         />
       )}
     </div>
+  );
+}
+
+// Ticks once a second on its own, so the cards around it don't redraw with it.
+function Countdown({ endsAt, serverTime }: { endsAt: string; serverTime: string }) {
+  const countdown = useCountdown(endsAt, serverTime);
+  if (!countdown) return null;
+  return (
+    <p className="countdown mono" role="timer" aria-label={`${countdown.d} days ${countdown.h} hours ${countdown.m} minutes left`}>
+      <span>{countdown.d}<small>d</small></span>
+      <span>{pad(countdown.h)}<small>h</small></span>
+      <span>{pad(countdown.m)}<small>m</small></span>
+      <span>{pad(countdown.s)}<small>s</small></span>
+    </p>
   );
 }
 
@@ -296,14 +318,20 @@ function UserMenu() {
   }
 
   return (
-    <div className="menu" ref={wrap}>
-      <button ref={trigger} className="menu__trigger" aria-expanded={open} aria-haspopup="true" onClick={() => setOpen((v) => !v)}>
+    <div
+      className="menu"
+      ref={wrap}
+      onBlur={(e) => {
+        if (open && !wrap.current?.contains(e.relatedTarget as Node | null)) setOpen(false);
+      }}
+    >
+      <button ref={trigger} className="menu__trigger" aria-expanded={open} aria-controls="user-menu" onClick={() => setOpen((v) => !v)}>
         <span className="menu__dot" aria-hidden="true" />
         <span className="mono">{me.intra_username}</span>
         <Icon name="chevron-down" size={16} />
       </button>
       {open && (
-        <div className="menu__panel">
+        <div className="menu__panel" id="user-menu">
           <p className="menu__name">{me.first_name} {me.last_name}</p>
           <p className="menu__label" id="accent-label">Accent</p>
           <div className="menu__swatches" role="radiogroup" aria-labelledby="accent-label">
