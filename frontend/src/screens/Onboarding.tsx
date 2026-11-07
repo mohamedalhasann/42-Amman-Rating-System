@@ -7,9 +7,16 @@ import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
 import { useSession } from '../session';
 import { ACCENTS, knownAccent } from '../accents';
 import { ApiError } from '../api';
+import { Kitten, type Mood } from '../components/Kitten';
 
 
-const STEPS = ['You', 'How it works', 'Color'];
+const STEPS = ['You', 'How it works', 'Your cat', 'Color'];
+
+const MOODS: { mood: Mood; label: string; text: string }[] = [
+  { mood: 'sleepy', label: 'Napping', text: 'You missed the minimum last window. It wakes up as soon as you vote.' },
+  { mood: 'normal', label: 'Waiting', text: 'A window is open and you haven’t reached the minimum yet.' },
+  { mood: 'happy', label: 'Happy', text: 'You reached the minimum votes this window.' },
+];
 
 export function Onboarding() {
   const { me, saveProfile, previewAccent } = useSession();
@@ -18,6 +25,7 @@ export function Onboarding() {
   const [accent, setAccent] = useState(knownAccent(me?.profile?.accent));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [mood, setMood] = useState<Mood>('happy');
 
   if (!me) return null;
 
@@ -109,11 +117,29 @@ export function Onboarding() {
                 <div><b>Voting happens in windows.</b><p className="muted">Each window has a deadline and a set number of votes. You see your own rating, nothing else.</p></div>
               </li>
             </ul>
-            <button className="btn btn--accent btn--block" onClick={next}>Next: pick a color</button>
+            <button className="btn btn--accent btn--block" onClick={next}>Next: meet your cat</button>
           </section>
         )}
 
         {step === 2 && (
+          <section className="onb__step rise" key="cat">
+            <h1 className="onb__title">Meet your cat.</h1>
+            <div className="pet-stage">
+              <Kitten mood={mood} scale={3} />
+            </div>
+            <div className="pet-moods" role="radiogroup" aria-label="Preview your cat's moods">
+              {MOODS.map((m) => (
+                <button key={m.mood} role="radio" aria-checked={mood === m.mood} className="pet-moods__btn" onClick={() => setMood(m.mood)}>
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <p className="muted onb__lead pet-note">{MOODS.find((m) => m.mood === mood)!.text} It reacts to your voting only, never to your rating.</p>
+            <button className="btn btn--accent btn--block" onClick={next}>Next: pick a color</button>
+          </section>
+        )}
+
+        {step === 3 && (
           <section className="onb__step rise" key="color">
             <div className="onb__mobile-figure" aria-hidden="true">
               <Monogram first={me.first_name} last={me.last_name} />

@@ -419,3 +419,53 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   .sheet__head { padding-top: calc(14px + var(--safe-top)); }
   .sheet__foot { padding-bottom: calc(20px + var(--safe-bottom)); }
 }
+
+/* ---------- the pixel cat ---------- */
+.kitten { position: relative; display: inline-block; flex: none; padding: 0; border: 0; background: none; line-height: 0; }
+.kitten img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; user-select: none; pointer-events: none; }
+.kitten__body { position: absolute; inset: 0; animation: kitten-in 220ms steps(2) both; }
+/* breathing: down one sprite pixel and back */
+.kitten__body--normal { animation: kitten-in 220ms steps(2) both, kitten-breathe 2.4s steps(1) 220ms infinite; }
+.kitten__body--sleepy { animation: kitten-in 220ms steps(2) both, kitten-breathe 3.6s steps(1) 220ms infinite; }
+.kitten__body--happy { animation: kitten-in 220ms steps(2) both, kitten-hop 0.56s steps(1) 220ms infinite; }
+.kitten__sparkles { animation: kitten-twinkle 0.9s steps(1) infinite; }
+.kitten__zzz { animation: kitten-zzz 2.8s steps(6) infinite; }
+@keyframes kitten-in { from { transform: translateY(var(--px)); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes kitten-breathe { 0%, 100% { transform: none; } 50% { transform: translateY(var(--px)); } }
+@keyframes kitten-hop { 0%, 100% { transform: none; } 50% { transform: translateY(calc(var(--px) * -2)); } }
+@keyframes kitten-twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes kitten-zzz {
+  0% { transform: translate(0, calc(var(--px) * 3)); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translate(var(--px), calc(var(--px) * -3)); opacity: 0; }
+}
+.kitten--still .kitten__body, .kitten--still img { animation: none !important; }
+.kitten--pettable { cursor: pointer; border-radius: 20px; }
+.kitten--pettable:focus-visible { outline: 3px solid var(--on-accent, var(--ink)); outline-offset: 4px; }
+
+/* sitting at the bottom of the sign-in stage */
+.auth__pet { display: none; }
+@media (min-width: 960px) {
+  .auth__stage { position: sticky; }
+  .auth__pet { display: block; position: absolute; right: 36px; bottom: 0; line-height: 0; }
+  /* two screen pixels per sprite pixel on laptops, so it stays clear of the promises; three on wide screens */
+  .auth__pet .kitten { width: 190px !important; height: 182px !important; --px: 2px !important; }
+}
+/* narrow laptops: the stage is too slim to share the bottom row, so the cat sits above the promises */
+@media (min-width: 960px) and (max-width: 1279px) {
+  .auth__pet { bottom: 158px; }
+}
+@media (min-width: 1600px) {
+  .auth__pet .kitten { width: 285px !important; height: 273px !important; --px: 3px !important; }
+}
+
+/* onboarding: meet your cat */
+.pet-stage { display: grid; place-items: center; padding: 18px 0 6px; border: var(--stroke); border-radius: var(--r-md); background: var(--card); }
+.pet-moods { display: flex; gap: 8px; }
+.pet-moods__btn {
+  flex: 1; height: 44px; border-radius: 12px; border: var(--stroke); background: var(--card); font: 600 15px var(--font); color: var(--ink);
+  box-shadow: 0 3px 0 var(--ink); transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.pet-moods__btn[aria-checked='true'] { background: var(--accent); color: var(--on-accent, var(--ink)); transform: translateY(3px); box-shadow: none; }
+.pet-note { min-height: 3em; }
