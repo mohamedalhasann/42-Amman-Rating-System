@@ -5,8 +5,9 @@ import {counted, fullName, ratingsIn, stateOfWindow} from './model';
 import {clearCredentials, request} from './api';
 import {SessionBoundary} from './session';
 import {Badge, Icon, Modal, RatingDetail, shortDate} from './components';
-import {AbuseReview, Explorer, Overview, RatingGroup, StudentRecord, Students} from './screens';
-import {CaseDetail} from './case-review';
+import {Explorer, Overview, RatingGroup, StudentRecord, Students} from './screens';
+import {AbuseReview} from './abuse';
+import {CaseDetail} from './abuse';
 import {Accounts, AuditLog, Configuration} from './management';
 // Fonts ship as real files: the server's CSP allows fonts from 'self' only, not data: URLs.
 import '@fontsource/space-grotesk/400.css';
