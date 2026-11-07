@@ -186,6 +186,7 @@ export const mockApi: Api = {
         max_votes: WINDOW_MAX,
       },
       own_rating: { average: 2.6, scope: 'all_windows' as const },
+      campus_average: 2.4,
       allowance: allowance(s, user.intra_username),
     });
   },

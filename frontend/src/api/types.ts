@@ -34,6 +34,7 @@ export interface Dashboard {
   server_time: string;
   window: VotingWindow | null;
   own_rating: { average: number | null; scope: 'all_windows' };
+  campus_average: number | null; // added: mean of every student's all-window average
   allowance: { votes_used: number; votes_remaining: number } | null;
 }
 

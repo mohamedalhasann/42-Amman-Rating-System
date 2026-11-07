@@ -119,7 +119,7 @@ export function Onboarding() {
               <Monogram first={me.first_name} last={me.last_name} />
             </div>
             <h1 className="onb__title">Pick your accent.</h1>
-            <p className="muted onb__lead">It colors the whole app, only for you. 42 cyan is the default. You can change it anytime.</p>
+            <p className="muted onb__lead">You can change it anytime.</p>
             <div className="swatches" role="radiogroup" aria-label="Accent color">
               {ACCENTS.map((a) => (
                 <button

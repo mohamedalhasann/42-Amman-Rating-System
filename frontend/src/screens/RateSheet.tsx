@@ -56,9 +56,36 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
     idempotency.current = crypto.randomUUID();
   }, [target, stars, picked, explanation]);
 
-  // Close with Escape, keep the page behind from scrolling.
+  // Focus goes back to whatever opened the sheet (the "Rate someone" button) when it closes.
+  // Mount-only on purpose: the parent re-renders every second for the countdown.
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => {
+      if (opener?.isConnected) opener.focus();
+    };
+  }, []);
+
+  // Close with Escape, keep Tab inside the sheet, keep the page behind from scrolling.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return close();
+      const panel = panelRef.current;
+      if (e.key !== 'Tab' || !panel) return;
+      const items = [...panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )].filter((el) => el.offsetParent !== null);
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const inside = panel.contains(document.activeElement);
+      if (e.shiftKey && (!inside || document.activeElement === first)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -151,7 +178,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
 
   return (
     <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
-      <button className="sheet__backdrop" aria-label="Close" onClick={close} />
+      <button className="sheet__backdrop" tabIndex={-1} aria-hidden="true" onClick={close} />
       <div className="sheet__panel" ref={panelRef}>
         <div className="sheet__head">
           {step === 'form' ? (
@@ -236,6 +263,16 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
                     aria-checked={active}
                     className={`stars__btn stars__btn--${n}`}
                     onClick={() => chooseStars(n)}
+                    onKeyDown={(e) => {
+                      // a radio group: arrows move and pick, one Tab stop for the group
+                      const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+                      if (!dir) return;
+                      e.preventDefault();
+                      const next = (((n - 1 + dir + 3) % 3) + 1) as Stars;
+                      chooseStars(next);
+                      (e.currentTarget.parentElement?.children[next - 1] as HTMLElement | undefined)?.focus();
+                    }}
+                    tabIndex={(stars ?? 3) === n ? 0 : -1}
                     data-autofocus={n === 3 ? true : undefined}
                   >
                     <span className="stars__icons">

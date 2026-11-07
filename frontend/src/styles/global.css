@@ -14,7 +14,7 @@
   --danger: #b3261e;
   --accent: #00ced1;
   --on-accent: var(--ink); /* text on an accent fill; paper for dark accents */
-  --accent-on-ink: var(--accent); /* accent used on ink surfaces; lighter for dark accents */
+  --on-accent-muted: color-mix(in srgb, var(--ink) 75%, transparent); /* secondary text on an accent fill; set per accent */
   --accent-soft: color-mix(in srgb, var(--accent) 22%, #ffffff);
   --accent-deep: color-mix(in srgb, var(--accent) 45%, var(--ink));
 
@@ -26,7 +26,7 @@
   --r-lg: 28px;
   --stroke: 2px solid var(--ink);
   --shadow: 0 4px 0 var(--ink);
-  --ease: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1); /* fast ease-out, no overshoot */
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -89,7 +89,7 @@ h1, h2, h3, p { margin: 0; }
 }
 .input--mono { font-family: var(--mono); }
 .textarea { height: auto; padding: 14px 16px; resize: none; line-height: 1.5; }
-.input::placeholder { color: #8a9099; }
+.input::placeholder { color: #6b7178; } /* 4.9:1 on white */
 .error { color: var(--danger); font-size: 14px; }
 
 /* Cards */
@@ -98,7 +98,6 @@ h1, h2, h3, p { margin: 0; }
   padding: 22px;
 }
 .card--strong { border: var(--stroke); box-shadow: var(--shadow); }
-.card--ink { background: var(--ink); color: var(--paper); border: none; }
 
 /* Chips */
 .chip {
