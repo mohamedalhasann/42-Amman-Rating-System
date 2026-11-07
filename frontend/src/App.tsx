@@ -39,6 +39,8 @@ export function App() {
       <Route path="/login" element={<Guard need="anonymous"><Login /></Guard>} />
       <Route path="/setup" element={<Guard need="anonymous"><SetupRequest /></Guard>} />
       <Route path="/setup/complete" element={<SetupComplete />} />
+      <Route path="/reset" element={<Guard need="anonymous"><SetupRequest mode="reset" /></Guard>} />
+      <Route path="/reset/complete" element={<SetupComplete mode="reset" />} />
       <Route path="/welcome" element={<Guard need="onboarding"><Onboarding /></Guard>} />
       <Route path="/" element={<Guard need="home"><Home /></Guard>} />
       <Route path="*" element={<Navigate to="/" replace />} />

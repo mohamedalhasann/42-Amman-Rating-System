@@ -24,16 +24,16 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 .auth { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
 .auth__stage {
   position: relative; overflow: hidden; background: var(--accent); color: var(--on-accent);
-  padding: 24px 22px 0; display: flex; flex-direction: column; gap: 18px;
+  padding: 24px 20px 0; display: flex; flex-direction: column; gap: 18px;
   border-bottom: var(--stroke);
 }
 .auth__brand { display: flex; justify-content: space-between; align-items: center; }
 .auth__campus { color: var(--on-accent); }
-.auth__pitch h1 { font-size: clamp(34px, 8vw, 76px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 700; }
-.auth__pitch p { margin-top: 14px; color: inherit; font-size: 18px; font-weight: 500; line-height: 1.45; max-width: 32ch; }
+/* the big P sits ~0.055em in from its box; pull it back so its ink lines up with the logo and icons */
+.auth__pitch h1 { font-size: clamp(34px, 8vw, 76px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 700; margin-left: -0.055em; }
 .auth__panel { display: flex; align-items: center; justify-content: center; padding: 32px 20px 48px; }
 .auth__form { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
-.auth__head { display: flex; flex-direction: column; gap: 8px; }
+.auth__head { display: flex; flex-direction: column; gap: 12px; }
 .auth__head h2 { font-size: 34px; letter-spacing: -0.03em; line-height: 1.05; }
 .auth__head p { line-height: 1.5; }
 .auth__alt { font-size: 15px; }
@@ -57,7 +57,6 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   .auth__stage { padding: 40px 48px 0; min-height: 100vh; position: sticky; top: 0; border-bottom: none; border-right: var(--stroke); }
   .auth__pitch { margin: auto 0; }
   .auth__stage .auth__promises { margin-top: 0; }
-  .auth__pitch p { font-size: 20px; }
 }
 
 /* ---------- onboarding ---------- */
@@ -365,3 +364,64 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
 }
 .onb__brand { display: flex; justify-content: space-between; align-items: center; color: var(--paper); }
+
+/* ---------- sign-in flow ---------- */
+.auth__alt { display: flex; flex-direction: column; gap: 6px; }
+.auth__alt .muted { font-size: 15px; }
+.field__row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.field__link { font-size: 14px; font-weight: 500; }
+/* phones: only sign-in shows the pitch; the other steps keep the brand bar and get to the point */
+@media (max-width: 959px) {
+  .auth { grid-template-rows: auto 1fr; }
+  /* phones: the form starts right under the header instead of centering in the leftover space */
+  .auth__panel { align-items: flex-start; padding-top: 28px; }
+  .auth__stage { padding-bottom: 26px; }
+  .auth--slim .auth__stage { padding-bottom: 18px; gap: 0; }
+  .auth--slim .auth__pitch { display: none; }
+}
+.hint { font-size: 13px; color: var(--muted); }
+.hint--warn { color: var(--ink); font-weight: 600; }
+.hint--warn::before { content: '⇪ '; }
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--muted); }
+.checks li { display: flex; align-items: center; gap: 8px; transition: color 150ms ease; }
+.checks li.is-met { color: var(--ink); }
+.checks__mark { width: 20px; height: 20px; flex: none; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; transition: background 150ms ease, border-color 150ms ease; }
+.checks li.is-met .checks__mark { background: var(--accent); color: var(--on-accent); border-color: var(--ink); }
+.btn:disabled { opacity: 0.55; cursor: default; transform: none; box-shadow: none; }
+
+/* ---------- notches and home indicators ----------
+   index.html sets viewport-fit=cover, so on phones the page runs under the status bar and
+   home indicator. Every top bar adds the top inset; bottom-pinned actions add the bottom one.
+   On devices without a notch the insets are 0 and nothing moves. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+@media (max-width: 959px) {
+  .auth__stage {
+    padding-top: calc(24px + var(--safe-top));
+    padding-left: max(20px, var(--safe-left));
+    padding-right: max(20px, var(--safe-right));
+  }
+  .auth__panel { padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); padding-bottom: calc(48px + var(--safe-bottom)); }
+  .onb__main {
+    padding-top: calc(20px + var(--safe-top));
+    padding-left: max(20px, var(--safe-left));
+    padding-right: max(20px, var(--safe-right));
+    padding-bottom: calc(48px + var(--safe-bottom));
+  }
+}
+@media (max-width: 719px) {
+  .home {
+    padding-top: calc(16px + var(--safe-top));
+    padding-left: max(16px, var(--safe-left));
+    padding-right: max(16px, var(--safe-right));
+    padding-bottom: calc(48px + var(--safe-bottom));
+  }
+}
+@media (max-width: 959px) {
+  .sheet__head { padding-top: calc(14px + var(--safe-top)); }
+  .sheet__foot { padding-bottom: calc(20px + var(--safe-bottom)); }
+}

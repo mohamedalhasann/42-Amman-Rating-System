@@ -3,9 +3,10 @@ import { Wordmark } from './bits';
 import { Promises } from './Promises';
 import { CampusLogo } from './CampusLogo';
 
-export function AuthLayout({ children }: { children: ReactNode }) {
+// `pitch` shows the headline and promises; on phones the other steps use a slim header instead.
+export function AuthLayout({ children, pitch = false }: { children: ReactNode; pitch?: boolean }) {
   return (
-    <div className="auth">
+    <div className={`auth ${pitch ? '' : 'auth--slim'}`}>
       <section className="auth__stage">
         <div className="auth__brand">
           <Wordmark size={30} color="var(--on-accent)" dotColor="var(--on-accent)" />
@@ -13,7 +14,6 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="auth__pitch">
           <h1>Peer ratings,<br />done fairly.</h1>
-          <p>Rate the people you learn with, and see where you stand.</p>
         </div>
         <Promises className="auth__promises" />
       </section>

@@ -40,6 +40,7 @@ interface State {
   profiles: Record<string, Profile>;
   given: (GivenRating & { voter: string })[];
   windowEndsAt: number;
+  setupFor?: string; // login of the last setup request, so the demo link knows whose it is
 }
 
 function load(): State {
@@ -128,12 +129,23 @@ export const mockApi: Api = {
     save(s);
     await wait(null, 150);
   },
-  async setupRequest() {
+  async setupRequest(username) {
+    const s = load();
+    s.setupFor = username;
+    save(s);
     await wait(null, 500);
   },
   async setupComplete(token) {
     await wait(null, 500);
-    if (!token) throw new ApiError(400, 'INVALID_TOKEN', 'This link is invalid or has expired.');
+    // demo: ?token=expired shows the expired-link screen
+    if (!token || token === 'expired') throw new ApiError(400, 'INVALID_TOKEN', 'This link is invalid or has expired.');
+    return { intra_username: load().setupFor ?? 'anashwan' };
+  },
+  async resetRequest(username) {
+    return mockApi.setupRequest(username);
+  },
+  async resetComplete(token, password) {
+    return mockApi.setupComplete(token, password);
   },
 
   async me() {
