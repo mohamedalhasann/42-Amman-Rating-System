@@ -17,6 +17,18 @@ const DIMENSION_OF = {
   'disruptive': 'Conduct',
   'aggressive behavior': 'Conduct',
   'disrespectful': 'Conduct',
+  'clear explainer': 'Help',
+  'helpful feedback': 'Help',
+  'knows their code': 'Help',
+  'thorough': 'Teamwork',
+  'well prepared': 'Teamwork',
+  'rushed': 'Teamwork',
+  'late': 'Teamwork',
+  'unprepared': 'Teamwork',
+  'fair': 'Conduct',
+  'open to feedback': 'Conduct',
+  'defensive': 'Conduct',
+  'bad evaluator': 'Conduct',
 };
 
 export const dimensionOf = label => DIMENSION_OF[label?.name?.trim().toLowerCase()] || 'Other';
