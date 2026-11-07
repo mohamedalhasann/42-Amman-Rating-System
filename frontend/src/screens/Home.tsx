@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Monogram } from '../components/Monogram';
+import { Kitten, type Mood } from '../components/Kitten';
 import { Icon, StarMeter, Wordmark, pad, starWord, useCountdown } from '../components/bits';
 import { api, type Dashboard, type GivenRating, type HistoryPoint } from '../api';
 import { useSession } from '../session';
@@ -17,6 +17,7 @@ export function Home() {
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [given, setGiven] = useState<GivenRating[]>([]);
   const [loadError, setLoadError] = useState('');
+  const [metLast, setMetLast] = useState(true);
   const [rating, setRating] = useState(false);
   // The rated list has a fixed height; fade its bottom edge while more names sit below.
   const givenRef = useRef<HTMLUListElement>(null);
@@ -38,6 +39,7 @@ export function Home() {
       setHistory(h);
       setGiven(g);
       setLoadError('');
+      api.participation().then((p) => setMetLast(p.met_last_minimum !== false)).catch(() => undefined);
     } catch {
       setLoadError('Couldn’t load your dashboard. Check your connection and try again.');
     }
@@ -73,6 +75,8 @@ export function Home() {
   const left = allowance?.votes_remaining ?? 0;
   const max = win?.max_votes ?? 0;
   const min = win?.min_votes ?? 0;
+  // The cat reacts to voting only, never to the rating.
+  const mood: Mood = win && used > 0 && used >= min ? 'happy' : !metLast && used === 0 ? 'sleepy' : 'normal';
 
   return (
     <div className="home">
@@ -90,14 +94,12 @@ export function Home() {
 
       <main className="home__grid">
         <section className="poster rise" aria-labelledby="poster-title">
-          <div className="poster__who">
-            <div className="poster__badge">
-              <Monogram first={me.first_name} last={me.last_name} />
-            </div>
-            <div className="poster__names">
-              <h1 className="poster__name">{me.first_name} {me.last_name}</h1>
-              <p className="mono poster__login">{me.intra_username}</p>
-            </div>
+          <div className="poster__pet">
+            <Kitten mood={mood} scale={3} />
+          </div>
+          <div className="poster__names">
+            <h1 className="poster__name">{me.first_name} {me.last_name}</h1>
+            <p className="mono poster__login">{me.intra_username}</p>
           </div>
 
           <div className="poster__info">

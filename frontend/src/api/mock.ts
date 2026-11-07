@@ -259,7 +259,9 @@ export const mockApi: Api = {
     const s = load();
     const me = current(s);
     const used = allowance(s, me.intra_username).votes_used;
-    return wait({ streak: 4, windows_joined: 6, windows_total: 7, votes_given_total: 17 + used });
+    // nterzi missed the last window's minimum in the demo, so their cat naps until they vote
+    const missed = me.intra_username === 'nterzi';
+    return wait({ streak: missed ? 0 : 4, windows_joined: missed ? 5 : 6, windows_total: 7, votes_given_total: 17 + used, met_last_minimum: !missed });
   },
   async given() {
     const s = load();

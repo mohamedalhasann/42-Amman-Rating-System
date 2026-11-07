@@ -80,6 +80,8 @@ export interface Participation {
   windows_joined: number;
   windows_total: number;
   votes_given_total: number;
+  /** proposed: did the student reach the minimum in the last closed window? Drives the cat's napping mood. */
+  met_last_minimum?: boolean;
 }
 
 // added: GET /student/ratings/given?window_id=

@@ -156,13 +156,11 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   transition: background 300ms ease;
   padding: 20px; display: flex; flex-direction: column; gap: 22px;
 }
-.poster__who { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.poster__badge { position: relative; flex: none; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; background: var(--paper); border: var(--stroke); }
-.poster__badge .monogram span { font-size: 36cqw; color: var(--ink); }
-.poster__names { min-width: 0; }
+.poster__pet { grid-area: pet; align-self: end; line-height: 0; }
+.poster__names { grid-area: names; min-width: 0; }
 .poster__name { font-size: 17px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .poster__login { font-size: 14px; color: var(--muted-on-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.poster__info { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.poster__info { grid-area: info; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .home .poster__label { font-size: 15px; font-weight: 500; color: var(--muted-on-ink); }
 .poster__rating { --accent: var(--on-accent); display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 16px; }
 .poster__number { font-size: 76px; font-weight: 700; letter-spacing: -0.05em; line-height: 0.85; }
@@ -239,9 +237,9 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   .home__grid { grid-template-columns: minmax(380px, 0.82fr) 1.18fr; gap: 24px; align-items: start; }
   .home__col { gap: 24px; }
   /* stretch to the height of the cards beside it; the rating sits at the bottom */
-  .poster { align-self: stretch; display: flex; flex-direction: column; padding: 30px; gap: 34px; border-radius: 34px; }
-  .poster__who { flex: 1; flex-direction: column; justify-content: center; gap: 16px; text-align: center; }
-  .poster__badge { width: min(200px, 50%); height: auto; aspect-ratio: 1; border-width: 3px; }
+  .poster { align-self: stretch; display: grid; grid-template-areas: 'pet' 'names' 'info'; grid-template-rows: 1fr auto auto; grid-template-columns: 1fr; padding: 30px; gap: 0; border-radius: 34px; }
+  .poster__pet { align-self: center; justify-self: center; padding: 10px 0 6px; }
+  .poster__names { text-align: center; margin-bottom: 34px; }
   .poster__name { font-size: 26px; letter-spacing: -0.02em; }
   .poster__login { font-size: 15px; }
   .poster__number { font-size: 120px; }
@@ -469,3 +467,15 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 }
 .pet-moods__btn[aria-checked='true'] { background: var(--accent); color: var(--on-accent, var(--ink)); transform: translateY(3px); box-shadow: none; }
 .pet-note { min-height: 3em; }
+
+/* the profile card: on phones the cat sits beside your rating, on desktop it takes the top of the card */
+@media (max-width: 1023px) {
+  .poster { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'names names' 'info pet'; column-gap: 4px; row-gap: 18px; }
+  .poster__pet { margin: -6px -14px -20px -10px; } /* the sprite has empty edges for sparkles and Z's */
+  .poster__pet .kitten { width: 190px !important; height: 182px !important; --px: 2px !important; }
+  .poster__number { font-size: 68px; }
+}
+@media (max-width: 379px) {
+  .poster__pet .kitten { width: 95px !important; height: 91px !important; --px: 1px !important; }
+  .poster__pet { margin: 0 -12px -10px 0; }
+}
