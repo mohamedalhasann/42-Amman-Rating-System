@@ -23,14 +23,14 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 /* ---------- auth ---------- */
 .auth { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
 .auth__stage {
-  position: relative; overflow: hidden; background: var(--accent); color: var(--ink);
+  position: relative; overflow: hidden; background: var(--accent); color: var(--on-accent);
   padding: 24px 22px 0; display: flex; flex-direction: column; gap: 18px;
   border-bottom: var(--stroke);
 }
 .auth__brand { display: flex; justify-content: space-between; align-items: center; }
-.auth__campus { font-size: 13px; color: var(--ink); }
+.auth__campus { color: var(--on-accent); }
 .auth__pitch h1 { font-size: clamp(34px, 8vw, 76px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 700; }
-.auth__pitch p { margin-top: 12px; color: var(--ink); opacity: 0.78; font-size: 17px; max-width: 34ch; }
+.auth__pitch p { margin-top: 14px; color: inherit; font-size: 18px; font-weight: 500; line-height: 1.45; max-width: 32ch; }
 .auth__panel { display: flex; align-items: center; justify-content: center; padding: 32px 20px 48px; }
 .auth__form { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
 .auth__head { display: flex; flex-direction: column; gap: 8px; }
@@ -55,6 +55,9 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 @media (min-width: 960px) {
   .auth { grid-template-columns: 1.15fr 1fr; }
   .auth__stage { padding: 40px 48px 0; min-height: 100vh; position: sticky; top: 0; border-bottom: none; border-right: var(--stroke); }
+  .auth__pitch { margin: auto 0; }
+  .auth__stage .auth__promises { margin-top: 0; }
+  .auth__pitch p { font-size: 20px; }
 }
 
 /* ---------- onboarding ---------- */
@@ -86,7 +89,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   border-radius: var(--r-lg); padding: 18px; box-shadow: var(--shadow);
 }
 .idcard__avatar {
-  width: 64px; height: 64px; flex: none; border-radius: 18px; background: var(--accent); border: var(--stroke);
+  width: 64px; height: 64px; flex: none; border-radius: 18px; background: var(--accent); color: var(--on-accent); border: var(--stroke);
   display: grid; place-items: center; font-size: 22px; font-weight: 700; overflow: hidden;
 }
 .idcard__avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -158,6 +161,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 
 /* the poster: who you are, then your rating */
 .poster {
+  --accent: var(--accent-on-ink);
   position: relative; overflow: hidden; background: var(--ink); color: var(--paper); border-radius: 30px;
   padding: 20px; display: flex; flex-direction: column; gap: 22px;
 }
@@ -291,7 +295,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   flex: none; width: 46px; height: 46px; border-radius: 15px; border: var(--stroke); background: #e3e6e1;
   display: grid; place-items: center; font-weight: 700; font-size: 14px;
 }
-.peer__avatar--lg { width: 62px; height: 62px; border-radius: 20px; font-size: 19px; background: var(--accent); }
+.peer__avatar--lg { width: 62px; height: 62px; border-radius: 20px; font-size: 19px; background: var(--accent); color: var(--on-accent); }
 .peer__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .peer__name { font-weight: 600; }
 .peer__login { font-size: 13px; }
@@ -320,7 +324,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 .notice svg { flex: none; margin-top: 1px; }
 .done { align-items: center; justify-content: center; text-align: center; gap: 18px; }
 .done__badge {
-  width: 104px; height: 104px; border-radius: 32px; background: var(--accent); border: var(--stroke);
+  width: 104px; height: 104px; border-radius: 32px; background: var(--accent); color: var(--on-accent); border: var(--stroke);
   box-shadow: var(--shadow); display: grid; place-items: center;
 }
 .done__text { font-size: 18px; line-height: 1.45; max-width: 34ch; }
@@ -338,7 +342,8 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 
 /* the three promises: login panel and onboarding side panel */
 .promises { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.promises li { display: flex; align-items: flex-start; gap: 12px; font-size: 16px; line-height: 1.4; }
+.promises li { display: flex; align-items: flex-start; gap: 12px; font-size: 16px; font-weight: 500; line-height: 1.4; }
+.promises b { font-weight: 700; }
 .promises__icon { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; border: 2px solid currentColor; }
 .promises li > span:last-child { padding-top: 8px; }
 .promises--on-ink { color: var(--paper); }
@@ -350,6 +355,13 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 /* onboarding side panel: a preview of the student's own card */
 .onb__preview { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .onb__badge { position: relative; width: min(220px, 60%); aspect-ratio: 1; border-radius: 50%; background: var(--accent); border: 3px solid var(--paper); transition: background 300ms ease; }
-.onb__badge .monogram span { color: var(--ink); }
+.onb__badge .monogram span { color: var(--on-accent); }
 .onb__name { color: var(--paper); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin-top: 8px; }
 @media (max-width: 959px) { .auth__promises { display: none; } }
+
+/* 42 Amman mark, coloured by the surrounding text */
+.campus-logo {
+  display: inline-block; flex: none; background: currentColor;
+  -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
+}
+.onb__brand { display: flex; justify-content: space-between; align-items: center; color: var(--paper); }

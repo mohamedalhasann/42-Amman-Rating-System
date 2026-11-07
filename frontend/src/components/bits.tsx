@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Stars } from '../api';
 
-export function Wordmark({ size = 26, onInk = false, dotColor = 'var(--accent)' }: { size?: number; onInk?: boolean; dotColor?: string }) {
+export function Wordmark({ size = 26, onInk = false, color, dotColor = 'var(--accent)' }: { size?: number; onInk?: boolean; color?: string; dotColor?: string }) {
   return (
-    <span style={{ fontSize: size, fontWeight: 700, letterSpacing: '-0.03em', color: onInk ? 'var(--paper)' : 'var(--ink)' }}>
+    <span style={{ fontSize: size, fontWeight: 700, letterSpacing: '-0.03em', color: color ?? (onInk ? 'var(--paper)' : 'var(--ink)') }}>
       Fairly<span style={{ color: dotColor }}>.</span>
     </span>
   );

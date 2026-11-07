@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { api, ApiError, type Me, type Profile } from './api';
 
-export const DEFAULT_ACCENT = '#00BABC';
+import { DEFAULT_ACCENT, applyAccent, knownAccent } from './accents';
+
+export { DEFAULT_ACCENT, applyAccent };
 
 type Status = 'loading' | 'anonymous' | 'ready';
 
@@ -17,9 +19,6 @@ interface SessionValue {
 
 const SessionContext = createContext<SessionValue | null>(null);
 
-export function applyAccent(color: string) {
-  document.documentElement.style.setProperty('--accent', color);
-}
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading');
@@ -30,7 +29,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const next = await api.me();
       setMe(next);
       setStatus('ready');
-      applyAccent(next.profile?.accent ?? DEFAULT_ACCENT);
+      applyAccent(knownAccent(next.profile?.accent));
       return next;
     } catch (e) {
       if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
