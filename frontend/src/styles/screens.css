@@ -218,6 +218,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 .bars__col { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
 .bars__bar {
   width: 100%; max-width: 54px; background: var(--ink); border: var(--stroke); border-radius: 10px;
+  height: calc(var(--f, 0) * var(--bar-h) + 12px);
   transform-origin: bottom; animation: grow 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .bars__bar--last { background: var(--accent); }
@@ -251,7 +252,11 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   .home__poster { grid-area: poster; }
   .home__window { grid-area: window; }
   .home__history { grid-area: history; display: flex; flex-direction: column; }
-  .home__history .bars { flex: 1; height: auto; min-height: 220px; --bar-h: 190px; }
+  /* the bars fill whatever height the row ends up with; 44px leaves room for the value and 'kept' labels */
+  .home__history .bars { flex: 1; height: auto; min-height: 220px; }
+  .home__history .bars__bar:not(.bars__bar--none):not(.bars__bar--open) { height: calc(var(--f, 0) * (100% - 56px) + 12px); }
+  /* two columns, so a full window's list stays short */
+  .home__window .given { display: grid; grid-template-columns: 1fr 1fr; }
 
   .poster { flex-direction: row; align-items: center; justify-content: space-between; gap: 40px; padding: 32px 40px; border-radius: 30px; }
   .poster__who { gap: 22px; }

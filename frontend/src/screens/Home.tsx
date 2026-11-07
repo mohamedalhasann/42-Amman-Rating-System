@@ -211,7 +211,7 @@ export function Home() {
                     <span
                       aria-hidden="true"
                       className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastMoved ? 'bars__bar--last' : ''}`}
-                      style={h.value !== null ? { height: `calc(${((h.value - 1) / 2).toFixed(3)} * var(--bar-h) + 12px)` } : undefined}
+                      style={h.value !== null ? ({ ['--f' as string]: ((h.value - 1) / 2).toFixed(3) }) : undefined}
                     />
                     <span className="visually-hidden">{text}</span>
                   </li>
