@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useStaff} from './context';
 import {activitySeries, average, counted, filterRatings, fullName, groupsFor, participation, ratingsIn, searchReceivedRatings, stats} from './model';
-import {Badge, dateTime, Empty, Icon, PageControls, Person, RatingTable, Search, shortDate, Tabs} from './components';
+import {Avatar, Badge, dateTime, Empty, Icon, PageControls, Person, RatingTable, Search, shortDate, Tabs} from './components';
 
 function PanelHeading({title, children, description}) {return <div className="panel-heading"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{children}</div>;}
 const displayAverage = value => value === null ? '—' : value.toFixed(2);
@@ -18,7 +18,7 @@ export function Overview() {
     <section className="overview-metrics" aria-label="Window totals">
       <article className="metric-primary"><span>Ratings submitted</span><strong>{summary.submitted}<Icon name="chart" size={36}/></strong><p><i className="dot green"/>{summary.counted} counted <span className="metric-divider">/</span> {summary.invalidated} invalidated</p></article>
       <article><span>Student participation</span><strong>{summary.total ? Math.round(summary.rated/summary.total*100) : 0}<small>%</small></strong><div className="participation-track"><i style={{width:`${summary.total ? summary.rated/summary.total*100 : 0}%`}}/></div><p>{summary.rated} of {summary.total} eligible students have rated</p></article>
-      <article className="metric-action"><span>Still to participate</span><strong>{Math.max(0,summary.total-summary.rated)}<Icon name="people" size={34}/></strong><p>{summary.total===summary.rated?'Everyone in this window has rated.':<button className="metric-link" onClick={()=>{setRosterState(state=>({...state,filter:'not',page:1}));go('students')}}>View students who have not rated <Icon name="arrow" size={15}/></button>}</p></article>
+      <article className="metric-action"><span>Still to participate</span><strong>{Math.max(0,summary.total-summary.rated)}<Icon name="people" size={34}/></strong><p>{!summary.total?'No students in this window’s roster.':summary.total===summary.rated?'Everyone in this window has rated.':<button className="metric-link" onClick={()=>{setRosterState(state=>({...state,scope:'window',filter:'not',page:1}));go('students')}}>View students who have not rated <Icon name="arrow" size={15}/></button>}</p></article>
       <article><span>Open abuse cases</span><strong>{cases.length}<button className="circle-button" aria-label="Open abuse review" onClick={()=>go('review')}><Icon name="arrow"/></button></strong><p>{cases.length ? 'Ready for staff review' : 'No cases awaiting a decision'}</p></article>
     </section>
     <section className="panel"><PanelHeading title="Rating activity" description={grouped?"Accepted ratings, grouped across this window":"Accepted ratings by day"}><span className="chart-legend"><i/>Submitted</span></PanelHeading>{rows.length ? <><div className="activity-chart" role="img" aria-label={bars.map(b=>`${b.period}: ${b.count} ratings`).join('; ')}><div className="chart-y"><span>{max}</span><span>{Math.round(max/2)}</span><span>0</span></div><div className="chart-bars">{bars.map((b,i)=><div className="chart-day" key={i}><span className="bar-number">{b.count || ''}</span><div className={`bar ${b.count===max?'peak':''} ${b.count===0?'zero':''}`} title={`${b.period}: ${b.count} ratings`} style={{height:b.count?b.count/max*150:0}}/><span className="bar-label">{b.label}</span></div>)}</div></div><div className="chart-note">All accepted votes count immediately. Only invalidated votes are excluded from averages.</div></> : <Empty>This window has no ratings yet.</Empty>}</section>
@@ -33,19 +33,25 @@ export function Students() {
   const setFilter=value=>setRosterState(state=>({...state,filter:value,page:1}));
   const setPage=value=>setRosterState(state=>({...state,page:value}));
   const window=db.windows.find(w=>w.id===windowId), roster=participation(db,windowId);
+  const scope=window&&rosterState.scope==='window'?'window':'directory';
+  const directory=db.students.filter(student=>student.active&&(fullName(student)+' '+student.intra_username).toLowerCase().includes(query.trim().toLowerCase()));
   const matches=roster.filter(person=>(fullName(person.student)+' '+person.student.intra_username).toLowerCase().includes(query.trim().toLowerCase())&&(filter==='all'||(filter==='rated'?person.submitted>0:person.submitted===0)));
   const previousWindow=React.useRef(windowId);
   useEffect(()=>{if(previousWindow.current!==windowId){setRosterState(state=>({...state,page:1}));previousWindow.current=windowId;}},[windowId,setRosterState]);
   const safePage=Math.min(page,Math.max(1,Math.ceil(matches.length/8)));
-  return <section className="panel student-roster">
+  return <><div className="student-scope"><Tabs label="Student view" value={scope} onChange={scope=>setRosterState(state=>({...state,scope,page:1}))} options={window?[["directory","Student directory"],["window","Window participation"]]:[["directory","Student directory"]]}/></div>{scope==='directory'?<section className="panel student-roster">
+    <PanelHeading title="Student directory" description="Active 42cursus students from the imported campus roster."><span className="roster-total">{db.students.filter(student=>student.active).length} students</span></PanelHeading>
+    <div className="table-toolbar"><Search value={query} onChange={setQuery} label="Search students" placeholder="Search name or username"/></div>
+    {directory.length?<><div className="table-scroll"><table><thead><tr><th>Student</th><th>Account status</th><th><span className="sr-only">Student record</span></th></tr></thead><tbody>{directory.slice((Math.min(page,Math.ceil(directory.length/8))-1)*8,Math.min(page,Math.ceil(directory.length/8))*8).map(student=><tr key={student.id}><td><Person id={student.id}/></td><td><Badge tone={student.approved_at?'green':student.email_verified_at?'amber':'neutral'}>{student.approved_at?'Approved':student.email_verified_at?'Awaiting approval':'Setup required'}</Badge></td><td><button className="text-button view-record" data-student-id={student.id} onClick={()=>goStudent(student.id)}>View record <Icon name="arrow" size={16}/></button></td></tr>)}</tbody></table></div><PageControls page={Math.min(page,Math.ceil(directory.length/8))} setPage={setPage} total={directory.length}/></>:<Empty>No students match your search.</Empty>}
+  </section>:<section className="panel student-roster">
     <PanelHeading title="Window roster" description="Check participation or open a student’s rating record."><span className="roster-total">{roster.length} students</span></PanelHeading>
     <div className="table-toolbar"><Search value={query} onChange={setQuery} label="Search students" placeholder="Search name or username"/><Tabs label="Participation filter" value={filter} onChange={setFilter} options={[["all",`Everyone (${roster.length})`],["rated",`Rated (${roster.filter(person=>person.submitted).length})`],["not",`Not rated (${roster.filter(person=>!person.submitted).length})`]]}/></div>
     {matches.length?<>
       <div className="table-scroll"><table><thead><tr><th>Student</th><th>Votes given</th><th>Votes remaining</th><th>Participation</th><th><span className="sr-only">Student record</span></th></tr></thead><tbody>{matches.slice((safePage-1)*8,safePage*8).map(person=><tr className={selectedStudent===person.student.id?'record-selected':''} key={person.student.id}><td><Person id={person.student.id}/></td><td><span className="vote-count">{person.submitted}</span>{person.counted!==person.submitted&&<small className="block muted">{person.counted} counted</small>}</td><td>{person.remaining}</td><td><div className="participation-cell"><Badge tone={!person.submitted?'neutral':person.submitted>=window.min_votes?'green':'amber'}>{!person.submitted?'Not rated':person.submitted>=window.min_votes?'Target met':`${window.min_votes-person.submitted} below target`}</Badge><small>{person.submitted} / {window.min_votes} target</small></div></td><td><button className="text-button view-record" data-student-id={person.student.id} aria-label={`View record for ${fullName(person.student)}`} onClick={()=>goStudent(person.student.id)}>View record <Icon name="arrow" size={16}/></button></td></tr>)}</tbody></table></div>
       <PageControls page={safePage} setPage={setPage} total={matches.length}/>
-    </>:<Empty>{roster.length?'No students match these filters.':'No student roster has been captured for this window yet.'}</Empty>}
+    </>:<Empty>{roster.length?'No students match these filters.':window.roster_captured_at?'No approved students were eligible when this window opened.':'The participation roster will be captured when this window opens.'}</Empty>}
     <p className="panel-note">The minimum is a participation target. Invalidated votes still use voting allowance.</p>
-  </section>;
+  </section>}</>;
 }
 
 export function StudentRecord({id}) {
@@ -57,16 +63,16 @@ export function StudentRecord({id}) {
   const received=db.ratings.filter(r=>r.recipient_id===id&&(scope==='all'||r.window_id===windowId));
   const labelGroups=groupsFor(db,received,'label').filter(group=>group.id!=='none');
   return <div className="routed-student-record">
-    <div className="student-record-context"><span>{window.name}</span><span>{shortDate(window.starts_at)} – {shortDate(window.ends_at)}</span></div>
+    {window&&<div className="student-record-context"><span>{window.name}</span><span>{shortDate(window.starts_at)} – {shortDate(window.ends_at)}</span></div>}
     <section className="student-record-summary">
       <div className="record-heading">
-        <div className="record-identity"><span className={'avatar avatar-'+Number(id.slice(1))%5}>{student.first_name[0]}{student.last_name[0]}</span><div><h2>{fullName(student)}</h2><p>{student.intra_username}</p></div></div>
+        <div className="record-identity"><Avatar student={student}/><div><h2>{fullName(student)}</h2><p>{student.intra_username}</p></div></div>
         <Badge tone={student.approved_at?'green':'amber'}>{student.approved_at?'Approved':'Awaiting approval'}</Badge>
       </div>
       <div className="record-metrics">
         <div><span>Overall average</span><strong>{displayAverage(average(db,id))}<small> / 3</small></strong><p>All voting windows</p></div>
-        <div><span>Window average</span><strong>{displayAverage(average(db,id,windowId))}<small> / 3</small></strong><p>{window.name}</p></div>
-        <div><span>Ratings given</span><strong>{ratingsIn(db,windowId).filter(r=>r.voter_id===id).length}</strong><p>{window.name}</p></div>
+        <div><span>Window average</span><strong>{window?displayAverage(average(db,id,windowId)):'—'}<small> / 3</small></strong><p>{window?.name||'No voting window'}</p></div>
+        <div><span>Ratings given</span><strong>{ratingsIn(db,windowId).filter(r=>r.voter_id===id).length}</strong><p>{window?.name||'No voting window'}</p></div>
       </div>
     </section>
     <section className="panel record-history">
@@ -74,7 +80,7 @@ export function StudentRecord({id}) {
       <div className="inner-tabs"><Tabs label="Rating direction" value={direction} onChange={setDirection} options={[["received","Received"],["given","Given"]]}/><span className="muted">{rows.length} {rows.length===1?'rating':'ratings'}</span></div>
       <RatingTable rows={[...rows].sort((a,b)=>b.submitted_at.localeCompare(a.submitted_at))} studentDirection={direction} showWindow={scope==='all'} pageSize={5}/>
     </section>
-    <section className="record-label-section"><PanelHeading title="Labels received" description={scope==='all'?'Across all voting windows':window.name}/><div className="received-labels">{labelGroups.map(group=>{const valid=group.rows.filter(counted).length;return <span key={group.id}>{group.name}<b>{valid===group.rows.length?valid+' '+(valid===1?'rating':'ratings'):valid+' counted · '+(group.rows.length-valid)+' invalidated'}</b></span>;})}{!labelGroups.length&&<p className="muted">No received labels in this scope.</p>}</div></section>
+    <section className="record-label-section"><PanelHeading title="Labels received" description={scope==='all'?'Across all voting windows':window?.name}/><div className="received-labels">{labelGroups.map(group=>{const valid=group.rows.filter(counted).length;return <span key={group.id}>{group.name}<b>{valid===group.rows.length?valid+' '+(valid===1?'rating':'ratings'):valid+' counted · '+(group.rows.length-valid)+' invalidated'}</b></span>;})}{!labelGroups.length&&<p className="muted">No received labels in this scope.</p>}</div></section>
   </div>;
 }
 
@@ -165,10 +171,9 @@ export function AbuseReview() {
       <Search value={query} onChange={value=>update('query',value)} label="Search abuse cases" placeholder="Search case or student"/>
       <div className="review-filter-selects"><label><span>Pattern</span><select aria-label="Case mechanism" value={mechanism} onChange={e=>update('mechanism',e.target.value)}><option value="">Every pattern</option>{mechanisms.map(m=><option key={m}>{m}</option>)}</select></label><label><span>Decision status</span><select aria-label="Case status" value={status} onChange={e=>update('status',e.target.value)}><option value="open">Needs review</option><option value="confirmed">Abuse confirmed</option><option value="dismissed">Dismissed</option><option value="">All statuses</option></select></label></div>
     </div>
-    <p className="review-results-summary" role="status">{cases.length} {cases.length===1?'case':'cases'} shown · {cases.filter(c=>c.status==='open').length} awaiting a decision in this view</p>
     <div className="case-list">
       {cases.slice((safePage-1)*6,safePage*6).map(c=><button key={c.id} data-case-id={c.id} className="case-item" onClick={()=>openCase(c.id)}>
-        <div className="case-item-top"><span className="case-id">Case {c.id.toUpperCase()}</span><Badge tone={c.status==='open'?'amber':c.status==='confirmed'?'red':'neutral'}>{c.status==='open'?'Needs review':c.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge><time dateTime={c.detected_at}>Flagged {dateTime(c.detected_at)} · Amman</time></div>
+        <div className="case-item-top"><span className="case-id">Case {c.id.toUpperCase()}</span>{c.status!=='open'&&<Badge tone={c.status==='confirmed'?'red':'neutral'}>{c.status==='confirmed'?'Abuse confirmed':'Dismissed'}</Badge>}<time dateTime={c.detected_at}>Flagged {dateTime(c.detected_at)} · Amman</time></div>
         <div className="case-item-body"><div><h3>{c.title}</h3><p className="case-explanation-preview">{c.findings.map(f=>f.explanation).join(' ')}</p><p className="case-people-preview"><span>Involves</span> {people(c)}</p><div className="case-facts"><span>{c.findings.length} {c.findings.length===1?'pattern':'patterns'} matched</span><span>{c.rating_ids.length} linked {c.rating_ids.length===1?'rating':'ratings'}</span>{c.attempt_ids.length>0&&<span>{c.attempt_ids.length} blocked {c.attempt_ids.length===1?'attempt':'attempts'}</span>}</div></div><span className="case-open">Review case <Icon name="arrow" size={17}/></span></div>
       </button>)}
       {!cases.length&&<Empty>No cases match these filters.</Empty>}

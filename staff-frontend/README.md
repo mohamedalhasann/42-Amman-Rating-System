@@ -1,62 +1,63 @@
 # Fairly staff frontend
 
-React + Vite. Run from this directory:
+React + Vite, connected to Django through cookie sessions. The bundle contains no demo roster or cases. Workspace records stay in memory and are never saved to localStorage. Fixture/model files remain only for tests.
+
+## Run locally
+
+From the repository root, with the backend environment already configured:
 
 ```sh
+.venv/bin/python backend/manage.py migrate
+.venv/bin/python backend/manage.py provision_staff
+cd staff-frontend
 npm install
-npm run dev
+npm run build
+cd ..
+.venv/bin/python backend/manage.py runserver
 ```
 
-Open the printed localhost URL. The app opens directly to the staff dashboard. Authentication is intentionally left to the teammate implementing it. All names, votes, attempts, and cases are synthetic.
+Open **http://127.0.0.1:8000/staff/**. Before the shared login is integrated, sign in with your existing superuser at **http://127.0.0.1:8000/admin/**, then open `/staff/` in the same browser. Use the same hostname; `localhost` and `127.0.0.1` have separate cookies.
+
+No new React login page was added. The shared login on `feat/student-frontend` remains on that branch. It should POST `{intra_username, password}` to `/api/v1/auth/login`, then redirect a returned `role: "staff"` to `/staff/`. Setup requests need only `{intra_username}`; the backend chooses the stored role and email domain. The student frontend has not been connected.
+
+For React development, keep Django on port 8000 and run `npm run dev` in this directory. Open **http://127.0.0.1:5173/staff/**. Vite proxies `/api` to Django. Port 5173 is fixed; its localhost origins are trusted for CSRF only in Django debug mode. Do not put credentials or API tokens in Vite environment variables.
+
+For production, serve `dist/assets/` at `/staff/assets/` through the web server. Route `/staff/` and `/api/v1/` to Django on the same HTTPS origin. Django serves the built index; its asset route is development-only. Configure real SMTP, PostgreSQL, HTTPS and secrets separately.
+
+## Connected pages
+
+- **Overview:** totals, participation, daily activity and recent ratings for the selected window.
+- **Students:** imported student directory and captured-window participation, with search/pagination. Records show given/received histories and all-window/window averages. Private photos render when available, with initials on missing or failed images.
+- **Ratings:** group by recipient, stars or label; inspect histories/details; export all matching results rather than just the visible page.
+- **Abuse review:** persisted cases, findings, students, ratings and blocked attempts. Select abusive counted ratings first, then resolve once with one reason. The server saves the decision, selected exclusions and audit together. Dismissal preserves ratings.
+- **Configuration:** persisted windows and labels, overlap/limit validation, stale-write checks and preserved rosters/history.
+- **Accounts:** pending student approvals, versioned manual-approval setting and trusted staff roster with setup status.
+- **Activity log:** persisted staff actors/actions, approvals, configuration, case decisions and CSV exports.
+
+Changes show success only after server confirmation. The app refreshes on demand, on focus and every minute while visible. Expired or revoked access removes workspace data. Backend failures never fall back to synthetic records.
+
+## Current boundaries
+
+An empty database shows empty states. Create a window and labels in Configuration. Browse imported students before a window exists. Approvals do not change an already captured roster.
+
+Student rating submission and automatic abuse detection remain separate pending workstreams. Staff pages display their records once those services write to the shared models. An empty queue does not mean a detector ran. Do not insert demo votes/cases into the real database.
+
+Run `manage.py capture_window_rosters` every minute in deployment; staff reads and window writes also capture overdue rosters. Captures exclude approvals/verification after opening and never replace existing snapshots. Delayed capture uses current activation/eligibility because historical changes are not recorded: run the scheduler at opening. Date edits preserve captured membership.
+
+Staff reads currently fetch one complete campus snapshot, with React search/grouping/pagination. This suits the initial campus integration; large histories will need server aggregation and paginated reads. CSV is server-generated and audited, with at most 10000 selected records per request. PostgreSQL concurrency and production deployment have not been verified locally.
+
+Photo collection remains blocked by the upstream CDN; missing photos use initials. Login and ordinary page requests never call 42.
+
+## Verification
 
 ```sh
 npm test
 npm run build
+../.venv/bin/python ../backend/manage.py test profiles.tests --noinput
 ```
 
-## Staff coverage
+Backend tests cover authorization/CSRF, automatic role lookup, trusted provisioning, imports, account setup/approval, rosters, configuration conflicts, atomic case resolution and CSV safety/auditing. Frontend model tests cover all eight abuse examples and reporting/filtering rules.
 
-The visual system follows the supplied Fairly student reference: locally bundled Space Grotesk and JetBrains Mono, cyan `#00BABC`, ink `#121417`, off-white `#F4F5F2`, dotted backgrounds, dark outlines, and rounded controls. The bundled font files were extracted unchanged from the supplied student prototype; their original SIL Open Font License notices are retained in `src/fonts.css`.
+Browser checks use an isolated synthetic SQLite database. They cover all seven pages, directory search/pagination/records, grouped rating details, selection before resolution, recalculated totals, CSV, persisted configuration, approvals/settings, audit, refresh, narrow layouts, session expiry and absence of workspace browser storage.
 
-The campus branding imports the original `../docs/42-logo.jpeg` through Vite and displays only its 42 symbol using a compact CSS crop. The adjacent wordmark is hidden without stretching or altering the source file. The sidebar shows it on desktop; the header shows it in compact layouts. Build from the repository checkout so this source asset is available.
-
-Usability refinements include a labeled and remembered window selection, clear-search controls, distinct table headings, accessible star values and active navigation, keyboard skip/focus handling, sticky dialog close controls, and an activity chart that covers the entire window without implying votes on zero-activity days. Long windows are grouped into at most seven date ranges; retained historical votes stay visible after date edits.
-
-The three PDFs under `../docs/` are the source requirements. The current decisions, voting rules, authentication plan, and proposed API contract define additional team policies.
-
-| Requirement | Frontend flow |
-| --- | --- |
-| Overview | Submitted, counted, invalidated, participating/eligible totals; daily activity; stars. All computed from the same records. The requested “Yet to participate” overview card is removed. |
-| Window-specific participation | One Students page with the captured window roster, including zero-vote students; name/username search; everyone/rated/not-rated filters; votes given, counted totals when different, remaining allowance, minimum progress; pagination. The old `#participation` route redirects here. |
-| Student inspection | Click a student or View record to navigate to a dedicated `#students/<id>` page. Direct links, refresh, and browser back/forward work. Back to students restores the roster's search, filters, pagination, and scroll position. The record page includes overall/window averages, given/received histories showing only the other student, a window scope switch, received labels, and rating detail with explanation, timestamp, state, and related cases. Student records are not drawers; individual rating details still open in a dialog over the record page. |
-| Rating explorer | Browse ratings has Student, Stars, and Label tabs for the required grouped summaries; Student means the recipient. Student browsing uses case-insensitive name/username search instead of a long dropdown and shows names with usernames. Group summaries render 10 items per page. View ratings and group names navigate to dedicated `#explorer/<student\|stars\|label>/<id>` pages with rating history, status filtering, pagination, and a scoped export. Direct links, refresh, and browser back/forward work. Back to ratings restores the browse category, search, filters, group page, scroll, and focus. Stars and Label selectors filter the grouped summaries; individual records open on their own page. Search/selection combines with Status, and Clear filters resets both. Empty combinations stay empty rather than reverting to all ratings. No separate Group by/View selector. Submitted/counted/invalidated totals and one export action following the visible results are retained. |
-| Labels | Add labels; edit permitted star levels; activate/deactivate; historical wording/selections preserved. Replacements rather than renaming historical labels. |
-| Voting configuration | Create/edit/select windows, dates, minimum and maximum; derived upcoming/open/closed state; overlap/integer/range validation; existing votes and captured rosters preserved. All date inputs explicitly use Amman time. |
-| CSV | Export all ratings in selected window or current filtered/grouped view; identities, stars, labels, time, state, explanation, and invalidation reason; CSV quoting and spreadsheet-formula neutralization; export audit event. |
-| Unified abuse review | One searchable inbox covering all eight required scenarios, with pattern/status/window filters and pagination. Cases open on dedicated `#review/<id>` pages, with a plain-language explanation first, chronological rating cards with student explanations inline, and the staff decision after the evidence. A side column shows every flagged mechanism, involved students and their roles, the case window, and detection time. Linked evidence retains its own window and can cross windows. Accepted ratings and blocked attempts are separate, each paginated six per page. Back to review inbox preserves search, filters, page, scroll, and focus. Direct links, refresh, and browser history work. |
-| Decisions and invalidation | Select abusive ratings during evidence review, then resolve once with one reason: confirm abuse and exclude the selected ratings together, or dismiss without changing ratings. Case resolution, exclusions, and audit are saved atomically by the preview adapter. Cases with no counted ratings can be confirmed without exclusions. Original records, decisions, and exclusion reasons remain inspectable; unrelated votes and voting allowance are preserved. The backend must enforce the same transaction boundary when integrated. |
-| Account administration | Manual student-approval setting; verified pending accounts; explicit approval; established approvals retained; existing captured window roster unaffected. Disabling manual approval leaves existing pending accounts for explicit review, shown in the UI. This is a preview policy for the unresolved pending-account decision. |
-| Authentication | Delegated to the teammate responsible for authentication. No sign-in, credential, setup, or session implementation is included in this frontend. |
-| Audit | Staff decisions, per-rating invalidation data, label/window edits, approvals, settings, and exports retain actor, timestamp, and reason/detail. Searchable and paginated activity log. |
-
-The dashboard shows participation as a fraction. Students who have not voted remain discoverable in Participation, as required, without a separate overview card.
-
-## Local preview and production boundary
-
-The local adapter uses browser storage under `fairly.staff.preview.v3` for **synthetic data only**. Changes survive refresh and synchronize between tabs. Clearing that storage resets the preview on the next load. This frontend does not implement login, credentials, email, or sessions.
-
-This is a frontend workflow implementation with a local data adapter, not a deployed secure application. Before using real student records, connect the proposed `/api/v1` Django endpoints from `../docs/planning/api-contract.md`, remove the bundled fixtures, and integrate the teammate's authentication with server-side staff authorization for every data, mutation, and CSV request. Enforce verified/approved/active accounts, secure sessions/CSRF, protected storage, token lifetime/single use, and privacy on the server.
-
-The eight case fixtures demonstrate the review interface. They are not running abuse detectors, and their examples do not approve numeric detection thresholds. Detector rules, trusted roster imports, and email delivery belong to the backend workstreams. Thresholds remain deferred in the team decisions.
-
-Window rosters are captured on preview load when a window has started; future windows have no snapshot until then. The backend must capture eligibility durably at the actual opening instant. Existing snapshots do not change on approvals or window edits. All-window averages remain independent of selected-window filters.
-
-## Verification
-
-`npm test` exercises fixture validity, all eight mechanisms, totals reconciliation, invalidation prerequisites/recalculation/idempotency, dismissal, preserved allowances, window validation, approvals, historical labels, grouping, filters, and CSV escaping.
-
-Scale checks cover 235 recipients, including duplicate display names. Browser verification with an isolated synthetic dataset of 235 students and 470 ratings checks that only 10 grouped rows render at once, name/username search combines with status, pagination is preserved on returning from a group, and export includes the entire matching set rather than only the displayed page. This does not replace Django-side search, aggregation, and cursor pagination when live data is integrated.
-
-Browser verification also exercises screen navigation, searches/filters, student directions, grouping, case decisions, selective invalidation, updated totals, approval, audit entries, CSV flow, persistence after refresh, and desktop/narrow layouts. Production backend authorization remains an integration acceptance check, not a verified frontend capability.
-
-Case review checks cover all eight case types, inline explanations, inbox state restoration, required decision reasons, confirmation without automatic invalidation, cancellation and selective exclusion, persisted reasons and audit entries, and dismissal without changes to ratings. A separate synthetic case checks 31 ratings across voting windows, selection across evidence pages, and 15 non-retry blocked attempts with independent pagination. Desktop and narrow layouts are checked for page overflow.
+The bundled Space Grotesk/JetBrains Mono fonts retain their original license notices in `src/fonts.css`. Campus branding uses the supplied 42 asset.

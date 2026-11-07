@@ -284,6 +284,7 @@ h1:focus,#main-content:focus{outline:none}
 .badge{font-size:11px}.person small{font-size:11px;line-height:1.45}
 .table-toolbar select{font-size:13px}.table-toolbar .search-box{flex:1;max-width:330px}.table-toolbar .search-box input{width:100%}
 .search-box:focus-within{outline:0}.search-box input[type=search]::-webkit-search-cancel-button{display:none}
+.search-box input:focus,.search-box input:focus-visible{outline:none;box-shadow:none}
 .clear-search{width:24px;height:24px;border-radius:6px;flex-shrink:0;display:grid;place-items:center;color:#555B63;padding:0}.clear-search:hover{background:#E3E6E1;color:var(--ink)}
 .rating-stars{display:inline-flex;letter-spacing:1px}.rating-stars>.stars-filled{color:var(--ink)}
 .table-scroll:focus-visible{outline:2px solid var(--cyan);outline-offset:-3px}
@@ -631,3 +632,17 @@ h1:focus,#main-content:focus{outline:none}
 @media(max-width:1050px){.case-brief{grid-template-columns:minmax(0,1fr) 390px}.case-workspace{grid-template-columns:minmax(0,1fr) 320px}.case-brief-main{padding:24px}.case-brief-people{padding-inline:24px}}
 @media(max-width:820px){.case-brief{grid-template-columns:1fr}.case-brief-facts{border-left:0;border-top:1px solid #DADDD8}.case-workspace{grid-template-columns:1fr}.case-workspace .case-resolution{position:static;order:-1}.case-brief-people{padding-inline:20px}.case-brief-main{padding:22px}}
 @media(max-width:600px){.case-brief-facts>div{padding:17px}.case-brief .case-findings p{font-size:14px}.case-brief-people{gap:10px}.case-workspace{gap:18px}.case-workspace .case-resolution-body{padding:18px}.case-workspace .case-resolution .case-section-heading{padding:20px 18px 16px}}
+:root{color-scheme:light}
+.session-boundary{max-width:600px;margin:12vh auto;padding:24px}
+.session-boundary .brand{display:inline-block;margin-bottom:32px}
+.session-boundary .panel{padding:32px}
+.session-boundary h1{font-size:26px;line-height:1.3}
+.session-boundary p{color:var(--muted,#62676e);line-height:1.6;margin:16px 0 24px}
+.staff-identity{display:grid;gap:4px;margin-bottom:14px;overflow-wrap:anywhere}
+.staff-identity small{color:var(--muted,#62676e)}
+.form-stack .form-fields{border:0;padding:0;margin:0;display:grid;gap:18px;min-width:0}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.no-window{text-align:center;padding:52px 24px}
+.no-window h2{margin:16px 0 8px}
+.no-window p{color:var(--muted,#62676e);margin:0 0 24px}
+.student-scope{margin-bottom:18px}

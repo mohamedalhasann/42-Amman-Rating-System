@@ -25,7 +25,7 @@ Updated 3 November 2026 from the project owner's instructions. Agreed team polic
 ## Open details before the relevant feature is built
 
 - Deployment target, mail provider, session implementation, password policy, setup-token lifetime, and rate limits.
-- Trusted staff roster provisioning and initial administrator. Staff setup cannot be self-authorized.
+- Trusted staff roster supplied by the owner and provisioned by local command; initial administration uses `createsuperuser`. Staff setup cannot be self-authorized. The shared React login remains on its separate branch and will infer roles from stored usernames.
 - Treatment of already-verified pending students when manual approval is disabled. Proposed: approve them with an audit event.
 - Durable photo storage and access policy. Proposed: copy image objects into controlled storage and keep references in PostgreSQL instead of relying on Intra URLs.
 - Eligibility changes after a window opens. Proposed: preserve the snapshot and add new students next window. Deactivated accounts cannot access the application.

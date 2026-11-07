@@ -5,7 +5,7 @@ import {Badge, dateTime, Empty, Icon, Modal, PageControls, Person, RatingLabels,
 import './case-review.css';
 
 export function CaseDetail({id}) {
-  const {db,dispatch,notify,go}=useStaff();
+  const {db,dispatch,notify,go,saving}=useStaff();
   const [tab,setTab]=useState('ratings'),[page,setPage]=useState(1);
   const [selected,setSelected]=useState([]),[dialog,setDialog]=useState(null);
   const [reason,setReason]=useState(''),[error,setError]=useState('');
@@ -22,22 +22,21 @@ export function CaseDetail({id}) {
   const windowName=id=>db.windows.find(w=>w.id===id)?.name||'Unknown window';
   const name=id=>fullName(db.students.find(s=>s.id===id));
   function openDialog(value){setDialog(value);setReason('');setError('');}
-  function save(){
+  async function save(){
     try{
-      dispatch({type:'resolve-case',id:c.id,status:dialog==='dismissed'?'dismissed':'confirmed',ids:dialog==='dismissed'?[]:selectedIds,reason});
+      await dispatch({type:'resolve-case',id:c.id,status:dialog==='dismissed'?'dismissed':'confirmed',ids:dialog==='dismissed'?[]:selectedIds,reason});
       setDialog(null);setSelected([]);
       if(dialog==='confirmed'){setTab('ratings');setPage(1);}
       notify(dialog==='dismissed'?'Case dismissed. Ratings are unchanged.':'Case closed. Selected ratings excluded and scores updated.');
     }catch(e){setError(e.message);}
   }
   return <div className="investigation">
-    <div className="investigation-toolbar"><div><Icon name="clock" size={16}/><span>Flagged {dateTime(c.detected_at)} · Amman</span><span>·</span><span>{windowName(c.window_id)}</span></div>{canResolve&&<button className="button primary" onClick={()=>openDialog(selectedIds.length||!valid?'confirmed':'dismissed')}>Resolve case <Icon name="arrow" size={16}/></button>}</div>
-    <section className="investigation-summary" aria-labelledby="investigation-summary-title"><div className="investigation-summary-icon"><Icon name="flag" size={22}/></div><div><h2 id="investigation-summary-title">Why this was flagged</h2>{c.findings.map(f=><div className="investigation-finding" key={f.mechanism}><span>{f.mechanism}</span><p>{f.explanation}</p></div>)}<p className="investigation-caution">A flagged pattern is a reason to investigate. It does not establish misconduct.</p></div></section>
+    <div className="investigation-toolbar"><div><Icon name="clock" size={16}/><span>Flagged {dateTime(c.detected_at)} · Amman</span><span>·</span><span>{windowName(c.window_id)}</span></div></div>
+    <section className="investigation-summary" aria-labelledby="investigation-summary-title"><div className="investigation-summary-icon"><Icon name="flag" size={22}/></div><div><h2 id="investigation-summary-title">Why this was flagged</h2>{c.findings.map(f=><div className="investigation-finding" key={f.mechanism}><span>{f.mechanism}</span><p>{f.explanation}</p></div>)}</div></section>
     {c.review&&<section className={`investigation-decision ${c.status}`} aria-label="Recorded staff decision"><Icon name={c.status==='dismissed'?'check':'flag'} size={20}/><div><h2>{c.status==='dismissed'?'Case dismissed':'Abuse confirmed'}</h2><p>{c.review.reason}</p><small>{c.review.by} · {dateTime(c.review.at)} · Amman</small></div><span>{ratings.length-valid} of {ratings.length} ratings excluded</span></section>}
     <section className="investigation-evidence" aria-label="Case evidence">
-      <div className="investigation-evidence-heading"><div><h2>Case evidence</h2><p>Follow the sequence and compare the students’ reports.</p></div><span>{valid} counted · {ratings.length-valid} excluded</span></div>
+      <div className="investigation-evidence-heading"><h2>Case evidence</h2><span>{valid} counted · {ratings.length-valid} excluded</span></div>
       <div className="investigation-tabs"><Tabs label="Case evidence" value={tab} onChange={value=>{setTab(value);setPage(1);}} options={[["ratings",`Ratings (${ratings.length})`],["attempts",`Blocked attempts (${attempts.length})`],["people",`Students (${people.length})`]]}/><span><Icon name="clock" size={14}/>{tab==='people'?'Involved students':'Oldest first'}</span></div>
-      {canResolve&&valid>0&&tab==='ratings'&&<div className="investigation-selection"><div><strong>Select any ratings you found abusive</strong><p>Resolve the case once: exclude your selection, or dismiss without changing ratings.</p></div><span>{selectedIds.length} selected</span></div>}
       {tab==='ratings'&&<div className="evidence-timeline">{ratings.slice((safePage-1)*6,safePage*6).map((r,index)=><article className={`evidence-entry ${selectedIds.includes(r.id)?'selected':''}`} key={r.id} aria-label={`Rating ${r.id.toUpperCase()}`}><div className="evidence-marker">{(safePage-1)*6+index+1}</div><div className="evidence-entry-content">
         <div className="evidence-entry-meta"><time dateTime={r.submitted_at}>{dateTime(r.submitted_at)} · Amman</time><span>{windowName(r.window_id)}</span><Badge tone={counted(r)?'green':'neutral'}>{counted(r)?'Counted':'Excluded'}</Badge></div>
         <div className="evidence-relationship"><div><span>Rated by</span><Person id={r.voter_id}/></div><Icon name="arrow" size={20}/><div><span>Received by</span><Person id={r.recipient_id}/></div><div className="evidence-score"><RatingStars stars={r.stars}/><span>{r.stars} / 3</span></div></div>
@@ -50,15 +49,14 @@ export function CaseDetail({id}) {
       {!entries.length&&<Empty>{tab==='ratings'?'No accepted ratings are linked to this case.':'No blocked attempts are linked to this case.'}</Empty>}
       {entries.length>6&&<PageControls page={safePage} setPage={setPage} total={entries.length} size={6}/>}
     </section>
-    {canResolve&&<div className="investigation-bottom"><div><strong>{selectedIds.length?`${selectedIds.length} ratings selected for exclusion`:'Finished reviewing the evidence?'}</strong><p>One decision closes the case and applies any exclusions.</p></div><button className="button primary" onClick={()=>openDialog(selectedIds.length||!valid?'confirmed':'dismissed')}>Resolve case <Icon name="arrow" size={16}/></button></div>}
-    {dialog&&<Modal title="Resolve case" onClose={()=>setDialog(null)} className="investigation-dialog">
-      <p>Choose the outcome and add one reason. Everything is saved together.</p><div className="investigation-outcome-options">{[['confirmed',valid?'Exclude selected & close':'Confirm abuse & close',valid?`${selectedIds.length} selected ratings will stop counting toward scores.`:'Close this case without changing any scores.'],['dismissed','Dismiss case','Close without changing any ratings.']].map(([value,title,description])=><label key={value} className={dialog===value?'chosen':''}><input type="radio" name="case-outcome" checked={dialog===value} onChange={()=>{setDialog(value);setError('');}}/><span><strong>{title}</strong><small>{description}</small></span></label>)}</div>
+    {canResolve&&<div className="investigation-bottom"><div><strong aria-live="polite">{selectedIds.length?`${selectedIds.length} ${selectedIds.length===1?'rating':'ratings'} selected`:valid?'Select abusive ratings to resolve this case.':'No counted ratings to exclude.'}</strong></div><div className="investigation-bottom-actions"><button className="text-button" onClick={()=>openDialog('dismissed')}>Dismiss case</button><button className="button primary" disabled={valid>0&&!selectedIds.length} onClick={()=>openDialog('confirmed')}>{valid?'Resolve case':'Close case'}<Icon name="arrow" size={16}/></button></div></div>}
+    {dialog&&<Modal title={dialog==='dismissed'?'Dismiss case?':'Resolve case?'} onClose={()=>{if(!saving)setDialog(null);}} className="investigation-dialog">
+      <p>{dialog==='dismissed'?'Close this case without changing any ratings.':selectedIds.length?`Exclude ${selectedIds.length} selected ${selectedIds.length===1?'rating':'ratings'} and close this case.`:'Confirm the flagged abuse and close this case. No scores will change.'}</p>
       {dialog==='confirmed'&&valid>0&&!selectedIds.length&&<p className="form-error">Select the abusive ratings in the evidence first, or choose Dismiss case.</p>}
       {dialog==='confirmed'&&selectedIds.length>0&&<ul className="investigation-exclusion-list">{ratings.filter(r=>selectedIds.includes(r.id)).map(r=><li key={r.id}><span>{name(r.voter_id)} → {name(r.recipient_id)}</span><RatingStars stars={r.stars}/></li>)}</ul>}
-      <label className="investigation-reason" htmlFor="investigation-reason">Decision reason <span>Required</span><textarea id="investigation-reason" rows={4} value={reason} onChange={e=>{setReason(e.target.value);setError('');}} placeholder="Describe what you found in the evidence."/></label>
-      <p className="investigation-dialog-note">{dialog==='confirmed'?'Closing confirms abuse and excludes only the listed ratings. Your reason and the original records are retained. Voting allowance stays unchanged.':'No ratings will change, including any you selected. Your reason will be saved.'}</p>
+      <label className="investigation-reason" htmlFor="investigation-reason">Decision reason <span>Required</span><textarea id="investigation-reason" rows={4} maxLength={5000} disabled={saving} value={reason} onChange={e=>{setReason(e.target.value);setError('');}} placeholder="Describe what you found in the evidence."/></label>
       {error&&<p className="form-error" role="alert">{error}</p>}
-      <div className="modal-actions"><button className="button" onClick={()=>setDialog(null)}>Cancel</button><button className={`button ${dialog==='confirmed'?'danger':'primary'}`} disabled={!reason.trim()||(dialog==='confirmed'&&valid>0&&!selectedIds.length)} onClick={save}>{dialog==='dismissed'?'Dismiss case':valid?'Exclude selected & close case':'Confirm abuse & close case'}</button></div>
+      <div className="modal-actions"><button className="button" disabled={saving} onClick={()=>setDialog(null)}>Cancel</button><button className={`button ${dialog==='confirmed'?'danger':'primary'}`} disabled={saving||!reason.trim()||(dialog==='confirmed'&&valid>0&&!selectedIds.length)} onClick={save}>{saving?'Saving…':dialog==='dismissed'?'Dismiss case':valid?'Exclude selected & close case':'Confirm abuse & close case'}</button></div>
     </Modal>}
   </div>;
 }

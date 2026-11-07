@@ -22,11 +22,19 @@ export function Icon({name, size = 20}) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] || paths.grid}/></svg>;
 }
 export function Badge({children, tone = ''}) {return <span className={`badge ${tone}`}>{children}</span>;}
+export function Avatar({student}) {
+  const [failed,setFailed]=useState(false);
+  useEffect(()=>setFailed(false),[student.photo_url]);
+  const color=[...student.id].reduce((sum,letter)=>sum+letter.charCodeAt(0),0)%5;
+  return <span className={`avatar avatar-${color}`} aria-hidden="true">{student.photo_url&&!failed?
+    <img src={student.photo_url} alt="" loading="lazy" onError={()=>setFailed(true)}/>:
+    `${student.first_name?.[0]||''}${student.last_name?.[0]||''}`||student.intra_username.slice(0,2).toUpperCase()}</span>;
+}
 export function Person({id, compact = false, clickable = true}) {
   const {db, goStudent} = useStaff();
   const student = db.students.find(s => s.id === id);
   if (!student) return <span>Unknown student</span>;
-  const content = <><span className={`avatar avatar-${Number(id.slice(1)) % 5}`}>{student.first_name[0]}{student.last_name[0]}</span><span className="person-name">{fullName(student)}{!compact && <small>{student.intra_username}</small>}</span></>;
+  const content = <><Avatar student={student}/><span className="person-name">{fullName(student)}{!compact && <small>{student.intra_username}</small>}</span></>;
   return clickable ? <button className="person" onClick={() => goStudent(id)}>{content}</button> : <span className="person static">{content}</span>;
 }
 export function Search({value, onChange, placeholder = 'Search students…', label = 'Search', inputRef}) {

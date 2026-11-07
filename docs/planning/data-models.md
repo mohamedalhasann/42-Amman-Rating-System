@@ -1,6 +1,6 @@
 # Data models
 
-Status: Logical PostgreSQL model for the agreed Django backend. No migrations are included. Agreed policies are in [decisions](decisions.md); entity layout and implementation details remain proposals. IDs are opaque internal references. Timestamps are timezone-aware UTC instants.
+Status: Logical plan for the Django backend. Account/profile and staff workspace models now have migrations under `backend/profiles/migrations`; see the [staff integration guide](../../staff-frontend/README.md) for actual APIs and remaining work. IDs are opaque internal references. Timestamps are timezone-aware UTC instants.
 
 ## Relationships
 
@@ -38,7 +38,7 @@ Proposed shared account table: `User(id, role, active, email_verified_at, approv
 
 `Staff(user_id, intra_username)`: `user_id` is the primary key and User foreign key, and `intra_username` is unique. Records require trusted provisioning. Setup is not public staff registration. Proposed enforcement: each User has exactly the profile matching its role; no client may choose or change that role. Dual-role accounts remain outside the agreed baseline.
 
-Separate profile tables avoid duplicating usernames across a shared account and its profile. A staff and student username may match; the proposed account-type login selector resolves the trusted profile. Student lookup returns first name, last name, and username; photo display is still proposed.
+The implementation uses globally unique usernames across staff and students; the backend resolves the stored role without a public role selector. Student lookup returns first name, last name and username. The staff React client displays protected photo references when available, with initials as fallback.
 
 Email is derived from profile role: student `{intra_username}@student.42amman.com`, staff `{intra_username}@42amman.com`. Do not permit caller-supplied email addresses to redirect setup mail. The local roster and copied pictures must survive loss of 42 API access. See [authentication](authentication.md).
 
