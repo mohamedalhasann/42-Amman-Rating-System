@@ -164,7 +164,6 @@ export function StudentRecord({id}) {
     .filter(r => direction === 'received' ? r.recipient_id === id : r.voter_id === id)
     .filter(r => !picked || direction !== 'received' || picked.ratingIds.includes(r.id))
     .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at));
-  const maxCount = Math.max(5, ...info.dimensions.map(d => Math.max(d.positive, d.negative)));
   const targets = db.windows.filter(win => win.roster?.includes(id) && win.min_votes > 0);
   const metTarget = targets.filter(win => db.ratings.filter(r => r.window_id === win.id && r.voter_id === id).length >= win.min_votes).length;
   const givenTotal = info.given.total || 1;
@@ -181,11 +180,11 @@ export function StudentRecord({id}) {
         <p>{info.received ? `${info.received} rating${info.received === 1 ? '' : 's'} from ${info.raters} ${info.raters === 1 ? 'person' : 'people'}` : 'No counted ratings yet'}</p>
       </div>
       <div className="record-trend" aria-label="Rating by window">
-        <span className="record-label">By window</span>
+        <span className="record-label">Average per window</span>
         <div className="trend-bars">{info.perWindow.map(p => <div key={p.window.id} className={'trend-col' + (p.window.id === windowId ? ' selected' : '') + (stateOfWindow(p.window) === 'Open' ? ' open' : '')} title={`${p.window.name}: ${p.average === null ? 'no ratings' : p.average.toFixed(2)} (${p.count} ratings)`}>
           <span className="trend-value">{p.average === null ? '–' : p.average.toFixed(1)}</span>
           <i style={{height: p.average === null ? 2 : 6 + (p.average - 1) / 2 * 40}}/>
-          <span className="trend-name">{p.window.name.replace(/^Window\s*/i, 'W')}</span>
+          <span className="trend-name">{p.window.name.replace(/^Window\s*/i, 'W')}{stateOfWindow(p.window) === 'Open' && <em>open</em>}</span>
         </div>)}</div>
       </div>
       <div className="record-stars">
@@ -194,27 +193,39 @@ export function StudentRecord({id}) {
       </div>
     </section>
 
-    {(signals.length > 0 || info.cases.length > 0) && <section className="record-signals">
-      {signals.map((x, i) => <span key={i} className={`signal signal-${x.kind}`}>{x.text}</span>)}
-      {info.cases.map(c => <button key={c.id} className="text-button" onClick={() => openCase(c.id)}>{c.status === 'open' ? 'Open case' : c.status === 'confirmed' ? 'Confirmed case' : 'Dismissed case'}: {c.title} <Icon name="arrow" size={15}/></button>)}
+    {signals.filter(x => x.kind !== 'case').length > 0 && <section className="record-signals">
+      {signals.filter(x => x.kind !== 'case').map((x, i) => <span key={i} className={`signal signal-${x.kind}`}>{x.text}</span>)}
+    </section>}
+
+    {info.cases.length > 0 && <section className="panel record-cases">
+      <PanelHeading title="Abuse cases" description={`${info.cases.filter(c => c.status === 'open').length} open · ${info.cases.filter(c => c.status !== 'open').length} decided`}/>
+      <ul className="record-case-list">
+        {[...info.cases].sort((a, b) => (a.status === 'open' ? 0 : 1) - (b.status === 'open' ? 0 : 1) || b.detected_at.localeCompare(a.detected_at)).map(c => {
+          const role = c.roles?.[id];
+          const side = role === 'target' ? 'About votes they received' : role === 'voter' ? 'About votes they gave' : 'Involved';
+          return <li key={c.id}><button className="record-case" onClick={() => openCase(c.id)}>
+            <span className="pattern-chip">{c.findings[0]?.mechanism}</span>
+            <span className="record-case-title">{c.title}</span>
+            <span className="record-case-side">{side}</span>
+            <span className={'record-case-status ' + c.status}>{c.status === 'open' ? 'Needs a decision' : c.status === 'confirmed' ? 'Votes excluded' : 'Dismissed'}</span>
+            <Icon name="arrow" size={15}/>
+          </button></li>;
+        })}
+      </ul>
     </section>}
 
     <section className="panel record-dimensions">
-      <PanelHeading title="How peers describe them" description="Labels grouped into dimensions, across all windows. Counts show mentions and the number of different people. Select a dimension to see the ratings behind it."/>
-      {info.dimensions.some(d => d.positive + d.negative) ? <div className="dimension-rows" role="list">
-        {info.dimensions.map(d => <button key={d.dimension} role="listitem" className={'dimension-row' + (dimension === d.dimension ? ' active' : '')} disabled={!d.positive && !d.negative} aria-pressed={dimension === d.dimension} onClick={() => { setDirection('received'); setDimension(dimension === d.dimension ? null : d.dimension); }}>
-          <span className="dimension-name">{d.dimension}</span>
-          <span className="dimension-side negative">
-            {d.negative > 0 && <span className="dimension-count">{d.flags > 0 && <b className="flag-mark" title="Includes 1-star flags">⚑ {d.flags}</b>}{d.negative} concern{d.negative === 1 ? '' : 's'} · {d.negativePeople} {d.negativePeople === 1 ? 'person' : 'people'}</span>}
-            <i style={{width: `${d.negative / maxCount * 70}%`}}/>
-          </span>
-          <span className="dimension-side positive">
-            <i style={{width: `${d.positive / maxCount * 70}%`}}/>
-            {d.positive > 0 && <span className="dimension-count">{d.positive} positive · {d.positivePeople} {d.positivePeople === 1 ? 'person' : 'people'}</span>}
-          </span>
-        </button>)}
+      <PanelHeading title="How peers describe them" description="Labels received across all windows, grouped by what they describe. Select a row to see those ratings below."/>
+      {info.dimensions.some(d => d.positive + d.negative) ? <div className="dimension-list" role="list">
+        {info.dimensions.map(d => {
+          const labels = info.labels.filter(l => dimensionOf(l.label) === d.dimension);
+          const empty = !d.positive && !d.negative;
+          return <button key={d.dimension} role="listitem" className={'dimension-item' + (dimension === d.dimension ? ' active' : '')} disabled={empty} aria-pressed={dimension === d.dimension} onClick={() => { setDirection('received'); setDimension(dimension === d.dimension ? null : d.dimension); }}>
+            <span className="dimension-name">{d.dimension}</span>
+            <span className="dimension-labels">{empty ? <span className="muted">Not mentioned yet</span> : labels.map(l => <span key={l.label.id} className={`label-chip tone-${l.tone}`}>{l.label.name}<b>{l.people === 1 ? '1 person' : `${l.people} people`}</b></span>)}</span>
+          </button>;
+        })}
       </div> : <Empty>No labels received yet.</Empty>}
-      {info.labels.length > 0 && <div className="label-chips">{info.labels.map(l => <span key={l.label.id} className={`label-chip tone-${l.tone}`}>{l.label.name}<b>{l.count}{l.people !== l.count ? ` · ${l.people} people` : ''}</b></span>)}</div>}
     </section>
 
     <section className="panel record-history">
