@@ -154,6 +154,6 @@ test('grouping, filtering, and export use the same rating records', () => {
   assert.ok(filterRatings(db,'w7',{stars:'1'}).every(r=>r.stars===1));
   assert.equal(average(db,'s12'),null);
   const csv=ratingsCsv(db,[{...rows[0],explanation:'=HYPERLINK("bad")\nsecond line, quoted'}]);
-  assert.ok(csv.includes('rating_id')); assert.ok(csv.includes('invalidation_reason'));
+  assert.ok(csv.includes('Voter login')); assert.ok(csv.includes('Exclusion reason')); assert.ok(!csv.includes(rows[0].id));
   assert.ok(csv.includes("'=HYPERLINK")); assert.ok(csv.includes('""bad""'));
 });

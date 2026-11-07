@@ -259,20 +259,22 @@ def export_ratings(request):
     with transaction.atomic():
         locked_state()
         rows = list(Rating.objects.filter(pk__in=ids, window_id=window_id).select_related(
-            'voter__user', 'recipient__user', 'invalidation').prefetch_related('labels').order_by('submitted_at', 'id'))
+            'window', 'voter__user', 'recipient__user', 'invalidation').prefetch_related('labels').order_by('submitted_at', 'id'))
         if len(rows) != len(ids):
             return error('STATE_CONFLICT', 'Some ratings are unavailable in this window. Reload before exporting.', 409)
         output = io.StringIO(newline='')
         output.write('\ufeff')
         writer = csv.writer(output)
-        writer.writerow(['rating_id', 'window_id', 'voter_id', 'voter_name', 'recipient_id', 'recipient_name',
-                         'stars', 'labels', 'submitted_at', 'state', 'explanation', 'invalidation_reason'])
+        # Readable for staff: names and logins, local time, plain status. No database identifiers.
+        writer.writerow(['Window', 'Voter', 'Voter login', 'Recipient', 'Recipient login', 'Stars', 'Labels',
+                         'Explanation', 'Submitted (Amman time)', 'Status', 'Exclusion reason'])
         for r in rows:
             invalidation = getattr(r, 'invalidation', None)
-            writer.writerow([csv_cell(v) for v in [r.id, r.window_id, r.voter_id, r.voter.user.get_full_name(),
-                r.recipient_id, r.recipient.user.get_full_name(), r.stars, '; '.join(l.name for l in r.labels.all()),
-                stamp(r.submitted_at), 'invalidated' if invalidation else 'counted', r.explanation,
-                invalidation.reason if invalidation else '']])
+            writer.writerow([csv_cell(v) for v in [r.window.name, r.voter.user.get_full_name(), r.voter.user.username,
+                r.recipient.user.get_full_name(), r.recipient.user.username, r.stars,
+                ', '.join(l.name for l in r.labels.all()), r.explanation,
+                timezone.localtime(r.submitted_at).strftime('%Y-%m-%d %H:%M'),
+                'Excluded' if invalidation else 'Counted', invalidation.reason if invalidation else '']])
         AccountAudit.objects.create(actor=request.user, action='Ratings exported', detail={
             'target': str(window_id), 'summary': f'{len(rows)} records', 'rating_ids': [str(r.id) for r in rows]})
         response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')

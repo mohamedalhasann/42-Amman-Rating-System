@@ -130,11 +130,13 @@ export function applyAction(db, action, now = new Date().toISOString()) {
   return db;
 }
 export function ratingsCsv(db, rows) {
-  const columns = ['rating_id', 'window_id', 'voter_id', 'voter_name', 'recipient_id', 'recipient_name', 'stars', 'labels', 'submitted_at', 'state', 'explanation', 'invalidation_reason'];
+  const columns = ['Window', 'Voter', 'Voter login', 'Recipient', 'Recipient login', 'Stars', 'Labels', 'Explanation', 'Submitted (Amman time)', 'Status', 'Exclusion reason'];
   const cell = value => {
     let text = String(value ?? '');
     if (/^[\s]*[=+@-]/.test(text) || /^[\t\r\n]/.test(text)) text = "'" + text;
     return '"' + text.replaceAll('"', '""') + '"';
   };
-  return '\uFEFF' + [columns, ...rows.map(r => [r.id, r.window_id, r.voter_id, fullName(db.students.find(s => s.id === r.voter_id)), r.recipient_id, fullName(db.students.find(s => s.id === r.recipient_id)), r.stars, r.label_ids.map(id => db.labels.find(l => l.id === id)?.name).join('; '), r.submitted_at, counted(r) ? 'counted' : 'invalidated', r.explanation, r.invalidation?.reason || ''])].map(row => row.map(cell).join(',')).join('\r\n');
+  const person = id => db.students.find(s => s.id === id);
+  const local = t => new Intl.DateTimeFormat('sv-SE', {timeZone: 'Asia/Amman', dateStyle: 'short', timeStyle: 'short'}).format(new Date(t));
+  return '\uFEFF' + [columns, ...rows.map(r => [db.windows.find(w => w.id === r.window_id)?.name, fullName(person(r.voter_id)), person(r.voter_id)?.intra_username, fullName(person(r.recipient_id)), person(r.recipient_id)?.intra_username, r.stars, r.label_ids.map(id => db.labels.find(l => l.id === id)?.name).join(', '), r.explanation, local(r.submitted_at), counted(r) ? 'Counted' : 'Excluded', r.invalidation?.reason || ''])].map(row => row.map(cell).join(',')).join('\r\n');
 }

@@ -183,7 +183,8 @@ class WorkspaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         rows = list(csv.reader(io.StringIO(response.content.decode('utf-8-sig'))))
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[1][10], '\'=DANGEROUS()\n"quoted", text')
+        self.assertEqual(rows[1][7], '\'=DANGEROUS()\n"quoted", text')
+        self.assertNotIn(str(rating.id), response.content.decode('utf-8-sig'))
         self.assertEqual(AccountAudit.objects.filter(action='Ratings exported').count(), 1)
         self.assertIn('no-store', response['Cache-Control'])
         response = self.client.post('/api/v1/staff/ratings/export.csv', json.dumps({
