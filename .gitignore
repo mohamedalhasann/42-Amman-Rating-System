@@ -1,6 +1,16 @@
-
 # design tool output
 .impeccable/
 
 # Vite cache
 frontend/.vite/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+backend/db.sqlite3
+backend/*.sqlite3-*
+backend/backups/
+backend/private-media/
+backend/staticfiles/

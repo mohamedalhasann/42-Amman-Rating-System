@@ -1,6 +1,18 @@
 # Proposed API contract
 
-Status: Django API draft for React clients and PostgreSQL persistence. Endpoint names remain proposals; policies follow [decisions](decisions.md). No endpoints are implemented.
+Status: Profile import, protected profiles, [local accounts](../../backend/ACCOUNTS.md), and the [staff React workspace](../../staff-frontend/README.md) are implemented. The exact connected staff endpoints are listed below; the granular read/write routes later in this document remain proposals. Student submission and automatic detection are not implemented. Shared React login remains on `feat/student-frontend` for later integration.
+
+## Implemented staff React contract
+
+Every endpoint below requires a trusted, active, verified, approved staff session; writes require CSRF.
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| GET | `/staff/workspace` | Complete campus snapshot: `schema: 4`, workspace `version`, `server_time`, students (identity, activity, verification, approval), staff, windows/rosters, labels, ratings, cases/findings/decisions, attempts, settings/version and staff audit. No credentials, emails or provider IDs. |
+| POST | `/staff/actions` | Expected workspace `version` plus `type`: `window`, `label`, or `resolve-case`. Returns the saved snapshot. Window/label use `value` including ID and entity version. Case resolution uses `id`, `status`, `ids` (selected counted evidence) and `reason`. One transaction saves case, exclusions and audit. Stale writes return 409. |
+| POST | `/staff/ratings/export.csv` | `window_id`, `rating_ids` (1–10000); validates window/evidence scope, returns formula-safe CSV and records export audit. |
+
+The React app also uses the existing settings and account-approval routes below. It groups/searches/pages the complete snapshot in memory and never stores it in localStorage. Empty data remains empty. Pagination/aggregation routes below are a future scale improvement, not existing endpoints. Capture due rosters through `manage.py capture_window_rosters` on a scheduler; reads and window writes also perform a fallback capture.
 
 ## Shared conventions
 
@@ -16,11 +28,11 @@ Status: Django API draft for React clients and PostgreSQL persistence. Endpoint 
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/auth/setup-request` | `intra_username`, proposed `account_type` selector. Generic `202` response; send only to an eligible provisioned account without password. |
-| POST | `/auth/setup-complete` | `token`, `password`. Consume token, create credential, verify email, apply current approval setting. Return `{ "intra_username" }` of the account so the sign-in form can be prefilled; an invalid or used token returns `400` with code `INVALID_TOKEN`. |
-| POST | `/auth/password-reset-request` | `intra_username`, proposed `account_type`. Generic `202` response; email a reset link only to an account that already has a password. Rate-limited like setup. |
-| POST | `/auth/password-reset-complete` | `token`, `password`. Consume a reset-purpose token, replace the credential, revoke the account's other sessions. Never changes verification or approval. Returns `{ "intra_username" }`; an invalid or used token returns `400` with code `INVALID_TOKEN`. |
-| POST | `/auth/login` | `intra_username`, `password`, proposed `account_type`. Select an existing account, never assign its role. |
+| POST | `/auth/setup-request` | `intra_username`. Generic `202`; stored role determines domain. Only eligible provisioned accounts without passwords receive links. |
+| POST | `/auth/setup-complete` | `token`, `password`. Consume setup token, create credential, verify email, apply current approval setting. |
+| POST | `/auth/password-reset-request` | `intra_username`. Generic `202`; email a purpose-bound reset link only to an eligible account with a password. |
+| POST | `/auth/password-reset-complete` | `token`, `password`. Consume reset token, replace credential, revoke sessions. Preserve verification and approval. |
+| POST | `/auth/login` | `intra_username`, `password`; stored account determines role. Legacy `account_type` is ignored. |
 | POST | `/auth/logout` | Authenticated session revocation; CSRF protection if using cookies. |
 | GET | `/staff/settings` | Read approval setting and version. |
 | PATCH | `/staff/settings` | `manual_student_approval_enabled`, expected `version`; preserve existing approvals. |
