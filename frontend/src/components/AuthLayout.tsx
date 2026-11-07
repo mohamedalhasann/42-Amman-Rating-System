@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Wordmark } from './bits';
 import { Promises } from './Promises';
+import { CampusLogo } from './CampusLogo';
 
 export function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,7 +9,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       <section className="auth__stage">
         <div className="auth__brand">
           <Wordmark size={30} dotColor="var(--ink)" />
-          <span className="mono auth__campus">42 Amman</span>
+          <CampusLogo height={58} className="auth__campus" />
         </div>
         <div className="auth__pitch">
           <h1>Peer ratings,<br />done fairly.</h1>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Monogram } from '../components/Monogram';
 import { Promises } from '../components/Promises';
+import { CampusLogo } from '../components/CampusLogo';
 import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
 import { DEFAULT_ACCENT, useSession } from '../session';
 import { ApiError } from '../api';
@@ -50,7 +51,10 @@ export function Onboarding() {
   return (
     <div className="onb">
       <aside className="onb__stage">
-        <Wordmark size={26} onInk />
+        <div className="onb__brand">
+          <Wordmark size={26} onInk />
+          <CampusLogo height={46} />
+        </div>
         <div className="onb__preview">
           <div className="onb__badge">
             <Monogram first={me.first_name} last={me.last_name} />
@@ -76,7 +80,6 @@ export function Onboarding() {
 
         {step === 0 && (
           <section className="onb__step rise" key="you">
-            <p className="eyebrow">Welcome to Fairly</p>
             <h1 className="onb__title">Hi {me.first_name}.</h1>
             <div className="idcard">
               <div className="idcard__avatar mono" aria-hidden="true">
@@ -94,7 +97,6 @@ export function Onboarding() {
 
         {step === 1 && (
           <section className="onb__step rise" key="how">
-            <p className="eyebrow">How it works</p>
             <h1 className="onb__title">Four things to know.</h1>
             <ul className="rules">
               <li>
@@ -123,7 +125,6 @@ export function Onboarding() {
             <div className="onb__mobile-figure" aria-hidden="true">
               <Monogram first={me.first_name} last={me.last_name} />
             </div>
-            <p className="eyebrow">Your color</p>
             <h1 className="onb__title">Pick your accent.</h1>
             <p className="muted onb__lead">It colors the whole app, only for you. 42 cyan is the default. You can change it anytime.</p>
             <div className="swatches" role="radiogroup" aria-label="Accent color">
