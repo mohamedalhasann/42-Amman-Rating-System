@@ -186,12 +186,23 @@ class AbuseCase(models.Model):
     resolved_at = models.DateTimeField(null=True)
     reviewed_by = models.ForeignKey(User, null=True, on_delete=models.PROTECT)
     review_reason = models.TextField(blank=True)
+    # set by automatic detection: one case per pattern instance, so rescans update instead of duplicating
+    dedup_key = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    # student id -> 'target' | 'voter' | 'participant', as recorded by the detector
+    roles = models.JSONField(default=dict, blank=True)
 
 
 class CaseFinding(models.Model):
     case = models.ForeignKey(AbuseCase, related_name='findings', on_delete=models.PROTECT)
     mechanism = models.CharField(max_length=150)
     explanation = models.TextField()
+    # detector output: a stable pattern code, the numbers behind it and the span it looked at
+    kind = models.CharField(max_length=40, blank=True)
+    evidence = models.JSONField(default=dict, blank=True)
+    observed_from = models.DateTimeField(null=True, blank=True)
+    observed_to = models.DateTimeField(null=True, blank=True)
+    # context for staff rather than an accusation (revenge pairs, only-3-star voters)
+    advisory = models.BooleanField(default=False)
 
 
 class Invalidation(models.Model):

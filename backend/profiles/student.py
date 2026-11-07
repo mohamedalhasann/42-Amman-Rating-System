@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
+from . import detection
 from .auth_views import payload
 from .models import (BlockedAttempt, DetectionJob, Label, Rating, RatingSubmission,
                      StudentProfile, User, VotingWindow, WindowParticipant)
@@ -151,6 +152,7 @@ def rating_result(rating, profile):
 def blocked(window, voter, recipient, reason, code):
     attempt = BlockedAttempt.objects.create(window=window, voter=voter, recipient=recipient, reason=reason)
     DetectionJob.objects.create(attempt=attempt)
+    transaction.on_commit(detection.run_soon)
     return error(code, reason, 409)
 
 
@@ -215,6 +217,7 @@ def submit_rating(request):
         rating.labels.set(selected)
         RatingSubmission.objects.create(student=profile, key=key, request_hash=digest, rating=rating)
         DetectionJob.objects.create(rating=rating)
+        transaction.on_commit(detection.run_soon)
         return JsonResponse(rating_result(rating, profile), status=201)
 
 

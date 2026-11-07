@@ -76,7 +76,9 @@ def snapshot(state):
         'student_ids': [str(p.id) for p in c.students.all()], 'rating_ids': [str(r.id) for r in c.ratings.all()],
         'attempt_ids': [str(a.id) for a in c.attempts.all()], 'detected_at': stamp(c.detected_at),
         'resolved_at': stamp(c.resolved_at),
-        'findings': [{'mechanism': f.mechanism, 'explanation': f.explanation} for f in c.findings.all()],
+        'findings': [{'mechanism': f.mechanism, 'explanation': f.explanation, 'kind': f.kind, 'evidence': f.evidence,
+            'observed_from': stamp(f.observed_from), 'observed_to': stamp(f.observed_to), 'advisory': f.advisory} for f in c.findings.all()],
+        'roles': c.roles,
         'review': {'reason': c.review_reason, 'by': c.reviewed_by.username, 'at': stamp(c.resolved_at)} if c.reviewed_by_id else None}
         for c in AbuseCase.objects.select_related('reviewed_by').prefetch_related('students', 'ratings', 'attempts', 'findings').order_by('-detected_at', 'id')]
     attempts = [{'id': str(a.id), 'window_id': str(a.window_id), 'voter_id': str(a.voter_id),
@@ -217,6 +219,14 @@ def mutate_workspace(request):
             elif kind == 'resolve-case':
                 action, target, summary, rating_ids = resolve_case(data, request.user)
                 detail['rating_ids'] = rating_ids
+            elif kind == 'scan':
+                # run every pattern over every window now, instead of waiting for the next vote
+                from . import detection
+                detection.run_jobs()
+                found = set()
+                for window in VotingWindow.objects.order_by('starts_at'):
+                    found |= detection.scan_window(window)
+                action, target, summary = 'Ran abuse detection', 'All windows', f'{len(found)} cases found or refreshed'
             else:
                 raise ValueError('Unsupported staff action.')
             AccountAudit.objects.create(actor=request.user, action=action, detail={**detail, 'target': target, 'summary': summary})
