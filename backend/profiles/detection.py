@@ -16,7 +16,7 @@ import logging
 from django.db import transaction
 from django.utils import timezone
 
-from .models import AbuseCase, CaseFinding, DetectionJob, Rating, VotingWindow
+from .models import AbuseCase, BlockedAttempt, CaseFinding, DetectionJob, Rating, VotingWindow
 
 # Thresholds from the anti-abuse workstream (thresholds.py there).
 BULK_WINDOW_MINUTES = 20
@@ -25,14 +25,16 @@ BULK_RUSH_MIN_VOTERS, BULK_RUSH_CONCENTRATION, BULK_RUSH_HOURS = 6, 0.25, 2
 REPEATED_CONSECUTIVE_WINDOWS = 2
 GROUP_MIN_STUDENTS, GROUP_WINDOW_MINUTES = 3, 60
 BOOSTING_MIN_GROUP = 3
-# "Too fast or too often" has no detector there on purpose: it is enforced when the vote is
-# submitted (the window's vote limit and request throttling), so those attempts never become votes.
+# "Too fast or too often": his thresholds (4 votes in 120 seconds). Speed alone is not abuse, so a
+# burst only counts when every vote in it has the same stars. Refused attempts are context only.
+FAST_MIN_VOTES, FAST_WINDOW_SECONDS = 4, 120
+REFUSED_MIN_ATTEMPTS = 2
 EXTREME_MIN_NEGATIVE, EXTREME_MIN_POSITIVE = 4, 10
 
 # Plain names staff see; the code in `kind` lets the UI group and present each pattern.
 NAMES = {
     'bulk': 'Bulk votes', 'repeated': 'Repeated votes', 'group': 'Group voting', 'revenge': 'Pair voting',
-    'boosting': 'Friends boosting', 'extreme': 'Extreme voter',
+    'boosting': 'Friends boosting', 'fast': 'Too fast', 'refused': 'Refused attempts', 'extreme': 'Extreme voter',
     'serious': 'Serious vote check',
 }
 
@@ -218,6 +220,39 @@ def detect_boosting(window):
     return out
 
 
+# ---------- 6. too fast or too often ----------
+def detect_fast(voter, window, at):
+    """Several votes within two minutes, all with the same stars: not weighing each person."""
+    start = at - timedelta(seconds=FAST_WINDOW_SECONDS)
+    rows = list(_ratings().filter(voter=voter, window=window, submitted_at__gte=start, submitted_at__lte=at).order_by('submitted_at'))
+    if len(rows) < FAST_MIN_VOTES or len({r.stars for r in rows}) != 1:
+        return None
+    stars = rows[0].stars
+    seconds = int((rows[-1].submitted_at - rows[0].submitted_at).total_seconds())
+    took = plural(seconds // 60, 'minute') if seconds >= 120 else plural(max(seconds, 1), 'second')
+    return Finding(
+        'fast', window, f'{name(voter)} gave {len(rows)} people {stars} star{"s" if stars > 1 else ""} in {took}',
+        f'{name(voter)} cast {plural(len(rows), "vote")} within {took}, every one of them {stars} '
+        f'star{"s" if stars > 1 else ""}. That is too quick and too uniform to have weighed each person.',
+        f'fast:{voter.id}:{window.id}:{rows[0].submitted_at:%Y%m%d%H}', rows[0].submitted_at, rows[-1].submitted_at,
+        {'votes': len(rows), 'seconds': seconds, 'stars': stars},
+        {voter: 'voter', **{r.recipient: 'target' for r in rows}}, rows)
+
+
+def detect_refused(voter, window):
+    """Repeated votes the system refused. Only possible by bypassing the app; nothing was counted."""
+    attempts = list(BlockedAttempt.objects.select_related('recipient__user').filter(voter=voter, window=window).order_by('attempted_at'))
+    if len(attempts) < REFUSED_MIN_ATTEMPTS:
+        return None
+    reasons = sorted({a.reason for a in attempts})
+    return Finding(
+        'refused', window, f'{name(voter)} sent {plural(len(attempts), "vote")} the system refused',
+        f'{name(voter)} sent {plural(len(attempts), "vote")} that the system refused: {"; ".join(reasons)}. '
+        'The app never offers these, so they were sent around it. None of them counted.',
+        f'refused:{voter.id}:{window.id}', attempts[0].attempted_at, attempts[-1].attempted_at,
+        {'attempts': len(attempts), 'reasons': reasons}, {voter: 'voter'}, [], attempts, advisory=True)
+
+
 # ---------- 7. extreme voter ----------
 def detect_extreme(voter, window):
     """Someone giving only 1-star (from 4 votes) or only 3-star (from 10 votes) ratings."""
@@ -283,7 +318,7 @@ def check_rating(rating):
     at = rating.submitted_at
     found = [detect_revenge(rating), detect_serious(rating), detect_bulk(rating.recipient, rating.window, at),
              detect_group(rating.recipient, rating.window, at), detect_extreme(rating.voter, rating.window),
-             detect_repeated(rating.voter, rating.recipient)]
+             detect_repeated(rating.voter, rating.recipient), detect_fast(rating.voter, rating.window, at)]
     return [record(f) for f in found if f]
 
 
@@ -304,7 +339,11 @@ def run_jobs(limit=500):
                 rating = _ratings().filter(pk=job.rating_id).first()
                 if rating:
                     check_rating(rating)
-            # blocked attempts were already refused at submission; nothing to detect
+            else:
+                attempt = BlockedAttempt.objects.select_related('voter__user', 'window').get(pk=job.attempt_id)
+                f = detect_refused(attempt.voter, attempt.window)
+                if f:
+                    record(f)
             job.status = 'done'
         except Exception:  # a broken job must not stop the queue; it stays visible as failed
             job.status = 'failed'
@@ -320,6 +359,10 @@ def scan_window(window):
         cases.append(record(f))
     for r in _ratings().filter(window=window).order_by('submitted_at'):
         cases.extend(check_rating(r))
+    for voter_id in set(BlockedAttempt.objects.filter(window=window).values_list('voter_id', flat=True)):
+        f = detect_refused(BlockedAttempt.objects.filter(voter_id=voter_id, window=window).first().voter, window)
+        if f:
+            cases.append(record(f))
     DetectionJob.objects.filter(status='pending').filter(rating__window=window).update(status='done')
     DetectionJob.objects.filter(status='pending').filter(attempt__window=window).update(status='done')
     return {c.id for c in cases if c}

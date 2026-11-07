@@ -34,6 +34,8 @@ export function factsOf(f) {
     case 'boosting': return [`${e.core} in the core circle`, `${e.members} involved`, (e.windows || []).join(' and ')];
     case 'repeated': return [`${e.stars}★ every time`, (e.windows || []).join(', ')];
     case 'revenge': return [`${e.hours_apart} h apart`];
+    case 'fast': return [`${e.votes} votes`, `all ${e.stars}★`, e.seconds < 120 ? `${e.seconds} s` : `${Math.round(e.seconds / 60)} min`];
+    case 'refused': return [`${e.attempts} refused`, ...(e.reasons || [])];
     case 'extreme': return [`${e.votes} votes`, `all ${e.stars}★`];
     case 'serious': return e.labels || [];
     default: return [];
@@ -65,9 +67,11 @@ const PATTERNS = [
   ['group', 'Group voting', 'Three or more students gave one student 1 star within an hour.'],
   ['bulk', 'Bulk votes', 'Many students rated one student within 20 minutes, a large share of all votes on campus at that time.'],
   ['boosting', 'Friends boosting', 'The same circle of students traded 3 stars with each other in more than one window.'],
+  ['fast', 'Too fast', 'Four or more votes within two minutes, all with the same stars.'],
   ['extreme', 'Extreme voter', 'A student who gave only 1 star (4 votes or more), or only 3 stars (10 votes or more).'],
   ['repeated', 'Repeated votes', 'A student gave the same student the same stars in consecutive windows.'],
   ['revenge', 'Pair voting', 'Two students gave each other 1 star in the same window. Often a real dispute.'],
+  ['refused', 'Refused attempts', 'Votes the system refused, sent around the app. None of them counted.'],
   ['serious', 'Serious vote check', 'Every 1-star vote, so a serious claim is checked by a person before it counts against someone.'],
 ];
 const patternOf = c => c.findings[0]?.kind || c.findings[0]?.mechanism || 'other';
