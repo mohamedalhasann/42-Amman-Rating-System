@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Monogram } from '../components/Monogram';
 import { Promises } from '../components/Promises';
 import { CampusLogo } from '../components/CampusLogo';
-import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
+import { Icon, StarIcon, Wordmark } from '../components/bits';
 import { useSession } from '../session';
 import { ACCENTS, knownAccent } from '../accents';
 import { ApiError } from '../api';
+import {ProfilePicture} from '../components/ProfilePicture';
 
 
 const STEPS = ['You', 'How it works', 'Color'];
@@ -50,7 +51,7 @@ export function Onboarding() {
         </div>
         <div className="onb__preview">
           <div className="onb__badge">
-            <Monogram first={me.first_name} last={me.last_name} />
+            <Monogram first={me.first_name} last={me.last_name} picture={me.picture_url}/>
           </div>
           <p className="onb__name">{me.first_name} {me.last_name}</p>
           <p className="mono onb__tag">{me.intra_username} · 42 Amman</p>
@@ -76,7 +77,7 @@ export function Onboarding() {
             <h1 className="onb__title">Hi {me.first_name}.</h1>
             <div className="idcard">
               <div className="idcard__avatar mono" aria-hidden="true">
-                {me.picture_url ? <img src={me.picture_url} alt="" /> : initials(me.first_name, me.last_name)}
+                <ProfilePicture first={me.first_name} last={me.last_name} picture={me.picture_url}/>
               </div>
               <div>
                 <p className="idcard__name">{me.first_name} {me.last_name}</p>
@@ -116,7 +117,7 @@ export function Onboarding() {
         {step === 2 && (
           <section className="onb__step rise" key="color">
             <div className="onb__mobile-figure" aria-hidden="true">
-              <Monogram first={me.first_name} last={me.last_name} />
+              <Monogram first={me.first_name} last={me.last_name} picture={me.picture_url}/>
             </div>
             <h1 className="onb__title">Pick your accent.</h1>
             <p className="muted onb__lead">You can change it anytime.</p>
@@ -135,7 +136,7 @@ export function Onboarding() {
               ))}
             </div>
             {error && <p className="error" role="alert">{error}</p>}
-            <button className="btn btn--accent btn--block" onClick={finish} aria-busy={busy}>
+            <button className="btn btn--accent btn--block" onClick={finish} disabled={busy} aria-busy={busy}>
               {busy ? 'Saving…' : 'Enter Fairly'}
             </button>
           </section>

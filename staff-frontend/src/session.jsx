@@ -25,6 +25,6 @@ export function SessionBoundary({children}) {
   return <main className="session-boundary"><a className="brand" href="/staff/">Fairly<span>.</span></a><section className="panel" aria-live="polite" aria-busy={state.loading||undefined}>
     <h1>{state.loading?'Opening staff workspace…':signedOut?'Sign in required':state.error?.status===403?'Staff access required':'Workspace unavailable'}</h1>
     <p>{state.loading?'Checking your account and loading your workspace.':signedOut?'Sign in through the shared Fairly login, then return here.':state.error.message}</p>
-    {!state.loading&&<button className="button primary" onClick={()=>setAttempt(value=>value+1)}>{signedOut?'Check sign-in':'Try again'}</button>}
+    {!state.loading&&<>{signedOut&&<a className="button primary" href="/login">Sign in</a>}<button className="button" onClick={()=>setAttempt(value=>value+1)}>{signedOut?'Check sign-in':'Try again'}</button></>}
   </section></main>;
 }

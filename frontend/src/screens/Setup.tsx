@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { Icon } from '../components/bits';
 import { PasswordInput, intraLogin } from '../components/PasswordInput';
 import { ApiError, api, isMock } from '../api';
+import { clearLinkToken, readLinkToken } from '../link-token';
 
 const RESEND_AFTER = 30; // seconds
 
@@ -13,16 +14,16 @@ type Mode = 'setup' | 'reset';
 const COPY = {
   setup: {
     title: 'Set up your password',
-    lead: 'We’ll email a link to your 42 student address.',
-    sent: 'If this username belongs to a 42 Amman student who hasn’t set a password yet, we sent a setup link to',
+    lead: 'We’ll email a link to your registered 42 campus address.',
+    sent: 'If this account is eligible for setup, a link will be sent to its registered 42 campus email.',
     alt: 'Already set up?',
     choose: 'Choose a password',
     done: 'Password set. Sign in to continue.',
   },
   reset: {
     title: 'Reset your password',
-    lead: 'We’ll email a reset link to your 42 student address.',
-    sent: 'If this username has a Fairly account, we sent a reset link to',
+    lead: 'We’ll email a reset link to your registered 42 campus address.',
+    sent: 'If this account is eligible for recovery, a link will be sent to its registered 42 campus email.',
     alt: 'Remembered it?',
     choose: 'Choose a new password',
     done: 'Password changed. Sign in with your new one.',
@@ -82,7 +83,7 @@ export function SetupRequest({ mode = 'setup' }: { mode?: Mode }) {
           <p className="muted">
             {copy.sent}
           </p>
-          <p className="mono auth__address">{sentTo}@student.42amman.com</p>
+          <p className="mono auth__address">@{sentTo}</p>
         </div>
         <p className="muted">The link works once. Didn’t get it? Check spam, then send it again.</p>
         {resent && <p className="auth__notice" role="status">Sent again.</p>}
@@ -131,7 +132,7 @@ export function SetupRequest({ mode = 'setup' }: { mode?: Mode }) {
           />
         </div>
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="btn btn--accent btn--block" type="submit" aria-busy={busy}>
+        <button className="btn btn--accent btn--block" type="submit" disabled={busy} aria-busy={busy}>
           {busy ? 'Sending…' : 'Email me a link'}
         </button>
       </form>
@@ -147,8 +148,7 @@ const MIN_PASSWORD = 10;
 // Step 2: the student opens the emailed link and chooses a password.
 export function SetupComplete({ mode = 'setup' }: { mode?: Mode }) {
   const copy = COPY[mode];
-  const [params] = useSearchParams();
-  const token = params.get('token') ?? '';
+  const [token] = useState(readLinkToken);
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -167,12 +167,13 @@ export function SetupComplete({ mode = 'setup' }: { mode?: Mode }) {
     setError('');
     try {
       const res = await (mode === 'reset' ? api.resetComplete(token, password) : api.setupComplete(token, password));
+      clearLinkToken();
       navigate('/login', {
         replace: true,
         state: { notice: copy.done, username: res?.intra_username },
       });
     } catch (err) {
-      if (err instanceof ApiError && err.code === 'INVALID_TOKEN') return setExpired(true);
+      if (err instanceof ApiError && ['INVALID_TOKEN','INVALID_SETUP_LINK'].includes(err.code)){clearLinkToken();return setExpired(true);}
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
       setBusy(false);
     }
@@ -219,7 +220,7 @@ export function SetupComplete({ mode = 'setup' }: { mode?: Mode }) {
           </li>
         </ul>
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="btn btn--accent btn--block" type="submit" aria-busy={busy}>
+        <button className="btn btn--accent btn--block" type="submit" disabled={busy} aria-busy={busy}>
           {busy ? 'Saving…' : 'Set password'}
         </button>
       </form>

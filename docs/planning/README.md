@@ -1,6 +1,6 @@
 # Planning before implementation
 
-Status: Planning draft incorporating owner decisions. Stack: Django, React, PostgreSQL. Profile import, local accounts and the [staff React workspace](../../staff-frontend/README.md) are implemented in [backend](../../backend/README.md). Shared React login and student frontend integration, student submission, automated detection and deployment remain pending. The API contract distinguishes implemented staff endpoints from proposed granular routes.
+Status: Stack: Django, React, PostgreSQL. Profile import, shared accounts/login and both React frontends are connected, including student submission and staff review controls. See [run instructions](../../INTEGRATION.md). Automatic detection thresholds/worker, real SMTP and production deployment remain pending. The API contract distinguishes implemented endpoints from proposed granular staff routes.
 
 The source of truth is [the hackathon specification](../42_Amman_Rating_System_Next_Phase.pdf). The [student experience](../42_Amman_Student_Experience_PC_and_Mobile.pdf) and [staff experience](../42_Amman_Staff_Experience_PC.pdf) describe the interface workstreams. These plans use only those three current PDFs as sources.
 
@@ -27,4 +27,4 @@ Technical structures and endpoint names remain proposals. Agreed owner policies 
 
 ## Immediate team handoff
 
-Use the implemented account and staff contracts for integration. The shared login on `feat/student-frontend` should resolve the stored role through username/password authentication and send staff to `/staff/`; no role selector is needed. Connect the student frontend only when the owner requests it. Remaining submission and detection work must preserve roster, privacy and voting rules.
+Use the implemented account, student and staff contracts. The shared login resolves the stored role through username/password authentication and sends staff to `/staff/`; no role selector is needed. Remaining detection work must preserve roster, privacy and voting rules.

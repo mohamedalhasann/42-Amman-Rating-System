@@ -67,7 +67,7 @@ function App({db:initialDb,identity}){
  async function signOut(){
    if(busy.current)return;
    busy.current=true;setSaving(true);
-   try{await request('/auth/logout',{method:'POST',body:{}});clearCredentials();window.dispatchEvent(new CustomEvent('fairly:access-ended',{detail:{status:401,message:'Sign in to continue.'}}));}
+   try{await request('/auth/logout',{method:'POST',body:{}});clearCredentials();window.dispatchEvent(new CustomEvent('fairly:access-ended',{detail:{status:401,message:'Sign in to continue.'}}));window.location.assign('/login');}
    catch(error){setLoadError(error.message);}
    finally{busy.current=false;if(mounted.current)setSaving(false);}
  }

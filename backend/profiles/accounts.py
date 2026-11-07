@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.crypto import salted_hmac
 from django.views.decorators.debug import sensitive_variables
 
-from .models import AccountAudit, AccountSettings, AuthThrottle, SetupToken, StudentProfile, User
+from .models import AccountAudit, AccountSettings, AuthThrottle, PasswordResetToken, SetupToken, StudentProfile, User
 
 
 def eligible(user):
@@ -60,7 +60,7 @@ def request_setup(username):
         domain = '42amman.com' if user.role == 'staff' else 'student.42amman.com'
         destination = f'{user.username}@{domain}'
         # Fragment keeps the token out of ordinary HTTP request URLs/access logs.
-        link = settings.ACCOUNT_ORIGIN + '/account/setup/#token=' + token
+        link = settings.ACCOUNT_ORIGIN + '/setup/complete#token=' + token
         send_mail('Set up your Fairly account',
                   f'Create your Fairly password:\n\n{link}\n\nThis link expires in 30 minutes and can be used once.\n'
                   'If you did not request it, you can ignore this email.',
@@ -99,3 +99,49 @@ def complete_setup(token, password):
         AccountAudit.objects.create(subject=user, action='Account setup completed',
                                    detail={'approved': bool(user.approved_at)})
         return 'ready' if user.approved_at else 'awaiting_approval'
+
+
+@sensitive_variables()
+def request_reset(username):
+    with transaction.atomic():
+        user = User.objects.select_for_update().filter(username__iexact=username).first()
+        if not eligible(user) or not user.email_verified_at or not user.has_usable_password():
+            return
+        now = timezone.now()
+        token = secrets.token_urlsafe(32)
+        PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(used_at=now)
+        PasswordResetToken.objects.create(user=user, token_hash=hashlib.sha256(token.encode()).hexdigest(),
+            credential_hash=hashlib.sha256(user.password.encode()).hexdigest(),
+            expires_at=now+timedelta(seconds=settings.SETUP_TOKEN_SECONDS))
+        destination = f'{user.username}@' + ('42amman.com' if user.role == 'staff' else 'student.42amman.com')
+        link = settings.ACCOUNT_ORIGIN + '/reset/complete#token=' + token
+        send_mail('Reset your Fairly password',
+            f'Choose a new password:\n\n{link}\n\nThis link expires in 30 minutes and can be used once.\n'
+            'If you did not request it, you can ignore this email.', settings.DEFAULT_FROM_EMAIL, [destination], fail_silently=False)
+        AccountAudit.objects.create(subject=user, action='Password reset requested')
+
+
+@sensitive_variables()
+def complete_reset(token, password):
+    if not isinstance(token, str) or not re.fullmatch(r'[A-Za-z0-9_-]{43}', token):
+        raise InvalidSetup
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+    with transaction.atomic():
+        row = PasswordResetToken.objects.filter(token_hash=token_hash).first()
+        if not row:
+            raise InvalidSetup
+        user = User.objects.select_for_update().get(pk=row.user_id)
+        row = PasswordResetToken.objects.select_for_update().get(pk=row.pk)
+        now = timezone.now()
+        if (row.used_at or row.expires_at <= now or not eligible(user) or not user.email_verified_at or
+                not user.has_usable_password() or row.credential_hash != hashlib.sha256(user.password.encode()).hexdigest()):
+            raise InvalidSetup
+        validate_password(password, user=user)
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        # Django session auth hashes stop every old session on its next request.
+        # Neither verification nor approval is changed by password recovery.
+        PasswordResetToken.objects.filter(user=user, used_at__isnull=True).update(used_at=now)
+        SetupToken.objects.filter(user=user, used_at__isnull=True).update(used_at=now)
+        AccountAudit.objects.create(subject=user, action='Password reset completed')
+        return user.username

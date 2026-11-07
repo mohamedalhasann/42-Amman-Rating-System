@@ -42,7 +42,7 @@ class AccountTests(TestCase):
     def test_complete_student_flow_pending_approval_session_and_logout(self):
         token = self.setup_link()
         self.assertEqual(mail.outbox[0].to, ['learner@student.42amman.com'])
-        self.assertIn('http://testserver/account/setup/#token=', mail.outbox[0].body)
+        self.assertIn('http://testserver/setup/complete#token=', mail.outbox[0].body)
         self.assertEqual(SetupToken.objects.get().token_hash, hashlib.sha256(token.encode()).hexdigest())
         self.assertNotIn(token, json.dumps(list(AccountAudit.objects.values('detail'))))
         response = self.complete(token)
@@ -51,9 +51,11 @@ class AccountTests(TestCase):
         self.assertTrue(self.user.check_password(PASSWORD))
         self.assertIsNotNone(self.user.email_verified_at)
         self.assertIsNone(self.user.approved_at)
-        self.assertEqual(self.login().json()['error']['code'], 'PENDING_APPROVAL')
-        self.assertNotIn('_auth_user_id', self.client.session)
-        self.assertEqual(self.client.get('/api/v1/me').status_code, 401)
+        self.assertEqual(self.login().json()['status'], 'awaiting_approval')
+        self.assertEqual(self.client.get('/api/v1/me').json()['status'], 'pending')
+        self.assertEqual(self.client.session.get_expiry_age(), 900)
+        for url in ('student/dashboard', 'student/peers', 'staff/workspace'):
+            self.assertEqual(self.client.get('/api/v1/'+url).status_code, 403)
         self.client.force_login(self.staff)
         pending = self.client.get('/api/v1/staff/account-approvals').json()['items']
         self.assertEqual(pending[0]['id'], str(self.profile.pk))
@@ -157,7 +159,8 @@ class AccountTests(TestCase):
         row, _ = AccountSettings.objects.get_or_create(pk=1)
         row.manual_student_approval_enabled = False
         row.save()
-        self.assertEqual(self.login().json()['error']['code'], 'PENDING_APPROVAL')
+        self.assertEqual(self.login().json()['status'], 'awaiting_approval')
+        self.assertEqual(self.client.get('/api/v1/student/dashboard').status_code, 403)
 
     def test_access_is_checked_after_login_for_deactivation_or_exclusion(self):
         AccountSettings.objects.create(pk=1, manual_student_approval_enabled=False)
@@ -185,7 +188,7 @@ class AccountTests(TestCase):
 
     def test_csrf_is_required_on_all_auth_writes_and_login_rotates_session(self):
         client = Client(enforce_csrf_checks=True)
-        for route in ('auth/setup-request', 'auth/setup-complete', 'auth/login', 'auth/logout'):
+        for route in ('auth/setup-request', 'auth/setup-complete', 'auth/login', 'auth/logout', 'auth/password-reset-request', 'auth/password-reset-complete'):
             self.assertEqual(self.post(route, {}, client=client).status_code, 403)
         response = client.get('/api/v1/auth/csrf')
         csrf_token = response.json()['csrf_token']
@@ -202,10 +205,8 @@ class AccountTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_account_pages_do_not_change_account_or_expose_tokens(self):
-        for url in ('/account/', '/account/setup/'):
+        for url, destination in (('/account/', '/login'), ('/account/setup/', '/setup/complete')):
             response = self.client.get(url)
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response['Referrer-Policy'], 'no-referrer')
-            self.assertIn("script-src 'self'", response['Content-Security-Policy'])
-            self.assertIn('no-store', response['Cache-Control'])
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response['Location'], destination)
         self.assertFalse(SetupToken.objects.exists())

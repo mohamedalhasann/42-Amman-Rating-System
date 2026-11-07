@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Icon, StarIcon, initials, starWord } from '../components/bits';
+import { Icon, StarIcon, starWord } from '../components/bits';
+import { ProfilePicture } from '../components/ProfilePicture';
 import { ApiError, api, type Label, type Peer, type Stars, type SubmitRatingResult, type VotingWindow } from '../api';
 
 interface Props {
@@ -32,6 +33,8 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
   const [step, setStep] = useState<'search' | 'form' | 'done'>('search');
   const [query, setQuery] = useState('');
   const [peers, setPeers] = useState<Peer[] | null>(null);
+  const [nextCursor,setNextCursor]=useState<string|null>(null),[loadingMore,setLoadingMore]=useState(false),[labelsLoading,setLabelsLoading]=useState(false);
+  const searchSequence=useRef(0),starSequence=useRef(0);
   const [target, setTarget] = useState<Peer | null>(null);
   const [stars, setStars] = useState<Stars | null>(null);
   const [labels, setLabels] = useState<Label[]>([]);
@@ -99,8 +102,10 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
   useEffect(() => {
     if (step !== 'search') return;
     let cancelled = false;
+    ++searchSequence.current;setLoadingMore(false);setPeers(null);setNextCursor(null);setError('');
     const t = setTimeout(() => {
-      api.searchPeers(query).then((items) => !cancelled && setPeers(items)).catch(() => !cancelled && setPeers([]));
+      api.searchPeers(query).then(page=>{if(!cancelled){setPeers(page.items);setNextCursor(page.next_cursor);}})
+        .catch(()=>{if(!cancelled){setPeers([]);setError('Couldn’t load students. Try searching again.');}});
     }, 180);
     return () => {
       cancelled = true;
@@ -108,24 +113,34 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
     };
   }, [query, step]);
 
+  async function loadMore(){
+    if(!nextCursor||loadingMore)return;
+    const sequence=searchSequence.current;setLoadingMore(true);setError('');
+    try{const page=await api.searchPeers(query,nextCursor);if(sequence===searchSequence.current){setPeers(previous=>[...(previous||[]),...page.items.filter(item=>!previous?.some(peer=>peer.recipient_id===item.recipient_id))]);setNextCursor(page.next_cursor);}}
+    catch{if(sequence===searchSequence.current)setError('Couldn’t load more students. Try again.');}
+    finally{if(sequence===searchSequence.current)setLoadingMore(false);}
+  }
+
   useEffect(() => {
     panelRef.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus();
   }, [step]);
 
   async function chooseStars(n: Stars) {
+    const sequence=++starSequence.current;
     setStars(n);
     setPicked([]);
     setError('');
     const cached = labelCache.current.get(n);
-    if (cached) return setLabels(cached);
+    if (cached){setLabelsLoading(false);return setLabels(cached);}
     setLabels([]);
+    setLabelsLoading(true);
     try {
       const items = await api.labels(n);
       labelCache.current.set(n, items);
-      setLabels(items);
+      if(sequence===starSequence.current)setLabels(items);
     } catch {
-      setError('Couldn’t load labels. Try again.');
-    }
+      if(sequence===starSequence.current)setError('Couldn’t load labels. Try again.');
+    }finally{if(sequence===starSequence.current)setLabelsLoading(false);}
   }
 
   function toggle(id: string) {
@@ -212,7 +227,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
               />
             </div>
             <ul className="peers" aria-busy={peers === null}>
-              {peers?.length === 0 && <li className="muted peers__empty">No students match “{query}”.</li>}
+              {peers?.length === 0 && !error&&<li className="muted peers__empty">No students match “{query}”.</li>}
               {peers?.map((p, i) => {
                 const done = ratedIds.includes(p.recipient_id);
                 return (
@@ -229,7 +244,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
                         setStep('form');
                       }}
                     >
-                      <span className="peer__avatar mono" aria-hidden="true">{initials(p.first_name, p.last_name)}</span>
+                      <span className="peer__avatar mono" aria-hidden="true"><ProfilePicture first={p.first_name} last={p.last_name} picture={p.picture_url}/></span>
                       <span className="peer__text">
                         <span className="peer__name">{p.first_name} {p.last_name}</span>
                         <span className="mono muted peer__login">{p.intra_username}</span>
@@ -240,13 +255,15 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
                 );
               })}
             </ul>
+            {error&&<p className="error" role="alert">{error}</p>}
+            {nextCursor&&<button className="btn btn--ghost btn--block" disabled={loadingMore} onClick={loadMore}>{loadingMore?'Loading…':'Load more students'}</button>}
           </div>
         )}
 
         {step === 'form' && target && (
           <div className="sheet__body">
             <div className="target">
-              <span className="peer__avatar peer__avatar--lg mono" aria-hidden="true">{initials(target.first_name, target.last_name)}</span>
+              <span className="peer__avatar peer__avatar--lg mono" aria-hidden="true"><ProfilePicture first={target.first_name} last={target.last_name} picture={target.picture_url}/></span>
               <div>
                 <p className="target__name">{target.first_name} {target.last_name}</p>
                 <p className="mono muted">{target.intra_username}</p>
@@ -333,7 +350,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
 
             <div className="sheet__foot">
               {error && <p className="error" role="alert">{error}</p>}
-              <button className="btn btn--ink btn--block" onClick={submit} aria-busy={busy} disabled={!stars}>
+              <button className="btn btn--ink btn--block" onClick={submit} aria-busy={busy} disabled={busy||labelsLoading||!stars}>
                 {busy ? 'Sending…' : stars ? `Submit ${starWord(stars)}` : 'Pick stars to continue'}
               </button>
             </div>
@@ -346,7 +363,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
               <Icon name="check" size={40} />
             </div>
             <p className="done__text">
-              {`Your vote for ${target.first_name} counts. Nobody but staff can see it came from you.`}
+              {result.state==='invalidated'?`Your vote for ${target.first_name} was saved and has since been excluded by staff.`:`Your vote for ${target.first_name} counts. Nobody but staff can see it came from you.`}
             </p>
             <p className="mono done__left">
               {result.allowance.votes_remaining} vote{result.allowance.votes_remaining === 1 ? '' : 's'} left in this window

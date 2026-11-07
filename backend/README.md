@@ -1,6 +1,6 @@
 # Profile backend
 
-Django 5.2 with PostgreSQL support; SQLite is available only in local debug mode. This implements **profile import, local accounts and the staff workspace API**, including persisted windows, labels, rating/case models, atomic case resolution and CSV. See [account setup and trusted staff provisioning](ACCOUNTS.md) and the [connected React staff workspace](../staff-frontend/README.md). Student submission and automatic abuse detection remain pending. Photo downloads remain blocked by the upstream CDN.
+Django 5.2 with PostgreSQL support; SQLite is available only in local debug mode. Profile import, shared accounts/recovery, student submission and staff workspace controls are implemented. Both React frontends share the database and session. See [startup](../INTEGRATION.md), [accounts](ACCOUNTS.md) and the [staff app](../staff-frontend/README.md). Automatic abuse detection remains pending; submissions and blocked attempts enqueue durable jobs. Photo downloads remain blocked upstream.
 
 ## Local setup
 
@@ -75,11 +75,11 @@ Photo files live in `private-media/`; PostgreSQL stores their paths. There is no
 
 ## Implemented API
 
-All routes use Django sessions and require active, verified, approved accounts. Data and photo responses use private/no-store cache headers. No endpoint contacts 42 at request time.
+Routes use Django sessions. App data requires active, verified, approved accounts; pending sign-ins can read only their own identity/status through `/me`. Data and photo responses use private/no-store cache headers. No endpoint contacts 42 at request time.
 
 | Route | Access | Returns |
 | --- | --- | --- |
-| `GET /api/v1/me` | Approved account | Own display identity and role |
+| `GET /api/v1/me` | Verified sign-in, including restricted pending | Own display identity, role, status, protected photo reference and own preferences |
 | `GET /api/v1/staff/students?query=...&limit=25&cursor=...` | Trusted staff | Minimal student profiles, name/username search, cursor pagination |
 | `GET /api/v1/profiles/{profile_uuid}/photo` | Approved account | Private image; students cannot view pending/inactive/unverified profiles |
 
@@ -97,7 +97,7 @@ Profile response example (synthetic):
 
 Collections return `{ "items": [...], "next_cursor": null }`. Provider IDs, emails, credentials, and photo paths are not exposed. Missing images return `photo_url: null`; frontends should display initials. Use the same origin for session-authenticated API and image URLs, or configure a trusted development proxy. Do not expose `private-media/` through the web server.
 
-The staff React frontend now uses the protected workspace API, settings/approval endpoints and server-generated CSV. It keeps private records in memory and never falls back to browser-storage fixtures. See [staff integration](../staff-frontend/README.md) and [local accounts](ACCOUNTS.md) for exact setup and limits. Student frontend integration, submission and automated abuse detection remain pending. Student peer selection must use the captured voting roster when that workstream is implemented.
+Both React apps use real authenticated endpoints by default. Student dashboard/history, paginated roster-scoped peers, labels, profile preferences, own given votes and idempotent submission are implemented. Staff use the workspace snapshot, settings/approvals and server-generated CSV. Records stay in memory. See [integration](../INTEGRATION.md) for limits and verification. Automatic abuse detection remains pending.
 
 ## Verification
 

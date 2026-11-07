@@ -31,11 +31,12 @@ class ProfileApiTests(TestCase):
         self.client.force_login(self.student)
         response = self.client.get('/api/v1/me')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(set(response.json()), {'id', 'intra_username', 'first_name', 'last_name', 'photo_url', 'role'})
+        self.assertEqual(set(response.json()), {'id', 'intra_username', 'first_name', 'last_name', 'photo_url', 'picture_url', 'role', 'status', 'profile'})
         self.assertEqual(self.client.get('/api/v1/staff/students').status_code, 403)
         self.student.approved_at = None
         self.student.save()
-        self.assertEqual(self.client.get('/api/v1/me').status_code, 403)
+        self.assertEqual(self.client.get('/api/v1/me').json()['status'], 'pending')
+        self.assertEqual(self.client.get('/api/v1/student/dashboard').status_code, 403)
 
     def test_staff_search_pagination_and_private_photos(self):
         self.client.force_login(self.staff)

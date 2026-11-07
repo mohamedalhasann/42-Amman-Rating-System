@@ -42,6 +42,8 @@ class StudentProfile(models.Model):
     photo = models.FileField(storage=private_storage, blank=True, max_length=250)
     profile_synced_at = models.DateTimeField()
     photo_synced_at = models.DateTimeField(null=True, blank=True)
+    accent = models.CharField(max_length=7, default='#00CED1')
+    onboarded = models.BooleanField(default=False)
 
     def __str__(self):
         return self.user.username
@@ -70,6 +72,15 @@ class AccountSettings(models.Model):
 class SetupToken(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     token_hash = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token_hash = models.CharField(max_length=64, unique=True)
+    credential_hash = models.CharField(max_length=64)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     used_at = models.DateTimeField(null=True, blank=True)
@@ -189,3 +200,26 @@ class Invalidation(models.Model):
     reason = models.TextField()
     by = models.ForeignKey(User, on_delete=models.PROTECT)
     at = models.DateTimeField(default=timezone.now)
+
+
+class RatingSubmission(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.PROTECT)
+    key = models.UUIDField()
+    request_hash = models.CharField(max_length=64)
+    rating = models.OneToOneField(Rating, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['student', 'key'], name='student_submission_key_unique')]
+
+
+class DetectionJob(models.Model):
+    """Durable handoff; detector thresholds remain an owner decision."""
+    rating = models.OneToOneField(Rating, null=True, on_delete=models.PROTECT)
+    attempt = models.OneToOneField(BlockedAttempt, null=True, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, default='pending')
+
+    class Meta:
+        constraints = [models.CheckConstraint(condition=(
+            models.Q(rating__isnull=False, attempt__isnull=True) |
+            models.Q(rating__isnull=True, attempt__isnull=False)), name='detection_job_one_source')]

@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useSession } from './session';
 import { Login } from './screens/Login';
@@ -15,10 +15,17 @@ function Splash() {
   );
 }
 
+function StaffRedirect() {
+  useEffect(()=>{window.location.replace('/staff/');},[]);
+  return <Splash/>;
+}
+
 // Decides where a signed-in student belongs: pending approval, first-time setup, or home.
 function Guard({ need, children }: { need: 'anonymous' | 'onboarding' | 'home'; children: ReactElement }) {
-  const { status, me } = useSession();
+  const { status, me, refresh } = useSession();
   if (status === 'loading') return <Splash />;
+  if(status==='error')return <div className="auth__notice" role="alert"><p>Couldn’t reach Fairly. Check your connection and try again.</p><button className="btn btn--accent" onClick={()=>refresh().catch(()=>undefined)}>Try again</button></div>;
+  if(status==='ready'&&me?.role==='staff')return <StaffRedirect/>;
 
   if (need === 'anonymous') {
     if (status === 'ready') return <Navigate to="/" replace />;

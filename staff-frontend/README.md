@@ -16,9 +16,9 @@ cd ..
 .venv/bin/python backend/manage.py runserver
 ```
 
-Open **http://127.0.0.1:8000/staff/**. Before the shared login is integrated, sign in with your existing superuser at **http://127.0.0.1:8000/admin/**, then open `/staff/` in the same browser. Use the same hostname; `localhost` and `127.0.0.1` have separate cookies.
+Build the shared frontend too: `npm --prefix frontend ci` and `npm --prefix frontend run build` from the repository root. Open **http://127.0.0.1:8000/login**; a staff sign-in opens `/staff/`. The existing superuser can use the shared login or `/admin/`. Use the same hostname throughout. See [full startup](../INTEGRATION.md).
 
-No new React login page was added. The shared login on `feat/student-frontend` remains on that branch. It should POST `{intra_username, password}` to `/api/v1/auth/login`, then redirect a returned `role: "staff"` to `/staff/`. Setup requests need only `{intra_username}`; the backend chooses the stored role and email domain. The student frontend has not been connected.
+The shared login from `main` is connected. Username/password authentication resolves the stored role and sends staff here; students use onboarding/home. Setup needs only the username. The backend chooses the stored role and email domain. Staff sign-out returns to the shared login.
 
 For React development, keep Django on port 8000 and run `npm run dev` in this directory. Open **http://127.0.0.1:5173/staff/**. Vite proxies `/api` to Django. Port 5173 is fixed; its localhost origins are trusted for CSRF only in Django debug mode. Do not put credentials or API tokens in Vite environment variables.
 
@@ -40,7 +40,7 @@ Changes show success only after server confirmation. The app refreshes on demand
 
 An empty database shows empty states. Create a window and labels in Configuration. Browse imported students before a window exists. Approvals do not change an already captured roster.
 
-Student rating submission and automatic abuse detection remain separate pending workstreams. Staff pages display their records once those services write to the shared models. An empty queue does not mean a detector ran. Do not insert demo votes/cases into the real database.
+Student submissions now persist to the shared models and appear here after refresh. Automatic abuse detection remains pending: durable jobs are saved, but thresholds and a worker are not enabled. An empty queue does not mean a detector ran. Do not insert demo votes/cases into the real database.
 
 Run `manage.py capture_window_rosters` every minute in deployment; staff reads and window writes also capture overdue rosters. Captures exclude approvals/verification after opening and never replace existing snapshots. Delayed capture uses current activation/eligibility because historical changes are not recorded: run the scheduler at opening. Date edits preserve captured membership.
 

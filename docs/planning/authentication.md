@@ -1,6 +1,6 @@
 # Authentication and roster plan
 
-Status: Account flow agreed by the owner. The backend implements [local accounts and trusted staff provisioning](../../backend/ACCOUNTS.md), plus [profile imports](../../backend/README.md). The [staff React workspace](../../staff-frontend/README.md) is connected. Shared login on `feat/student-frontend`, student frontend, real email delivery and PostgreSQL concurrency verification remain pending.
+Status: [Shared accounts, recovery and trusted provisioning](../../backend/ACCOUNTS.md), profile imports and both React frontends are connected. The existing shared login from `main` routes by stored role. See [startup](../../INTEGRATION.md). Real email delivery and PostgreSQL concurrency verification remain pending.
 
 ## Import before API access ends
 
@@ -37,4 +37,4 @@ Implemented default: disabling manual approval applies to future setup completio
 
 Use high-entropy setup tokens, store only their hashes, enforce expiry and single use, rate-limit requests, and build links from a trusted configured origin. Never email passwords or log tokens. These measures follow [OWASP password recovery guidance](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html), applied to first-time setup.
 
-Proposed session mechanism: opaque server-side sessions in secure HTTP-only cookies with CSRF protection for writes. Session lifetime, password policy and hashing parameters, setup-token expiry, and mail provider remain open. Recovery after setup requires a separate purpose-bound flow that cannot bypass approval or staff provisioning.
+Implemented transport uses Django server-side sessions, secure HTTP-only cookies outside debug, and CSRF for writes. Approved sign-ins last eight hours; pending sign-ins last 15 minutes and can read only their own identity/status. Passwords require at least 10 characters and Django validators. Setup/reset links expire in 30 minutes; recovery is purpose-bound and preserves verification/approval while invalidating old credentials/sessions. Mail provider and production validation remain open.

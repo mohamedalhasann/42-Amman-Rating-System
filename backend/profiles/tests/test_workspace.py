@@ -134,17 +134,17 @@ class WorkspaceTests(TestCase):
             self.assertEqual(self.action({'type': 'window', 'value': {**current, **changes}}).status_code, 400)
 
     def test_label_controls_preserve_history_and_reject_stale_updates(self):
-        value = {'id': str(uuid4()), 'name': 'Helpful', 'allowed_stars': [2, 3], 'active': True, 'version': 0}
+        value = {'id': str(uuid4()), 'name': 'Example label', 'allowed_stars': [2, 3], 'active': True, 'version': 0}
         response = self.action({'type': 'label', 'value': value})
         self.assertEqual(response.status_code, 200)
-        saved = response.json()['labels'][0]
+        saved = next(label for label in response.json()['labels'] if label['id'] == value['id'])
         rating = self.rating()
         rating.labels.add(saved['id'])
         self.assertEqual(self.action({'type': 'label', 'value': {**saved, 'name': 'Replacement'}}).status_code, 400)
         self.assertEqual(self.action({'type': 'label', 'value': {**saved, 'active': False}}).status_code, 200)
-        self.assertEqual(rating.labels.get().name, 'Helpful')
+        self.assertEqual(rating.labels.get().name, 'Example label')
         self.assertEqual(self.action({'type': 'label', 'value': saved}).status_code, 409)
-        self.assertEqual(self.action({'type': 'label', 'value': {**value, 'id': str(uuid4()), 'name': 'helpful'}}).status_code, 400)
+        self.assertEqual(self.action({'type': 'label', 'value': {**value, 'id': str(uuid4()), 'name': 'example LABEL'}}).status_code, 400)
 
     def test_resolve_is_atomic_selective_audited_and_cannot_be_replayed(self):
         selected, preserved = self.rating(), self.rating(1, 0)

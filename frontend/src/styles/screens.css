@@ -419,3 +419,4 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   .sheet__head { padding-top: calc(14px + var(--safe-top)); }
   .sheet__foot { padding-bottom: calc(20px + var(--safe-bottom)); }
 }
+.monogram img,.peer__avatar img,.idcard__avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit}

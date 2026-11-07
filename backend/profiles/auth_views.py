@@ -14,7 +14,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.debug import sensitive_post_parameters, sensitive_variables
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from .accounts import InvalidSetup, account_settings, complete_setup, eligible, request_setup, throttle
+from .accounts import (InvalidSetup, account_settings, complete_setup, complete_reset, eligible,
+                       request_reset, request_setup, throttle)
 from .models import AccountAudit, StudentProfile, User
 from .views import error, protected, profile_json
 
@@ -122,12 +123,53 @@ def sign_in(request):
     user = authenticate(request, username=account.username if account else username, password=password)
     if not user or not eligible(user) or not user.email_verified_at:
         return error('INVALID_CREDENTIALS', 'Unable to sign in with these credentials.', 401)
-    if not user.approved_at:
-        return error('PENDING_APPROVAL', 'Your email is verified. Staff approval is still required.', 403)
     login(request, user)
-    request.session.set_expiry(settings.SESSION_COOKIE_AGE)
-    AccountAudit.objects.create(actor=user, subject=user, action='Signed in')
-    return JsonResponse({'status': 'signed_in', 'role': user.role, 'csrf_token': get_token(request)})
+    pending = not user.approved_at
+    request.session.set_expiry(900 if pending else settings.SESSION_COOKIE_AGE)
+    AccountAudit.objects.create(actor=user, subject=user, action='Pending approval sign-in' if pending else 'Signed in')
+    return JsonResponse({'status': 'awaiting_approval' if pending else 'signed_in', 'role': user.role, 'csrf_token': get_token(request)})
+
+
+@require_POST
+@never_cache
+@sensitive_post_parameters()
+@sensitive_variables()
+def reset_request(request):
+    if limited(request, 'reset-ip', settings.AUTH_SETUP_IP_LIMIT, 3600):
+        return error('RATE_LIMITED', 'Too many requests. Try again later.', 429)
+    try:
+        username = identity(payload(request, ['intra_username', 'account_type']))
+    except ValueError as exc:
+        return error('INVALID_REQUEST', str(exc), 400)
+    if throttle('reset-account', username, limit=3, seconds=3600):
+        try:
+            request_reset(username)
+        except (SMTPException, OSError):
+            logger.error('Password reset email delivery failed.')
+    return JsonResponse({'message': 'If this account can reset its password, a link will be sent to its campus email.'}, status=202)
+
+
+@require_POST
+@never_cache
+@sensitive_post_parameters()
+@sensitive_variables()
+def reset_complete(request):
+    if limited(request, 'reset-complete-ip', settings.AUTH_COMPLETE_IP_LIMIT, 900):
+        return error('RATE_LIMITED', 'Too many attempts. Try again later.', 429)
+    try:
+        data = payload(request, ['token', 'password'])
+        password = data.get('password')
+        if not isinstance(password, str) or not 1 <= len(password) <= 1024:
+            raise ValueError('Enter a password up to 1024 characters.')
+        username = complete_reset(data.get('token'), password)
+    except ValueError as exc:
+        return error('INVALID_REQUEST', str(exc), 400)
+    except InvalidSetup:
+        return error('INVALID_TOKEN', 'This reset link is invalid or expired. Request a new one.', 400)
+    except ValidationError as exc:
+        return error('INVALID_PASSWORD', ' '.join(exc.messages), 422)
+    logout(request)
+    return JsonResponse({'status': 'ready', 'intra_username': username})
 
 
 @require_POST

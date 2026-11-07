@@ -14,7 +14,7 @@ def error(code, message, status):
     return JsonResponse({'error': {'code': code, 'message': message}}, status=status)
 
 
-def protected(*, staff=False):
+def protected(*, staff=False, student=False, allow_pending=False):
     def decorator(view):
         @wraps(view)
         @never_cache
@@ -22,7 +22,7 @@ def protected(*, staff=False):
             user = request.user
             if not user.is_authenticated:
                 return error('UNAUTHENTICATED', 'Sign in to continue.', 401)
-            if not user.is_active or not user.email_verified_at or not user.approved_at:
+            if not user.is_active or not user.email_verified_at or (not user.approved_at and not allow_pending):
                 return error('ACCESS_DENIED', 'Account access is not enabled.', 403)
             if user.role == 'staff' and not user.is_staff:
                 return error('ACCESS_DENIED', 'Staff access is not enabled.', 403)
@@ -30,6 +30,8 @@ def protected(*, staff=False):
                 return error('ACCESS_DENIED', 'An active 42cursus profile is required.', 403)
             if staff and (user.role != 'staff' or not user.is_staff):
                 return error('FORBIDDEN', 'Staff access required.', 403)
+            if student and user.role != 'student':
+                return error('FORBIDDEN', 'Student access required.', 403)
             return view(request, *args, **kwargs)
         return wrapper
     return decorator
@@ -41,14 +43,19 @@ def profile_json(profile):
             'photo_url': reverse('profile-photo', args=[profile.id]) if profile.photo else None}
 
 
-@require_GET
-@protected()
-def me(request):
-    user = request.user
+def account_json(user):
     profile = StudentProfile.objects.select_related('user').filter(user=user).first()
     identity = profile_json(profile) if profile else {'id': str(user.id), 'intra_username': user.username,
         'first_name': user.first_name, 'last_name': user.last_name, 'photo_url': None}
-    return JsonResponse({**identity, 'role': user.role})
+    return {**identity, 'picture_url': identity['photo_url'], 'role': user.role,
+        'status': 'active' if user.approved_at else 'pending',
+        'profile': {'accent': profile.accent, 'onboarded': profile.onboarded} if profile and user.approved_at else None}
+
+
+@require_GET
+@protected(allow_pending=True)
+def me(request):
+    return JsonResponse(account_json(request.user))
 
 
 @require_GET

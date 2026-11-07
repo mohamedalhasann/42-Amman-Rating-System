@@ -43,12 +43,14 @@ if database_url:
         'HOST': db.hostname, 'PORT': db.port or 5432, 'CONN_MAX_AGE': 60,
         'OPTIONS': {'sslmode': parse_qs(db.query).get('sslmode', ['prefer' if DEBUG else 'require'])[0]}}}
 elif DEBUG:
-    DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+    DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {'transaction_mode': 'IMMEDIATE', 'timeout': 20}}}
 else:
     raise ImproperlyConfigured('Set DATABASE_URL to a PostgreSQL database.')
 AUTH_USER_MODEL = 'profiles.User'
 AUTH_PASSWORD_VALIDATORS = [{'NAME': 'django.contrib.auth.password_validation.' + name} for name in [
     'UserAttributeSimilarityValidator', 'MinimumLengthValidator', 'CommonPasswordValidator', 'NumericPasswordValidator']]
+AUTH_PASSWORD_VALIDATORS[1]['OPTIONS'] = {'min_length': 10}
 LANGUAGE_CODE = 'en'
 TIME_ZONE = 'Asia/Amman'
 USE_TZ = True
