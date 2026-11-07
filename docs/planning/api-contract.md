@@ -17,7 +17,9 @@ Status: Django API draft for React clients and PostgreSQL persistence. Endpoint 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | POST | `/auth/setup-request` | `intra_username`, proposed `account_type` selector. Generic `202` response; send only to an eligible provisioned account without password. |
-| POST | `/auth/setup-complete` | `token`, `password`. Consume token, create credential, verify email, apply current approval setting. |
+| POST | `/auth/setup-complete` | `token`, `password`. Consume token, create credential, verify email, apply current approval setting. Return `{ "intra_username" }` of the account so the sign-in form can be prefilled; an invalid or used token returns `400` with code `INVALID_TOKEN`. |
+| POST | `/auth/password-reset-request` | `intra_username`, proposed `account_type`. Generic `202` response; email a reset link only to an account that already has a password. Rate-limited like setup. |
+| POST | `/auth/password-reset-complete` | `token`, `password`. Consume a reset-purpose token, replace the credential, revoke the account's other sessions. Never changes verification or approval. Returns `{ "intra_username" }`; an invalid or used token returns `400` with code `INVALID_TOKEN`. |
 | POST | `/auth/login` | `intra_username`, `password`, proposed `account_type`. Select an existing account, never assign its role. |
 | POST | `/auth/logout` | Authenticated session revocation; CSRF protection if using cookies. |
 | GET | `/staff/settings` | Read approval setting and version. |
@@ -25,7 +27,7 @@ Status: Django API draft for React clients and PostgreSQL persistence. Endpoint 
 | GET | `/staff/account-approvals` | Paginated verified pending student accounts. |
 | POST | `/staff/account-approvals/{student_id}/approve` | Record approval of a verified imported student. |
 
-Setup and login are public authentication entry points, not public roster access. Login grants application access only to active, verified, approved accounts. Password-verified pending accounts may receive a restricted pending status; exact session behavior is open. Generic failures must not reveal account existence. Password recovery is not finalized.
+Setup and login are public authentication entry points, not public roster access. Login grants application access only to active, verified, approved accounts. Password-verified pending accounts may receive a restricted pending status; exact session behavior is open. Generic failures must not reveal account existence. Password reset mirrors setup with its own purpose-bound token, so a reset link can't be used for setup or the other way round.
 
 ## Student routes
 

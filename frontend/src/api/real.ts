@@ -11,7 +11,12 @@ export const realApi: Api = {
   logout: () => request<void>('POST', '/auth/logout'),
   setupRequest: (intra_username) =>
     request<void>('POST', '/auth/setup-request', { intra_username, account_type: 'student' }),
-  setupComplete: (token, password) => request<void>('POST', '/auth/setup-complete', { token, password }),
+  setupComplete: (token, password) =>
+    request<{ intra_username?: string } | undefined>('POST', '/auth/setup-complete', { token, password }),
+  resetRequest: (intra_username) =>
+    request<void>('POST', '/auth/password-reset-request', { intra_username, account_type: 'student' }),
+  resetComplete: (token, password) =>
+    request<{ intra_username?: string } | undefined>('POST', '/auth/password-reset-complete', { token, password }),
 
   me: () => request<Me>('GET', '/me'),
   saveProfile: (profile: Profile) => request<Me>('PATCH', '/me/profile', profile),

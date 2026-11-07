@@ -9,7 +9,10 @@ export interface Api {
   login(intra_username: string, password: string): Promise<void>;
   logout(): Promise<void>;
   setupRequest(intra_username: string): Promise<void>;
-  setupComplete(token: string, password: string): Promise<void>;
+  /** Returns the login the link belonged to, so the sign-in form can be filled in. */
+  setupComplete(token: string, password: string): Promise<{ intra_username?: string } | undefined>;
+  resetRequest(intra_username: string): Promise<void>;
+  resetComplete(token: string, password: string): Promise<{ intra_username?: string } | undefined>;
   me(): Promise<Me>;
   saveProfile(profile: Profile): Promise<Me>;
   dashboard(): Promise<Dashboard>;
