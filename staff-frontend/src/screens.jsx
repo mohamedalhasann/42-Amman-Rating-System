@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useStaff} from './context';
 import {activitySeries, average, counted, filterRatings, fullName, groupsFor, participation, ratingsIn, searchReceivedRatings, stateOfWindow, stats} from './model';
+import {indicators, studentInsights, toneOf, dimensionOf} from './insights';
 import {Avatar, Badge, dateTime, Empty, Icon, PageControls, Person, RatingTable, Search, shortDate, Tabs} from './components';
 
 function PanelHeading({title, children, description}) {return <div className="panel-heading"><div><h2>{title}</h2>{description && <p>{description}</p>}</div>{children}</div>;}
@@ -79,60 +80,159 @@ export function Overview() {
 }
 
 export function Students() {
-  const {db, windowId, selectedStudent, goStudent, rosterState, setRosterState} = useStaff();
-  const {query,filter,page}=rosterState;
-  const setQuery=value=>setRosterState(state=>({...state,query:value,page:1}));
-  const setFilter=value=>setRosterState(state=>({...state,filter:value,page:1}));
-  const setPage=value=>setRosterState(state=>({...state,page:value}));
-  const window=db.windows.find(w=>w.id===windowId), roster=participation(db,windowId);
-  const scope=window&&rosterState.scope==='window'?'window':'directory';
-  const directory=db.students.filter(student=>student.active&&(fullName(student)+' '+student.intra_username).toLowerCase().includes(query.trim().toLowerCase()));
-  const matches=roster.filter(person=>(fullName(person.student)+' '+person.student.intra_username).toLowerCase().includes(query.trim().toLowerCase())&&(filter==='all'||(filter==='rated'?person.submitted>0:person.submitted===0)));
-  const previousWindow=React.useRef(windowId);
-  useEffect(()=>{if(previousWindow.current!==windowId){setRosterState(state=>({...state,page:1}));previousWindow.current=windowId;}},[windowId,setRosterState]);
-  const safePage=Math.min(page,Math.max(1,Math.ceil(matches.length/8)));
-  return <><div className="student-scope"><Tabs label="Student view" value={scope} onChange={scope=>setRosterState(state=>({...state,scope,page:1}))} options={window?[["directory","Student directory"],["window","Window participation"]]:[["directory","Student directory"]]}/></div>{scope==='directory'?<section className="panel student-roster">
-    <PanelHeading title="Student directory" description="Active 42cursus students from the imported campus roster."><span className="roster-total">{db.students.filter(student=>student.active).length} students</span></PanelHeading>
-    <div className="table-toolbar"><Search value={query} onChange={setQuery} label="Search students" placeholder="Search name or username"/></div>
-    {directory.length?<><div className="table-scroll"><table><thead><tr><th>Student</th><th>Account status</th><th><span className="sr-only">Student record</span></th></tr></thead><tbody>{directory.slice((Math.min(page,Math.ceil(directory.length/8))-1)*8,Math.min(page,Math.ceil(directory.length/8))*8).map(student=><tr key={student.id}><td><Person id={student.id}/></td><td><Badge tone={student.approved_at?'green':student.email_verified_at?'amber':'neutral'}>{student.approved_at?'Approved':student.email_verified_at?'Awaiting approval':'Setup required'}</Badge></td><td><button className="text-button view-record" data-student-id={student.id} onClick={()=>goStudent(student.id)}>View record <Icon name="arrow" size={16}/></button></td></tr>)}</tbody></table></div><PageControls page={Math.min(page,Math.ceil(directory.length/8))} setPage={setPage} total={directory.length}/></>:<Empty>No students match your search.</Empty>}
-  </section>:<section className="panel student-roster">
-    <PanelHeading title="Window roster" description="Check participation or open a student’s rating record."><span className="roster-total">{roster.length} students</span></PanelHeading>
-    <div className="table-toolbar"><Search value={query} onChange={setQuery} label="Search students" placeholder="Search name or username"/><Tabs label="Participation filter" value={filter} onChange={setFilter} options={[["all",`Everyone (${roster.length})`],["rated",`Rated (${roster.filter(person=>person.submitted).length})`],["not",`Not rated (${roster.filter(person=>!person.submitted).length})`]]}/></div>
-    {matches.length?<>
-      <div className="table-scroll"><table><thead><tr><th>Student</th><th>Votes given</th><th>Votes remaining</th><th>Participation</th><th><span className="sr-only">Student record</span></th></tr></thead><tbody>{matches.slice((safePage-1)*8,safePage*8).map(person=><tr className={selectedStudent===person.student.id?'record-selected':''} key={person.student.id}><td><Person id={person.student.id}/></td><td><span className="vote-count">{person.submitted}</span>{person.counted!==person.submitted&&<small className="block muted">{person.counted} counted</small>}</td><td>{person.remaining}</td><td><div className="participation-cell"><Badge tone={!person.submitted?'neutral':person.submitted>=window.min_votes?'green':'amber'}>{!person.submitted?'Not rated':person.submitted>=window.min_votes?'Target met':`${window.min_votes-person.submitted} below target`}</Badge><small>{person.submitted} / {window.min_votes} target</small></div></td><td><button className="text-button view-record" data-student-id={person.student.id} aria-label={`View record for ${fullName(person.student)}`} onClick={()=>goStudent(person.student.id)}>View record <Icon name="arrow" size={16}/></button></td></tr>)}</tbody></table></div>
-      <PageControls page={safePage} setPage={setPage} total={matches.length}/>
-    </>:<Empty>{roster.length?'No students match these filters.':window.roster_captured_at?'No approved students were eligible when this window opened.':'The participation roster will be captured when this window opens.'}</Empty>}
-    <p className="panel-note">The minimum is a participation target. Invalidated votes still use voting allowance.</p>
-  </section>}</>;
+  const {db, windowId, goStudent, rosterState, setRosterState} = useStaff();
+  const {query, page} = rosterState;
+  // the overview's cards send 'all' / 'not'; this roster also has 'look' and 'below'
+  const filter = ({all: 'all', not: 'none', rated: 'all'})[rosterState.filter] || rosterState.filter || 'all';
+  const sort = rosterState.sort || 'look';
+  const set = patch => setRosterState(state => ({...state, ...patch}));
+  const w = db.windows.find(w => w.id === windowId);
+  const inWindow = new Map(participation(db, windowId).map(p => [p.student.id, p]));
+  const min = w?.min_votes || 0, max = w?.max_votes || 0;
+
+  // One row per active student: overall rating, this window's votes, and reasons to look.
+  const rows = db.students.filter(s => s.active).map(student => {
+    const p = inWindow.get(student.id);
+    const signals = indicators(db, student.id, windowId);
+    return {student, p, rating: average(db, student.id), signals, weight: signals.reduce((sum, x) => sum + x.weight, 0)};
+  });
+  const counts = {
+    all: rows.length,
+    look: rows.filter(r => r.weight > 0).length,
+    none: rows.filter(r => r.p && r.p.submitted === 0).length,
+    below: rows.filter(r => r.p && r.p.submitted > 0 && r.p.submitted < min).length,
+  };
+  const q = query.trim().toLowerCase();
+  const shown = rows
+    .filter(r => (fullName(r.student) + ' ' + r.student.intra_username).toLowerCase().includes(q))
+    .filter(r => filter === 'all' || (filter === 'look' ? r.weight > 0 : filter === 'none' ? r.p && r.p.submitted === 0 : r.p && r.p.submitted > 0 && r.p.submitted < min))
+    .sort((a, b) => sort === 'name' ? fullName(a.student).localeCompare(fullName(b.student))
+      : sort === 'rating' ? (a.rating ?? 9) - (b.rating ?? 9)
+      : sort === 'votes' ? (a.p?.submitted ?? -1) - (b.p?.submitted ?? -1)
+      : b.weight - a.weight || fullName(a.student).localeCompare(fullName(b.student)));
+  const size = 20, pages = Math.max(1, Math.ceil(shown.length / size)), safePage = Math.min(page, pages);
+  const rosterSize = inWindow.size, voted = [...inWindow.values()].filter(p => p.submitted > 0).length;
+  const pct = rosterSize ? Math.round(voted / rosterSize * 100) : 0;
+  const header = (key, label) => <th aria-sort={sort === key ? 'ascending' : undefined}><button className="th-sort" onClick={() => set({sort: key, page: 1})}>{label}{sort === key && <span aria-hidden="true"> ↓</span>}</button></th>;
+
+  return <section className="panel roster">
+    <div className="roster-head">
+      <div>
+        <h2>Roster</h2>
+        <p>{rows.length} active students{w ? ` · ${rosterSize} in ${w.name}` : ''}</p>
+      </div>
+      {w && <div className="roster-participation" aria-label={`${pct}% of ${w.name}'s roster have voted`}>
+        <strong>{pct}<small>%</small></strong>
+        <div><span>have voted in {w.name}</span><div className="participation-track"><i style={{width: `${pct}%`}}/></div><small>{voted} of {rosterSize} · target {min} vote{min === 1 ? '' : 's'}</small></div>
+      </div>}
+    </div>
+    <div className="table-toolbar roster-toolbar">
+      <Search value={query} onChange={value => set({query: value, page: 1})} label="Search students" placeholder="Search name or username"/>
+      <Tabs label="Show" value={filter} onChange={value => set({filter: value, page: 1})} options={[
+        ['all', `Everyone · ${counts.all}`], ['look', `Needs a look · ${counts.look}`], ['none', `Haven’t voted · ${counts.none}`], ['below', `Below target · ${counts.below}`]]}/>
+    </div>
+    {shown.length ? <>
+      <div className="table-scroll"><table className="roster-table">
+        <thead><tr>{header('name', 'Student')}{header('rating', 'Rating')}{header('votes', w ? `${w.name} votes` : 'Votes')}{header('look', 'Indicators')}</tr></thead>
+        <tbody>{shown.slice((safePage - 1) * size, safePage * size).map(r => <tr key={r.student.id} data-student-id={r.student.id} className="row-link" onClick={() => goStudent(r.student.id)}>
+          <td><button className="row-open" onClick={e => { e.stopPropagation(); goStudent(r.student.id); }}><Person id={r.student.id} clickable={false}/></button></td>
+          <td className="num">{r.rating === null ? <span className="muted">—</span> : <><b>{r.rating.toFixed(2)}</b><span className="muted"> / 3</span></>}</td>
+          <td>{!r.p ? <span className="muted">Not in this window</span> : <span className="votes-cell">
+            <b>{r.p.submitted}</b><span className="muted"> of {max}</span>
+            {min > 0 && <Badge tone={r.p.submitted >= min ? 'green' : r.p.submitted === 0 ? '' : 'amber'}>{r.p.submitted >= min ? 'target met' : r.p.submitted === 0 ? 'not voted' : `${min - r.p.submitted} below target`}</Badge>}
+          </span>}</td>
+          <td><div className="signals">{r.signals.length ? r.signals.map((x, i) => <span key={i} className={`signal signal-${x.kind}`}>{x.text}</span>) : <span className="muted">—</span>}</div></td>
+        </tr>)}</tbody>
+      </table></div>
+      <PageControls page={safePage} setPage={value => set({page: value})} total={shown.length} size={size}/>
+    </> : <Empty>No students match these filters.</Empty>}
+    <p className="panel-note">Indicators count different people, not repeated labels, and only counted ratings. They are reasons to look, not verdicts. The vote minimum is a participation target.</p>
+  </section>;
 }
 
 export function StudentRecord({id}) {
-  const {db,windowId,recordDirection:direction,setRecordDirection:setDirection,recordScope:scope,setRecordScope:setScope}=useStaff();
-  const student=db.students.find(student=>student.id===id);
-  if(!student)return <section className="panel"><Empty>This student record could not be found.</Empty></section>;
-  const window=db.windows.find(window=>window.id===windowId);
-  const rows=db.ratings.filter(r=>(scope==='all'||r.window_id===windowId)&&(direction==='received'?r.recipient_id===id:r.voter_id===id));
-  const received=db.ratings.filter(r=>r.recipient_id===id&&(scope==='all'||r.window_id===windowId));
-  const labelGroups=groupsFor(db,received,'label').filter(group=>group.id!=='none');
-  return <div className="routed-student-record">
-    {window&&<div className="student-record-context"><span>{window.name}</span><span>{shortDate(window.starts_at)} – {shortDate(window.ends_at)}</span></div>}
-    <section className="student-record-summary">
-      <div className="record-heading">
-        <div className="record-identity"><Avatar student={student}/><div><h2>{fullName(student)}</h2><p>{student.intra_username}</p></div></div>
-        <Badge tone={student.approved_at?'green':'amber'}>{student.approved_at?'Approved':'Awaiting approval'}</Badge>
+  const {db, windowId, openCase, recordDirection: direction, setRecordDirection: setDirection} = useStaff();
+  const [dimension, setDimension] = useState(null);
+  useEffect(() => setDimension(null), [id]);
+  const student = db.students.find(student => student.id === id);
+  if (!student) return <section className="panel"><Empty>This student record could not be found.</Empty></section>;
+  const w = db.windows.find(window => window.id === windowId);
+  const info = studentInsights(db, id);
+  const signals = indicators(db, id, windowId);
+  const picked = dimension && info.dimensions.find(d => d.dimension === dimension);
+  const history = db.ratings
+    .filter(r => direction === 'received' ? r.recipient_id === id : r.voter_id === id)
+    .filter(r => !picked || direction !== 'received' || picked.ratingIds.includes(r.id))
+    .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at));
+  const maxCount = Math.max(5, ...info.dimensions.map(d => Math.max(d.positive, d.negative)));
+  const targets = db.windows.filter(win => win.roster?.includes(id) && win.min_votes > 0);
+  const metTarget = targets.filter(win => db.ratings.filter(r => r.window_id === win.id && r.voter_id === id).length >= win.min_votes).length;
+  const givenTotal = info.given.total || 1;
+
+  return <div className="record">
+    <section className="panel record-summary">
+      <div className="record-who">
+        <Avatar student={student}/>
+        <div><h2>{fullName(student)}</h2><p className="mono">{student.intra_username}</p>{!student.approved_at && <Badge tone="amber">Awaiting approval</Badge>}</div>
       </div>
-      <div className="record-metrics">
-        <div><span>Overall average</span><strong>{displayAverage(average(db,id))}<small> / 3</small></strong><p>All voting windows</p></div>
-        <div><span>Window average</span><strong>{window?displayAverage(average(db,id,windowId)):'—'}<small> / 3</small></strong><p>{window?.name||'No voting window'}</p></div>
-        <div><span>Ratings given</span><strong>{ratingsIn(db,windowId).filter(r=>r.voter_id===id).length}</strong><p>{window?.name||'No voting window'}</p></div>
+      <div className="record-rating">
+        <span className="record-label">Overall rating</span>
+        <strong>{info.average === null ? '—' : info.average.toFixed(2)}<small> / 3</small></strong>
+        <p>{info.received ? `${info.received} rating${info.received === 1 ? '' : 's'} from ${info.raters} ${info.raters === 1 ? 'person' : 'people'}` : 'No counted ratings yet'}</p>
+      </div>
+      <div className="record-trend" aria-label="Rating by window">
+        <span className="record-label">By window</span>
+        <div className="trend-bars">{info.perWindow.map(p => <div key={p.window.id} className={'trend-col' + (p.window.id === windowId ? ' selected' : '') + (stateOfWindow(p.window) === 'Open' ? ' open' : '')} title={`${p.window.name}: ${p.average === null ? 'no ratings' : p.average.toFixed(2)} (${p.count} ratings)`}>
+          <span className="trend-value">{p.average === null ? '–' : p.average.toFixed(1)}</span>
+          <i style={{height: p.average === null ? 2 : 6 + (p.average - 1) / 2 * 40}}/>
+          <span className="trend-name">{p.window.name.replace(/^Window\s*/i, 'W')}</span>
+        </div>)}</div>
+      </div>
+      <div className="record-stars">
+        <span className="record-label">Stars received</span>
+        {info.stars.map(x => <div key={x.stars} className="star-row"><span>{x.stars}★</span><div className="star-track"><i style={{width: `${info.received ? x.count / info.received * 100 : 0}%`}}/></div><b>{x.count}</b></div>)}
       </div>
     </section>
+
+    {(signals.length > 0 || info.cases.length > 0) && <section className="record-signals">
+      {signals.map((x, i) => <span key={i} className={`signal signal-${x.kind}`}>{x.text}</span>)}
+      {info.cases.map(c => <button key={c.id} className="text-button" onClick={() => openCase(c.id)}>{c.status === 'open' ? 'Open case' : c.status === 'confirmed' ? 'Confirmed case' : 'Dismissed case'}: {c.title} <Icon name="arrow" size={15}/></button>)}
+    </section>}
+
+    <section className="panel record-dimensions">
+      <PanelHeading title="How peers describe them" description="Labels grouped into dimensions, across all windows. Counts show mentions and the number of different people. Select a dimension to see the ratings behind it."/>
+      {info.dimensions.some(d => d.positive + d.negative) ? <div className="dimension-rows" role="list">
+        {info.dimensions.map(d => <button key={d.dimension} role="listitem" className={'dimension-row' + (dimension === d.dimension ? ' active' : '')} disabled={!d.positive && !d.negative} aria-pressed={dimension === d.dimension} onClick={() => { setDirection('received'); setDimension(dimension === d.dimension ? null : d.dimension); }}>
+          <span className="dimension-name">{d.dimension}</span>
+          <span className="dimension-side negative">
+            {d.negative > 0 && <span className="dimension-count">{d.flags > 0 && <b className="flag-mark" title="Includes 1-star flags">⚑ {d.flags}</b>}{d.negative} concern{d.negative === 1 ? '' : 's'} · {d.negativePeople} {d.negativePeople === 1 ? 'person' : 'people'}</span>}
+            <i style={{width: `${d.negative / maxCount * 70}%`}}/>
+          </span>
+          <span className="dimension-side positive">
+            <i style={{width: `${d.positive / maxCount * 70}%`}}/>
+            {d.positive > 0 && <span className="dimension-count">{d.positive} positive · {d.positivePeople} {d.positivePeople === 1 ? 'person' : 'people'}</span>}
+          </span>
+        </button>)}
+      </div> : <Empty>No labels received yet.</Empty>}
+      {info.labels.length > 0 && <div className="label-chips">{info.labels.map(l => <span key={l.label.id} className={`label-chip tone-${l.tone}`}>{l.label.name}<b>{l.count}{l.people !== l.count ? ` · ${l.people} people` : ''}</b></span>)}</div>}
+    </section>
+
     <section className="panel record-history">
-      <PanelHeading title="Rating history"><select aria-label="Student rating scope" value={scope} onChange={event=>setScope(event.target.value)}><option value="window">Selected window</option><option value="all">All windows</option></select></PanelHeading>
-      <div className="inner-tabs"><Tabs label="Rating direction" value={direction} onChange={setDirection} options={[["received","Received"],["given","Given"]]}/><span className="muted">{rows.length} {rows.length===1?'rating':'ratings'}</span></div>
-      <RatingTable rows={[...rows].sort((a,b)=>b.submitted_at.localeCompare(a.submitted_at))} studentDirection={direction} showWindow={scope==='all'} pageSize={5}/>
+      <PanelHeading title="Rating history" description="All voting windows, newest first.">
+        <Tabs label="Rating direction" value={direction} onChange={value => { setDirection(value); setDimension(null); }} options={[["received", "Received"], ["given", "Given"]]}/>
+      </PanelHeading>
+      {picked && direction === 'received' && <div className="history-filter"><span>Showing ratings with <b>{picked.dimension}</b> labels</span><button className="text-button" onClick={() => setDimension(null)}>Show all</button></div>}
+      <RatingTable rows={history} studentDirection={direction} showWindow pageSize={6}/>
     </section>
-    <section className="record-label-section"><PanelHeading title="Labels received" description={scope==='all'?'Across all voting windows':window?.name}/><div className="received-labels">{labelGroups.map(group=>{const valid=group.rows.filter(counted).length;return <span key={group.id}>{group.name}<b>{valid===group.rows.length?valid+' '+(valid===1?'rating':'ratings'):valid+' counted · '+(group.rows.length-valid)+' invalidated'}</b></span>;})}{!labelGroups.length&&<p className="muted">No received labels in this scope.</p>}</div></section>
+
+    <section className="panel record-voter">
+      <PanelHeading title="As a voter"/>
+      <div className="voter-facts">
+        <div><span className="record-label">Ratings given</span><strong>{info.given.total}</strong></div>
+        <div><span className="record-label">Stars given</span><div className="given-split">{info.given.stars.map(x => <span key={x.stars}><b>{x.stars}★</b> {Math.round(x.count / givenTotal * 100)}%</span>)}</div></div>
+        <div><span className="record-label">Met the vote target</span><strong>{metTarget}<small> of {targets.length} window{targets.length === 1 ? '' : 's'}</small></strong></div>
+      </div>
+    </section>
   </div>;
 }
 

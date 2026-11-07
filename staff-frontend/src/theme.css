@@ -172,3 +172,90 @@ body { background-color: var(--paper); background-image: radial-gradient(#d5dad4
 /* ---------- overview: plan the next window, only when nothing is open or scheduled ---------- */
 .app-shell .plan-window { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 18px 22px; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--radius); }
 .app-shell .plan-window p { margin-top: 4px; font-size: 13px; color: var(--muted); }
+
+/* ---------- students roster: one list, participation on top, indicators as signals ---------- */
+.app-shell .roster-head { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 22px; }
+.app-shell .roster-head p { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.app-shell .roster-participation { display: flex; align-items: center; gap: 14px; min-width: 300px; }
+.app-shell .roster-participation > strong { font-size: 40px; font-weight: 600; letter-spacing: -1.5px; line-height: 1; }
+.app-shell .roster-participation > strong small { font-size: 20px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.app-shell .roster-participation > div { display: flex; flex-direction: column; gap: 6px; flex: 1; font-size: 13px; }
+.app-shell .roster-participation small { font-size: 12px; color: var(--muted); }
+.app-shell .roster-participation .participation-track { height: 6px; border-radius: 3px; background: var(--paper); overflow: hidden; margin: 0; }
+.app-shell .roster-participation .participation-track i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.app-shell .roster-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.app-shell .th-sort { background: none; border: 0; padding: 0; font: inherit; color: inherit; font-weight: 600; cursor: pointer; }
+.app-shell .th-sort:hover { color: var(--ink); }
+.app-shell .roster-table td { vertical-align: middle; }
+.app-shell .roster-table .num b { font-size: 15px; }
+.app-shell .row-link { cursor: pointer; }
+.app-shell .row-open { background: none; border: 0; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.app-shell .votes-cell { display: inline-flex; align-items: baseline; gap: 4px; }
+.app-shell .votes-cell b { font-size: 15px; }
+.app-shell .votes-cell .badge { margin-left: 10px; }
+.app-shell .signals { display: flex; flex-wrap: wrap; gap: 6px; white-space: normal; }
+.app-shell .signal { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid var(--line); background: #fafbf9; color: var(--ink); }
+.app-shell .signal::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--line-strong); }
+.app-shell .signal-flag { border-color: #f1c9c5; background: #fdf3f2; color: var(--bad); }
+.app-shell .signal-flag::before { background: var(--bad); }
+.app-shell .signal-concern { border-color: #f0dcb7; background: #fdf8ef; color: var(--warn); }
+.app-shell .signal-concern::before { background: #e39a1b; }
+.app-shell .signal-case { border-color: #f0dcb7; background: #fdf8ef; color: var(--warn); }
+.app-shell .signal-case::before { background: #e39a1b; }
+.app-shell .signal-info { color: var(--muted); }
+
+/* ---------- labels carry their meaning: positive, concern, flag ---------- */
+.app-shell .inline-labels > span.tone-positive, .app-shell .label-chip.tone-positive { border-color: #cfe7d9; background: #f2faf5; color: var(--good); }
+.app-shell .inline-labels > span.tone-concern, .app-shell .label-chip.tone-concern { border-color: #f0dcb7; background: #fdf8ef; color: var(--warn); }
+.app-shell .inline-labels > span.tone-flag, .app-shell .label-chip.tone-flag { border-color: #f1c9c5; background: #fdf3f2; color: var(--bad); }
+.app-shell .inline-labels > span.tone-flag::before, .app-shell .label-chip.tone-flag::before { content: '⚑ '; }
+
+/* ---------- student record ---------- */
+.app-shell .record { display: flex; flex-direction: column; gap: 18px; }
+.app-shell .record-label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.app-shell .record-summary { display: grid; grid-template-columns: 1.3fr 1fr 1.2fr 1fr; gap: 0; }
+.app-shell .record-summary > * { padding: 22px; border-left: 1px solid var(--line); }
+.app-shell .record-summary > :first-child { border-left: 0; }
+.app-shell .record-who { display: flex; align-items: center; gap: 14px; }
+.app-shell .record-who .avatar { width: 52px; height: 52px; font-size: 16px; }
+.app-shell .record-who h2 { font-size: 22px; letter-spacing: -0.5px; }
+.app-shell .record-who p { font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
+.app-shell .record-rating strong { display: block; font-size: 40px; font-weight: 600; letter-spacing: -1.5px; line-height: 1; }
+.app-shell .record-rating strong small { font-size: 18px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.app-shell .record-rating p { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.app-shell .trend-bars { display: flex; align-items: flex-end; gap: 10px; height: 74px; }
+.app-shell .trend-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 28px; }
+.app-shell .trend-col i { display: block; width: 22px; border-radius: 4px 4px 0 0; background: var(--accent); border: 1px solid var(--ink); border-bottom: 0; }
+.app-shell .trend-col.open i { background: color-mix(in srgb, var(--accent) 35%, #ffffff); border-style: dashed; }
+.app-shell .trend-col.selected .trend-name { color: var(--ink); font-weight: 700; }
+.app-shell .trend-col.selected i { box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--ink); }
+.app-shell .trend-value, .app-shell .trend-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+.app-shell .star-row { display: grid; grid-template-columns: 26px 1fr 22px; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+.app-shell .star-track { height: 6px; border-radius: 3px; background: var(--paper); overflow: hidden; }
+.app-shell .star-track i { display: block; height: 100%; background: var(--ink); border-radius: 3px; }
+.app-shell .star-row b { text-align: right; font-variant-numeric: tabular-nums; }
+.app-shell .record-signals { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+
+.app-shell .dimension-rows { display: flex; flex-direction: column; padding: 0 22px 8px; }
+.app-shell .dimension-row { display: grid; grid-template-columns: 140px 1fr 1fr; align-items: center; gap: 0; padding: 12px 10px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; color: inherit; text-align: left; border-radius: 0; cursor: pointer; }
+.app-shell .dimension-row:first-child { border-top: 0; }
+.app-shell .dimension-row:hover:not(:disabled) { background: #fafbf9; }
+.app-shell .dimension-row.active { background: var(--accent-soft); }
+.app-shell .dimension-row:disabled { cursor: default; opacity: 1; color: var(--muted); }
+.app-shell .dimension-name { font-weight: 600; }
+.app-shell .dimension-side { display: flex; align-items: center; gap: 8px; height: 26px; }
+.app-shell .dimension-side.negative { justify-content: flex-end; border-right: 1px solid var(--line-strong); }
+.app-shell .dimension-side i { display: block; height: 14px; }
+.app-shell .dimension-side.negative i { background: #e7a94a; border-radius: 3px 0 0 3px; }
+.app-shell .dimension-side.positive i { background: #43b07c; border-radius: 0 3px 3px 0; }
+.app-shell .dimension-count { font-size: 12px; white-space: nowrap; color: var(--muted); }
+.app-shell .flag-mark { color: var(--bad); font-weight: 700; margin-right: 6px; }
+.app-shell .label-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 22px 20px; border-top: 1px solid var(--line); }
+.app-shell .label-chip { display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; font-size: 12px; font-weight: 500; }
+.app-shell .label-chip b { font-family: 'JetBrains Mono', monospace; font-weight: 500; opacity: 0.8; }
+.app-shell .history-filter { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 22px 12px; padding: 10px 14px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
+.app-shell .voter-facts { display: grid; grid-template-columns: repeat(3, 1fr); padding: 0 22px 22px; gap: 22px; }
+.app-shell .voter-facts strong { font-size: 28px; font-weight: 600; letter-spacing: -1px; }
+.app-shell .voter-facts strong small { font-size: 14px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.app-shell .given-split { display: flex; gap: 14px; font-size: 14px; }
+@media (max-width: 1150px) { .app-shell .record-summary { grid-template-columns: 1fr 1fr; } .app-shell .record-summary > :nth-child(3) { border-left: 0; } }

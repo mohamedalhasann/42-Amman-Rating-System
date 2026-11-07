@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useStaff} from './context';
+import {toneOf} from './insights';
 import {counted, fullName} from './model';
 
 export function Icon({name, size = 20}) {
@@ -88,7 +89,7 @@ export function RatingTable({rows, selectIds, setSelectIds, pageSize = 8, studen
 }
 export function RatingLabels({rating}) {
   const {db} = useStaff();
-  return <div className="inline-labels">{rating.label_ids.length ? rating.label_ids.map(id => <span key={id}>{db.labels.find(l => l.id === id)?.name || 'Unknown label'}</span>) : <span className="muted">No labels</span>}</div>;
+  return <div className="inline-labels">{rating.label_ids.length ? rating.label_ids.map(id => {const label = db.labels.find(l => l.id === id); return <span key={id} className={label ? 'tone-' + toneOf(label) : ''}>{label?.name || 'Unknown label'}</span>;}) : <span className="muted">No labels</span>}</div>;
 }
 export function RatingDetail({id, onClose}) {
   const {db, openCase} = useStaff();
