@@ -79,7 +79,7 @@ export function Home() {
       )}
 
       <div className="home__grid">
-        <section className="poster rise" aria-labelledby="poster-title">
+        <section className="poster home__poster rise" aria-labelledby="poster-title">
           <div className="poster__who">
             <div className="poster__badge">
               <Monogram first={me.first_name} last={me.last_name} />
@@ -126,8 +126,7 @@ export function Home() {
           </div>
         </section>
 
-        <div className="home__col">
-          <section className="card card--strong window rise" style={{ animationDelay: '60ms' }} aria-label="Voting window">
+          <section className="card card--strong window home__window rise" style={{ animationDelay: '60ms' }} aria-label="Voting window">
             {!dash ? (
               <div className="skeleton" style={{ height: 180 }} />
             ) : !win ? (
@@ -170,7 +169,7 @@ export function Home() {
                 <div className="window__given">
                   <p className="window__given-title">You rated <span className="muted">· only you see this</span></p>
                   {given.length === 0 ? (
-                    <p className="given__empty">Nobody yet this window.</p>
+                    <p className="given__empty">You haven’t rated anyone this window yet.</p>
                   ) : (
                     <ul className="given">
                       {given.map((g) => (
@@ -188,7 +187,7 @@ export function Home() {
             )}
           </section>
 
-          <section className="card history rise" style={{ animationDelay: '120ms' }} aria-labelledby="history-title">
+          <section className="card history home__history rise" style={{ animationDelay: '120ms' }} aria-labelledby="history-title">
             <div className="card__head">
               <h2 id="history-title">Your rating over time</h2>
               <span className="muted">one bar per voting window</span>
@@ -212,7 +211,7 @@ export function Home() {
                     <span
                       aria-hidden="true"
                       className={`bars__bar ${h.state === 'open' ? 'bars__bar--open' : h.value === null ? 'bars__bar--none' : h.carried ? 'bars__bar--carried' : ''} ${h === lastMoved ? 'bars__bar--last' : ''}`}
-                      style={h.value !== null ? { height: `${Math.round(((h.value - 1) / 2) * 84) + 12}px` } : undefined}
+                      style={h.value !== null ? { height: `calc(${((h.value - 1) / 2).toFixed(3)} * var(--bar-h) + 12px)` } : undefined}
                     />
                     <span className="visually-hidden">{text}</span>
                   </li>
@@ -225,8 +224,6 @@ export function Home() {
               </p>
             )}
           </section>
-
-        </div>
       </div>
 
       {rating && win && (
