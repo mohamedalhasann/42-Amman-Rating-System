@@ -8,7 +8,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
     <div className="auth">
       <section className="auth__stage">
         <div className="auth__brand">
-          <Wordmark size={30} dotColor="var(--ink)" />
+          <Wordmark size={30} color="var(--on-accent)" dotColor="var(--on-accent)" />
           <CampusLogo height={58} className="auth__campus" />
         </div>
         <div className="auth__pitch">

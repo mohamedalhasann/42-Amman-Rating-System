@@ -4,17 +4,10 @@ import { Monogram } from '../components/Monogram';
 import { Promises } from '../components/Promises';
 import { CampusLogo } from '../components/CampusLogo';
 import { Icon, StarIcon, Wordmark, initials } from '../components/bits';
-import { DEFAULT_ACCENT, useSession } from '../session';
+import { useSession } from '../session';
+import { ACCENTS, knownAccent } from '../accents';
 import { ApiError } from '../api';
 
-export const ACCENTS: { hex: string; name: string }[] = [
-  { hex: '#00BABC', name: '42 cyan' },
-  { hex: '#5BA4FF', name: 'Sky' },
-  { hex: '#8FD16A', name: 'Lime' },
-  { hex: '#F2A541', name: 'Amber' },
-  { hex: '#FF8A80', name: 'Coral' },
-  { hex: '#B79CF2', name: 'Lilac' },
-];
 
 const STEPS = ['You', 'How it works', 'Color'];
 
@@ -22,7 +15,7 @@ export function Onboarding() {
   const { me, saveProfile, previewAccent } = useSession();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
-  const [accent, setAccent] = useState(me?.profile?.accent ?? DEFAULT_ACCENT);
+  const [accent, setAccent] = useState(knownAccent(me?.profile?.accent));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 

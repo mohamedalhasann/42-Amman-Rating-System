@@ -3,7 +3,7 @@ import { Monogram } from '../components/Monogram';
 import { Icon, StarMeter, Wordmark, pad, starWord, useCountdown } from '../components/bits';
 import { api, type Dashboard, type GivenRating, type HistoryPoint } from '../api';
 import { useSession } from '../session';
-import { ACCENTS } from './Onboarding';
+import { ACCENTS, knownAccent } from '../accents';
 import { RateSheet } from './RateSheet';
 
 const STATE_TEXT: Record<GivenRating['state'], string> = {
@@ -276,7 +276,7 @@ function UserMenu() {
 
   if (!me) return null;
   const profile = me.profile!;
-  const accent = profile.accent;
+  const accent = knownAccent(profile.accent);
 
   function changeAccent(hex: string) {
     previewAccent(hex);

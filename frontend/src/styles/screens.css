@@ -23,14 +23,14 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 /* ---------- auth ---------- */
 .auth { min-height: 100vh; display: grid; grid-template-columns: 1fr; }
 .auth__stage {
-  position: relative; overflow: hidden; background: var(--accent); color: var(--ink);
+  position: relative; overflow: hidden; background: var(--accent); color: var(--on-accent);
   padding: 24px 22px 0; display: flex; flex-direction: column; gap: 18px;
   border-bottom: var(--stroke);
 }
 .auth__brand { display: flex; justify-content: space-between; align-items: center; }
-.auth__campus { color: var(--ink); }
+.auth__campus { color: var(--on-accent); }
 .auth__pitch h1 { font-size: clamp(34px, 8vw, 76px); line-height: 0.95; letter-spacing: -0.04em; font-weight: 700; }
-.auth__pitch p { margin-top: 14px; color: var(--ink); font-size: 18px; font-weight: 500; line-height: 1.45; max-width: 32ch; }
+.auth__pitch p { margin-top: 14px; color: inherit; font-size: 18px; font-weight: 500; line-height: 1.45; max-width: 32ch; }
 .auth__panel { display: flex; align-items: center; justify-content: center; padding: 32px 20px 48px; }
 .auth__form { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 20px; }
 .auth__head { display: flex; flex-direction: column; gap: 8px; }
@@ -89,7 +89,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   border-radius: var(--r-lg); padding: 18px; box-shadow: var(--shadow);
 }
 .idcard__avatar {
-  width: 64px; height: 64px; flex: none; border-radius: 18px; background: var(--accent); border: var(--stroke);
+  width: 64px; height: 64px; flex: none; border-radius: 18px; background: var(--accent); color: var(--on-accent); border: var(--stroke);
   display: grid; place-items: center; font-size: 22px; font-weight: 700; overflow: hidden;
 }
 .idcard__avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -161,6 +161,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 
 /* the poster: who you are, then your rating */
 .poster {
+  --accent: var(--accent-on-ink);
   position: relative; overflow: hidden; background: var(--ink); color: var(--paper); border-radius: 30px;
   padding: 20px; display: flex; flex-direction: column; gap: 22px;
 }
@@ -294,7 +295,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
   flex: none; width: 46px; height: 46px; border-radius: 15px; border: var(--stroke); background: #e3e6e1;
   display: grid; place-items: center; font-weight: 700; font-size: 14px;
 }
-.peer__avatar--lg { width: 62px; height: 62px; border-radius: 20px; font-size: 19px; background: var(--accent); }
+.peer__avatar--lg { width: 62px; height: 62px; border-radius: 20px; font-size: 19px; background: var(--accent); color: var(--on-accent); }
 .peer__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .peer__name { font-weight: 600; }
 .peer__login { font-size: 13px; }
@@ -323,7 +324,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 .notice svg { flex: none; margin-top: 1px; }
 .done { align-items: center; justify-content: center; text-align: center; gap: 18px; }
 .done__badge {
-  width: 104px; height: 104px; border-radius: 32px; background: var(--accent); border: var(--stroke);
+  width: 104px; height: 104px; border-radius: 32px; background: var(--accent); color: var(--on-accent); border: var(--stroke);
   box-shadow: var(--shadow); display: grid; place-items: center;
 }
 .done__text { font-size: 18px; line-height: 1.45; max-width: 34ch; }
@@ -354,7 +355,7 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 /* onboarding side panel: a preview of the student's own card */
 .onb__preview { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .onb__badge { position: relative; width: min(220px, 60%); aspect-ratio: 1; border-radius: 50%; background: var(--accent); border: 3px solid var(--paper); transition: background 300ms ease; }
-.onb__badge .monogram span { color: var(--ink); }
+.onb__badge .monogram span { color: var(--on-accent); }
 .onb__name { color: var(--paper); font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin-top: 8px; }
 @media (max-width: 959px) { .auth__promises { display: none; } }
 
@@ -365,15 +366,19 @@ a { color: var(--ink); text-decoration-thickness: 2px; text-underline-offset: 3p
 }
 .onb__brand { display: flex; justify-content: space-between; align-items: center; color: var(--paper); }
 
-/* the sign-in stage slowly moves through the accent colours students can pick */
-.auth__stage { animation: stage-colors 30s ease-in-out infinite; }
+/* The sign-in screen slowly moves through the accent colours students can pick. The colour is
+   animated as a registered property and fed into --accent, so the stage, the sign-in button and
+   links all change together, with text switching to light on the dark navy. */
+@property --stage { syntax: '<color>'; inherits: true; initial-value: #00ced1; }
+@property --on-stage { syntax: '<color>'; inherits: true; initial-value: #121417; }
+.auth { --accent: var(--stage); --on-accent: var(--on-stage); animation: stage-colors 30s ease-in-out infinite; }
 @keyframes stage-colors {
-  0%, 13% { background-color: #00BABC; }
-  17%, 30% { background-color: #5BA4FF; }
-  34%, 46% { background-color: #8FD16A; }
-  50%, 63% { background-color: #F2A541; }
-  67%, 80% { background-color: #FF8A80; }
-  84%, 96% { background-color: #B79CF2; }
-  100% { background-color: #00BABC; }
+  0%, 13% { --stage: #00ced1; --on-stage: #121417; }
+  17%, 30% { --stage: #5ba4ff; --on-stage: #121417; }
+  34%, 46% { --stage: #ff7ab6; --on-stage: #121417; }
+  50%, 63% { --stage: #24387a; --on-stage: #f4f5f2; }
+  67%, 80% { --stage: #ff8a80; --on-stage: #121417; }
+  84%, 96% { --stage: #b79cf2; --on-stage: #121417; }
+  100% { --stage: #00ced1; --on-stage: #121417; }
 }
-@media (prefers-reduced-motion: reduce) { .auth__stage { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .auth { animation: none; } }
