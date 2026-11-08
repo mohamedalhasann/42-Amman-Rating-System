@@ -3,17 +3,12 @@
 Submission deadline: **Sunday 8 November, 9:00 AM (Amman)**. Commits after that disqualify the team.
 Working branch: `feat/staff-redesign` (contains `main`, the student integration and the staff work).
 
-## Remaining, in order
+## Status
 
-1. **Spec labels.** Add the labels from the spec table (Fair, Thorough, Clear explainer, Helpful feedback,
-   Well prepared, Knows their code, Open to feedback; Rushed, Late, Defensive; Bad Evaluator, Unprepared)
-   with the right star levels, and map each to a dimension in `staff-frontend/src/insights.js`.
-2. **Link everything.** One PR `feat/staff-redesign` → `main`. `feat/home-layout` (desktop home
-   experiments) and `feat/pet-cat` are intentionally not included.
-3. **PWA** for the student app (`frontend/`): manifest, icons, service worker. Check the CSP in Django allows it.
-4. **Profile pictures.** No empty avatars: a cat picture per user, chosen deterministically from the user id.
-5. **Mobile test pass** of the student app on a phone viewport, then final fixes.
-6. Then: end-to-end check (student votes → detection opens a case → staff decides), demo data.
+Done: spec labels, PWA, cat avatars, readable CSV, too-fast detection, mobile check of the student flow,
+end-to-end (student votes 1★ on a phone → detection opens the check → staff decide).
+Open: **PR #5 `feat/staff-redesign` → `main` must be merged before 9:00.** `feat/home-layout` and
+`feat/pet-cat` are intentionally not included.
 
 ## How to run locally
 
