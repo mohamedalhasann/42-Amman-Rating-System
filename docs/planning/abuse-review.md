@@ -24,8 +24,8 @@ An invalid label ID is rejected at submission, but a valid label can still conta
 3. Deduplicate or update cases so rerunning a scan does not flood staff with identical alerts.
 4. Store students, linked votes or attempts, observed interval, readable findings, and supporting counts.
 5. Present one queue with every applicable mechanism and a case detail view. Keep algorithm parameters out of the main explanation; provide supporting facts to staff.
-6. Staff confirm or dismiss the suspicion with a reason. Confirmation alone does not delete or invalidate every linked vote.
-7. Staff invalidate particular confirmed abusive votes. Record the decision and recalculate affected averages and valid totals.
+6. Staff select specific abusive ratings while reviewing, then resolve the case with one reason and one save: confirm abuse and exclude the selected ratings together, or dismiss without changing ratings. Never automatically select all linked ratings.
+7. Save the case decision, selected exclusions, and audit record atomically; recalculate affected averages and valid totals. Cases involving only blocked attempts can be confirmed and closed without exclusions.
 
 Agreed baseline: in accordance with the hackathon specification, all accepted votes count immediately without a pre-approval queue. Suspicion flags an open abuse case for staff review without altering ratings or student allowances. Staff can confirm abuse and invalidate specific votes. No automatic student penalties or future-vote discounts are approved. Resolve D15 thresholds before implementing the rules.
 

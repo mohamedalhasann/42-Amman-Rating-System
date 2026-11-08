@@ -23,7 +23,7 @@ Success means two things:
 
 Fairness is built into the mechanism, not just claimed in copy:
 - Students only ever see their own average. They never see received labels, other students' ratings, or who rated them.
-- When too few people rate someone in a window, that student's rating carries over unchanged. No change can then be traced back to a single vote.
+- Every accepted vote counts immediately toward the student's own all-window average. Staff invalidate votes confirmed as abuse. No publication threshold or campus-average substitute is enabled.
 - Serious (1-star) votes need a flag and an explanation, so staff have context if a vote is investigated for abuse.
 
 ## Operating Context
@@ -60,7 +60,7 @@ None binding. The owner confirmed that the name "Fairly", 42 cyan, the student-c
 
 ## Product Principles
 
-1. **Fairness has to be visible, not just promised.** The anonymity threshold and staff review are the product, so they should be understood at a glance.
+1. **Fairness has to be visible, not just promised.** Confidentiality and staff review should be understood at a glance.
 2. **Treat a person's rating with care.** Ratings carry real consequences, so show scores with context and a path forward, never as a bare verdict.
 3. **A vote is a serious, final act.** Make it deliberate and clear before submitting, and reassuring after.
 4. **Students see only themselves.** Never reveal or hint at anyone else's ratings, labels or identity as a rater.

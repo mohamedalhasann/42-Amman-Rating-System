@@ -45,28 +45,20 @@ export function Home() {
 
   useEffect(() => {
     load();
+    const update=()=>{if(!document.hidden)load();};
+    const interval=window.setInterval(update,30000);
+    window.addEventListener('focus',update);
+    return()=>{window.clearInterval(interval);window.removeEventListener('focus',update);};
   }, [load]);
 
   if (!me) return null;
 
   const average = dash?.own_rating.average ?? null;
-  // The rating as it stood when each window closed. A window with too few raters adds nothing,
-  // so the rating carries over unchanged from the window before.
-  // Windows before the student's first rating show the campus average instead, marked as such.
-  const campus = dash?.campus_average ?? null;
-  let carry: number | null = null;
-  const points = history.map((h) => {
-    if (h.state !== 'closed') return { ...h, value: null, carried: false, campus: false };
-    if (h.average !== null) carry = h.average;
-    if (carry === null) return { ...h, value: campus, carried: false, campus: campus !== null };
-    return { ...h, value: carry, carried: h.average === null, campus: false };
-  });
-  // Change since the last window that actually moved the rating; carried and campus bars don't count.
-  const moved = points.filter((p) => p.state === 'closed' && p.value !== null && !p.carried && !p.campus);
+  const points = history.map(h=>({...h,value:h.average}));
+  const moved = points.filter(p=>p.state==='closed'&&p.value!==null);
   const lastMoved = moved[moved.length - 1];
   const prevMoved = moved[moved.length - 2];
   const delta = lastMoved && prevMoved ? Math.round((lastMoved.value! - prevMoved.value!) * 10) / 10 : null;
-  const anyCarried = points.some((p) => p.carried);
   const win = dash?.window ?? null;
   const allowance = dash?.allowance ?? null;
   const used = allowance?.votes_used ?? 0;
@@ -92,7 +84,7 @@ export function Home() {
         <section className="poster rise" aria-labelledby="poster-title">
           <div className="poster__who">
             <div className="poster__badge">
-              <Monogram first={me.first_name} last={me.last_name} />
+              <Monogram first={me.first_name} last={me.last_name} picture={me.picture_url} seed={me.intra_username}/>
             </div>
             <div className="poster__names">
               <h1 className="poster__name">{me.first_name} {me.last_name}</h1>
@@ -110,7 +102,7 @@ export function Home() {
             ) : average === null ? (
               <>
                 <p className="poster__number poster__number--none">–</p>
-                <p className="poster__sub">Not enough ratings yet. Your first rating appears when a window closes with enough people rating you.</p>
+                <p className="poster__sub">No ratings yet. Your average appears when you receive your first counted rating.</p>
               </>
             ) : (
               <>
@@ -160,13 +152,13 @@ export function Home() {
                   <div>
                     <p className="window__left">{left} of {max} votes left</p>
                     {/* the staff minimum only shows while there's something to do about it */}
-                    {min > used && (
+                    {!dash.voting_notice&&min > used && (
                       <p className="muted window__min">
                         {used === 0 ? `Vote for at least ${min} people this window.` : `${min - used} more to reach the minimum.`}
                       </p>
                     )}
                   </div>
-                  {left > 0 ? (
+                  {dash.voting_notice?<p className="muted window__min">{dash.voting_notice}</p>:left > 0 ? (
                     <button className="btn btn--accent window__cta" onClick={() => setRating(true)}>Rate someone</button>
                   ) : (
                     <p className="window__done">All votes used. See you next window.</p>
@@ -205,12 +197,8 @@ export function Home() {
                 const text =
                   h.state === 'open'
                     ? `${h.name}: open now.`
-                    : h.campus
-                      ? `${h.name}: no rating for you yet. Campus average ${h.value!.toFixed(1)}.`
-                      : h.carried
-                      ? `${h.name}: too few raters, so your rating stayed at ${h.value!.toFixed(1)}.`
-                      : h.value === null
-                        ? `${h.name}: too few raters, no rating yet.`
+                    : h.value === null
+                        ? `${h.name}: no rating yet.`
                         : `${h.name}: ${h.value.toFixed(1)}.`;
                 return (
                   <li key={h.window_id} className="bars__col">
@@ -227,11 +215,7 @@ export function Home() {
                 );
               })}
             </ol>
-            {anyCarried && (
-              <p className="bars__legend">
-                Hint: If there aren’t enough votes, no change will be displayed.
-              </p>
-            )}
+            {!points.length&&<p className="muted">Your rating history will appear here as you take part in voting windows.</p>}
           </section>
 
         </div>
@@ -273,9 +257,11 @@ function Countdown({ endsAt, serverTime }: { endsAt: string; serverTime: string 
 function UserMenu() {
   const { me, logout, saveProfile, previewAccent } = useSession();
   const [open, setOpen] = useState(false);
+  const [error,setError]=useState('');
   const wrap = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const saveTimer = useRef<number>();
+  useEffect(()=>()=>window.clearTimeout(saveTimer.current),[]);
 
   useEffect(() => {
     if (!open) return;
@@ -301,10 +287,11 @@ function UserMenu() {
   const accent = knownAccent(profile.accent);
 
   function changeAccent(hex: string) {
+    setError('');
     previewAccent(hex);
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      saveProfile({ ...profile, accent: hex }).catch(() => previewAccent(accent));
+      saveProfile({ ...profile, accent: hex }).catch(() => {previewAccent(accent);setError('Couldn’t save your color. Try again.');});
     }, 400);
   }
 
@@ -349,7 +336,8 @@ function UserMenu() {
               />
             ))}
           </div>
-          <button className="menu__item" onClick={() => logout()}>
+          {error&&<p className="error" role="alert">{error}</p>}
+          <button className="menu__item" onClick={() => logout().catch(()=>setError('Couldn’t sign out. Try again.'))}>
             <Icon name="logout" size={18} /> Sign out
           </button>
         </div>

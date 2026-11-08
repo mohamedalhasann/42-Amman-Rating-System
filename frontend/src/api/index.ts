@@ -16,7 +16,7 @@ export interface Api {
   me(): Promise<Me>;
   saveProfile(profile: Profile): Promise<Me>;
   dashboard(): Promise<Dashboard>;
-  searchPeers(query: string): Promise<Peer[]>;
+  searchPeers(query: string, cursor?: string): Promise<import('./types').Page<Peer>>;
   labels(stars: Stars): Promise<Label[]>;
   submitRating(input: SubmitRatingInput, idempotencyKey: string): Promise<SubmitRatingResult>;
   history(): Promise<HistoryPoint[]>;
@@ -24,6 +24,6 @@ export interface Api {
   given(windowId: string): Promise<GivenRating[]>;
 }
 
-export const isMock = import.meta.env.VITE_USE_MOCK !== 'false';
+export const isMock = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true';
 export const api: Api = isMock ? mockApi : realApi;
 export * from './types';

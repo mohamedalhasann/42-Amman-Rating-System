@@ -34,8 +34,8 @@ export interface Dashboard {
   server_time: string;
   window: VotingWindow | null;
   own_rating: { average: number | null; scope: 'all_windows' };
-  campus_average: number | null; // added: mean of every student's all-window average
   allowance: { votes_used: number; votes_remaining: number } | null;
+  voting_notice: string | null;
 }
 
 export interface Peer {
@@ -43,6 +43,7 @@ export interface Peer {
   first_name: string;
   last_name: string;
   intra_username: string;
+  picture_url?: string | null;
 }
 
 export interface Label {
@@ -61,7 +62,7 @@ export interface SubmitRatingInput {
 
 export interface SubmitRatingResult {
   rating_id: string;
-  state: 'counted';
+  state: 'counted' | 'invalidated';
   submitted_at: string;
   allowance: { votes_used: number; votes_remaining: number };
 }
@@ -70,7 +71,7 @@ export interface SubmitRatingResult {
 export interface HistoryPoint {
   window_id: string;
   name: string;
-  average: number | null; // null when the window had too few raters
+  average: number | null; // own cumulative counted average at the close; null before any ratings
   state: 'closed' | 'open';
 }
 

@@ -186,11 +186,11 @@ export const mockApi: Api = {
         max_votes: WINDOW_MAX,
       },
       own_rating: { average: 2.6, scope: 'all_windows' as const },
-      campus_average: 2.4,
+      voting_notice: null,
       allowance: allowance(s, user.intra_username),
     });
   },
-  async searchPeers(query) {
+  async searchPeers(query, cursor) {
     const s = load();
     const me = current(s);
     const q = query.trim().toLowerCase();
@@ -203,7 +203,9 @@ export const mockApi: Api = {
           r.first_name.toLowerCase().includes(q) ||
           r.last_name.toLowerCase().includes(q)),
     ).map(strip);
-    return wait(items, 180);
+    const start = cursor ? items.findIndex(item=>item.recipient_id===cursor)+1 : 0;
+    const page = items.slice(start,start+25);
+    return wait({items:page,next_cursor:start+25<items.length?page[page.length-1].recipient_id:null}, 180);
   },
   async labels(stars) {
     return wait(

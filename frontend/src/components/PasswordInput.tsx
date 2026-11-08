@@ -50,5 +50,5 @@ export function PasswordInput({ id, value, onChange, autoComplete, autoFocus, in
 
 /** Intra logins are lowercase. Accept a pasted 42 email or "@login" and keep just the login. */
 export function intraLogin(raw: string): string {
-  return raw.trim().toLowerCase().replace(/^@/, '').replace(/@student\.42amman\.com$/, '');
+  return raw.trim().toLowerCase().replace(/^@/, '').replace(/@(?:student\.)?42amman\.com$/, '');
 }

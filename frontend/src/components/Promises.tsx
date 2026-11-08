@@ -10,11 +10,11 @@ export function Promises({ className = '' }: { className?: string }) {
       </li>
       <li>
         <span className="promises__icon"><Icon name="eye" size={20} /></span>
-        <span>Your rating is private. Only you can see it.</span>
+        <span>Your rating is private to you and staff.</span>
       </li>
       <li>
         <span className="promises__icon"><Icon name="scale" size={20} /></span>
-        <span>Suspicious voting patterns are flagged for review.</span>
+        <span>Staff can review suspicious voting.</span>
       </li>
     </ul>
   );

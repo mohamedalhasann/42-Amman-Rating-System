@@ -21,6 +21,7 @@ export function Login() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    if(busy)return;
     const user = intraLogin(username);
     if (!user || !password) {
       setError(!user ? 'Enter your intra username.' : 'Enter your password.');
@@ -31,6 +32,7 @@ export function Login() {
     setError('');
     try {
       const me = await login(user, password);
+      if(me?.role==='staff'){window.location.replace('/staff/');return;}
       navigate(me?.profile?.onboarded ? '/' : '/welcome', { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
@@ -69,7 +71,7 @@ export function Login() {
           <PasswordInput id="password" autoComplete="current-password" autoFocus={!!arrived?.username} value={password} onChange={setPassword} />
         </div>
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="btn btn--accent btn--block" type="submit" aria-busy={busy}>
+        <button className="btn btn--accent btn--block" type="submit" disabled={busy} aria-busy={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
       </form>

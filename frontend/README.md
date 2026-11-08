@@ -1,43 +1,39 @@
-# Fairly student frontend
+# Fairly student frontend and shared login
 
-React + TypeScript + Vite. Student experience for PC and mobile: sign in, first-time password setup, onboarding (character and accent color), dashboard, and the rating flow.
+React + TypeScript + Vite. The existing screens from `main` are connected to Django: shared sign-in, student/staff setup, password reset, approval waiting, onboarding/accent preferences, student dashboard, history, peers and rating submission.
 
-## Run it
+See [connected app startup and policies](../INTEGRATION.md). For the simplest local setup, build both apps and open **http://127.0.0.1:8000/login** with Django running. Staff go to `/staff/` based on their stored backend role. There is no role selector or separate staff login.
 
-```bash
+## React development
+
+```sh
 cd frontend
-npm install
-cp .env.example .env
+npm ci
 npm run dev
 ```
 
-Open http://localhost:5173.
+Keep Django on port 8000, then open **http://127.0.0.1:5173**. Vite proxies `/api` and `/staff` to Django; build `staff-frontend` first. Both frontends share this hostname's session cookie. Port 5173 is fixed. Do not run both Vite servers on that port simultaneously.
 
-- `VITE_USE_MOCK=true` (default): runs entirely in the browser with a mock API. Sign in with any roster username, for example `anashwan`, and any password. Username `pending` shows the waiting-for-approval screen. Mock data lives in `localStorage`; clear it to start over.
-- `VITE_USE_MOCK=false`: calls the Django API at `/api/v1`. In development, Vite proxies `/api` to `http://localhost:8000`.
+Real API is the default. `VITE_USE_MOCK=true` explicitly enables development-only mock data; production builds always use the backend. Real sessions, records, passwords and tokens are never written to localStorage or replaced by synthetic fallback data.
 
-`npm run build` typechecks and builds to `dist/`.
+```sh
+npm run typecheck
+npm run build
+```
 
-## Structure
+TypeScript checks and the production build are required. Router and Vite dependencies were updated to address the advisories from the original lockfile.
 
-| Path | What it holds |
-| --- | --- |
-| `src/api/types.ts` | Request and response shapes from `docs/planning/api-contract.md` |
-| `src/api/real.ts` | Calls to the Django API (session cookie + CSRF token on writes, `Idempotency-Key` on ratings) |
-| `src/api/mock.ts` | In-browser mock following `voting-rules.md` |
-| `src/session.tsx` | Signed-in user, login/logout, profile save, accent color |
-| `src/App.tsx` | Routes and the guard that sends users to login, pending, onboarding or home |
-| `src/components/Character.tsx` | The character, built from swappable SVG parts |
-| `src/screens/` | Login, setup, pending, onboarding, home, rating sheet |
-| `src/styles/` | Design tokens (`global.css`) and screen styles (`screens.css`) |
+## Integration behavior
 
-## Design rules
+- Setup and reset requests send only the Intra username. The server derives the staff/student delivery domain. The generic confirmation does not expose the stored role or claim a student address for staff.
+- Completion links use fragments. Tokens are removed from the address bar before API requests and held only in memory. Reopen the email link after a refresh. Password recovery preserves approval/verification and invalidates existing sessions.
+- Pending accounts get a short session restricted to their own display identity and waiting screen. Staff approval unlocks onboarding; every student/staff data request rechecks access.
+- Accent/onboarding preferences persist in the database. Saved private photos display with initials as fallback. The initial catalog follows `docs/planning/voting-rules.md`.
+- The dashboard uses server time and actual allowance. Students outside the opening roster see a clear message and no vote action.
+- Peer search includes pagination. Allowed labels come from staff configuration. A one-star vote needs a permitted flag and explanation. Submission uses a stable idempotency key for identical retries; success appears only after the server accepts it.
+- Students see their own all-window counted average, own cumulative history and own given votes. No other student's score/received labels, campus-score substitute or minimum-rater threshold is exposed.
+- Accepted votes appear in the staff app after refresh. Staff invalidation updates averages and preserves consumed allowance.
 
-- Thick ink outlines everywhere, matching the characters. Hard offset shadows only on things you press.
-- One accent color, chosen by the student (42 cyan by default), set as `--accent` on the root.
-- Space Grotesk for text, JetBrains Mono for usernames, numbers and the timer.
-- Students only ever see their own rating, their own votes and the window. Nothing about anyone else.
+The visual design, color choices and existing React screens are retained. Copy about score timing and campus averages now follows the agreed requirements. Automatic detection remains pending; the backend records durable work for it.
 
-## Backend endpoints this needs
-
-Besides the routes already in the contract, the frontend uses the additions listed under "Student interface additions" in `docs/planning/api-contract.md`.
+Browser verification with synthetic data covers both role routes, setup domains, approval, onboarding, preferences, roster restrictions, peer pagination/search, serious submissions visible to staff, password reset, mobile layout and absence of mock browser storage.

@@ -1,0 +1,42 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>{% if setup %}Create your password{% else %}Sign in{% endif %} · Fairly</title>
+  <link rel="stylesheet" href="{% static 'profiles/accounts.css' %}">
+  <script src="{% static 'profiles/accounts.js' %}" defer></script>
+</head>
+<body data-setup="{{ setup|yesno:'true,false' }}">
+  <main class="account-card">
+    <a class="brand" href="/account/">Fairly<span>.</span></a>
+    <p class="eyebrow">42 Amman</p>
+    <div id="account-entry">
+      <h1>{% if setup %}Create your password{% else %}Welcome back{% endif %}</h1>
+      <p class="intro">{% if setup %}Finish setting up your account.{% else %}Sign in with your Intra username and Fairly password.{% endif %}</p>
+      {% if setup %}
+      <form id="complete-form">
+        <label for="new-password">New password</label><input id="new-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="1024">
+        <label for="repeat-password">Repeat password</label><input id="repeat-password" type="password" autocomplete="new-password" required minlength="8" maxlength="1024">
+        <button class="primary" type="submit">Create password</button>
+      </form>
+      {% else %}
+      <form id="login-form">
+        <label for="account-type">Account</label><select id="account-type" name="account_type"><option value="student">Student</option><option value="staff">Staff</option></select>
+        <label for="username">Intra username</label><input id="username" name="intra_username" autocomplete="username" required maxlength="150" autocapitalize="none" spellcheck="false">
+        <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required maxlength="1024">
+        <button class="primary" type="submit">Sign in</button>
+      </form>
+      <div class="setup-request"><h2>First time here?</h2><p>Enter your username above to request a setup link at your campus email.</p><button id="request-setup" type="button">Send setup link</button></div>
+      {% endif %}
+    </div>
+    <section id="signed-in" hidden><h1>You’re signed in</h1><p id="signed-in-name"></p><button id="logout" type="button">Sign out</button>
+      <section id="approvals" hidden><h2>Awaiting approval</h2><div id="approval-list"></div><button id="more-approvals" hidden type="button">Load more</button></section>
+    </section>
+    <p id="account-message" role="status" aria-live="polite"></p>
+    {% if setup %}<a class="back-link" href="/account/">Back to sign in</a>{% endif %}
+  </main>
+</body>
+</html>
