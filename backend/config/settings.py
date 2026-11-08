@@ -62,6 +62,9 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 SECURE_SSL_REDIRECT = not DEBUG
+# Hosts like Render terminate HTTPS at their proxy; trust its header so the redirect above doesn't loop.
+if os.getenv('DJANGO_BEHIND_PROXY', 'false').lower() == 'true':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 FORTYTWO_CLIENT_ID = os.getenv('FORTYTWO_CLIENT_ID', '')
