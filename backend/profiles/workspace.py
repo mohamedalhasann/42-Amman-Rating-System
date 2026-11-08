@@ -276,7 +276,7 @@ def export_ratings(request):
                 timezone.localtime(r.submitted_at).strftime('%Y-%m-%d %H:%M'),
                 'Excluded' if invalidation else 'Counted', invalidation.reason if invalidation else '']])
         AccountAudit.objects.create(actor=request.user, action='Ratings exported', detail={
-            'target': str(window_id), 'summary': f'{len(rows)} records', 'rating_ids': [str(r.id) for r in rows]})
+            'target': rows[0].window.name, 'summary': f'{len(rows)} records', 'rating_ids': [str(r.id) for r in rows]})
         response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="fairly-ratings.csv"'
         response['X-Content-Type-Options'] = 'nosniff'
