@@ -10,8 +10,16 @@ urlpatterns = [path('admin/', admin.site.urls), path('api/v1/', include('profile
                path('account/', RedirectView.as_view(url='/login')),
                path('account/setup/', RedirectView.as_view(url='/setup/complete')),
                re_path(r'^(?:login|welcome|setup(?:/complete)?|reset(?:/complete)?)?/?$', student_page)]
-if settings.DEBUG:
-    urlpatterns += [path('staff/assets/<path:path>', serve, {
-        'document_root': settings.BASE_DIR.parent / 'staff-frontend' / 'dist' / 'assets'})]
-    urlpatterns += [path('assets/<path:path>', serve, {
-        'document_root': settings.BASE_DIR.parent / 'frontend' / 'dist' / 'assets'})]
+# The built apps are served by Django itself, so one process is a complete deployment (no separate web
+# server). Asset names are content-hashed, so they can be cached for a long time.
+def built(app):
+    root = settings.BASE_DIR.parent / app / 'dist' / 'assets'
+    def view(request, path):
+        response = serve(request, path, document_root=root)
+        response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        return response
+    return view
+
+
+urlpatterns += [path('staff/assets/<path:path>', built('staff-frontend')),
+                path('assets/<path:path>', built('frontend'))]

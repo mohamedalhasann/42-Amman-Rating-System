@@ -3,3 +3,4 @@ requests>=2.32,<3
 Pillow>=12,<13
 psycopg[binary]>=3.2,<4
 python-dotenv>=1.1,<2
+gunicorn>=23,<24

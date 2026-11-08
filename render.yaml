@@ -1,0 +1,53 @@
+# Render Blueprint: one free web service plus one free PostgreSQL database.
+# In Render: New > Blueprint > pick this repo. Fill the values marked sync: false when asked.
+services:
+  - type: web
+    name: fairly
+    runtime: python
+    plan: free
+    buildCommand: ./bin/render-build.sh
+    startCommand: cd backend && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_BEHIND_PROXY
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fairly-db
+          property: connectionString
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false   # e.g. fairly.onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false   # e.g. https://fairly.onrender.com
+      - key: ACCOUNT_ORIGIN
+        sync: false   # e.g. https://fairly.onrender.com
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "true"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false   # a Gmail app password, not the account password
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: FORTYTWO_CLIENT_ID
+        sync: false
+      - key: FORTYTWO_CLIENT_SECRET
+        sync: false
+      - key: FORTYTWO_IMAGE_HOSTS
+        value: cdn.intra.42.fr
+databases:
+  - name: fairly-db
+    plan: free
