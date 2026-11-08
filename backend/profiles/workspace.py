@@ -12,6 +12,7 @@ from django.utils.dateparse import parse_datetime
 from django.views.decorators.http import require_GET, require_POST
 
 from .accounts import account_settings
+from . import demo
 from .auth_views import payload
 from .models import (AbuseCase, AccountAudit, BlockedAttempt, Invalidation, Label,
                      Rating, StudentProfile, User, VotingWindow, WindowParticipant, WorkspaceState)
@@ -33,8 +34,10 @@ def capture_rosters():
     captured = 0
     for window in VotingWindow.objects.filter(starts_at__lte=now, roster_captured_at__isnull=True):
         students = StudentProfile.objects.filter(user__role='student', user__is_active=True,
-            intra_active=True, eligibility_status='eligible', user__email_verified_at__lte=window.starts_at,
-            user__approved_at__lte=window.starts_at)
+            intra_active=True, eligibility_status='eligible')
+        if not demo.enabled():
+            students = students.filter(user__email_verified_at__lte=window.starts_at,
+                user__approved_at__lte=window.starts_at)
         WindowParticipant.objects.bulk_create([WindowParticipant(window=window, student=s) for s in students])
         window.roster_captured_at = now
         window.save(update_fields=['roster_captured_at'])

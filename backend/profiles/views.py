@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
 
 from .models import StudentProfile
+from . import demo
 
 
 def error(code, message, status):
@@ -22,7 +23,10 @@ def protected(*, staff=False, student=False, allow_pending=False):
             user = request.user
             if not user.is_authenticated:
                 return error('UNAUTHENTICATED', 'Sign in to continue.', 401)
-            if not user.is_active or not user.email_verified_at or (not user.approved_at and not allow_pending):
+            demo_session = demo.session_enabled(request)
+            if request.session.get('local_demo_login') and not demo_session:
+                return error('ACCESS_DENIED', 'Demo sign-in has ended. Sign in again.', 403)
+            if not user.is_active or (not demo_session and (not user.email_verified_at or (not user.approved_at and not allow_pending))):
                 return error('ACCESS_DENIED', 'Account access is not enabled.', 403)
             if user.role == 'staff' and not user.is_staff:
                 return error('ACCESS_DENIED', 'Staff access is not enabled.', 403)
@@ -43,19 +47,19 @@ def profile_json(profile):
             'photo_url': reverse('profile-photo', args=[profile.id]) if profile.photo else None}
 
 
-def account_json(user):
+def account_json(user, *, demo_session=False):
     profile = StudentProfile.objects.select_related('user').filter(user=user).first()
     identity = profile_json(profile) if profile else {'id': str(user.id), 'intra_username': user.username,
         'first_name': user.first_name, 'last_name': user.last_name, 'photo_url': None}
     return {**identity, 'picture_url': identity['photo_url'], 'role': user.role,
-        'status': 'active' if user.approved_at else 'pending',
-        'profile': {'accent': profile.accent, 'onboarded': profile.onboarded} if profile and user.approved_at else None}
+        'status': 'active' if user.approved_at or demo_session else 'pending',
+        'profile': {'accent': profile.accent, 'onboarded': profile.onboarded} if profile and (user.approved_at or demo_session) else None}
 
 
 @require_GET
 @protected(allow_pending=True)
 def me(request):
-    return JsonResponse(account_json(request.user))
+    return JsonResponse(account_json(request.user, demo_session=demo.session_enabled(request)))
 
 
 @require_GET
@@ -85,7 +89,7 @@ def students(request):
 @protected()
 def photo(request, profile_id):
     rows = StudentProfile.objects.select_related('user').filter(user__role='student', eligibility_status='eligible', intra_active=True)
-    if request.user.role != 'staff' or not request.user.is_staff:
+    if (request.user.role != 'staff' or not request.user.is_staff) and not demo.session_enabled(request):
         # Students may see display photos of approved peers, never pending profiles.
         rows = rows.filter(user__is_active=True, user__email_verified_at__isnull=False, user__approved_at__isnull=False)
     profile = rows.filter(pk=profile_id).first()

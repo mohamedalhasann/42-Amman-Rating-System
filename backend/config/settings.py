@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 DEBUG = os.getenv('DJANGO_DEBUG', 'false').lower() == 'true'
+LOCAL_DEMO_LOGIN = os.getenv('LOCAL_DEMO_LOGIN', 'false').lower() == 'true'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', '')
 if not SECRET_KEY:
     if not DEBUG:

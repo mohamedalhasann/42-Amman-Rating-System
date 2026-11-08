@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from . import detection
+from . import demo
 from .auth_views import payload
 from .models import (BlockedAttempt, DetectionJob, Label, Rating, RatingSubmission,
                      StudentProfile, User, VotingWindow, WindowParticipant)
@@ -76,7 +77,7 @@ def save_profile(request):
         profile.accent = accent
         profile.onboarded = profile.onboarded or onboarded
         profile.save(update_fields=['accent', 'onboarded'])
-    return JsonResponse(account_json(request.user))
+    return JsonResponse(account_json(request.user, demo_session=demo.session_enabled(request)))
 
 
 @require_GET
@@ -112,8 +113,9 @@ def peers(request):
             return JsonResponse({'items': [], 'next_cursor': None})
         rows = StudentProfile.objects.select_related('user').filter(
             windowparticipant__window=window, user__role='student', user__is_active=True,
-            user__email_verified_at__isnull=False, user__approved_at__isnull=False,
             eligibility_status='eligible', intra_active=True).exclude(pk=profile.pk).order_by('id')
+        if not demo.session_enabled(request):
+            rows = rows.filter(user__email_verified_at__isnull=False, user__approved_at__isnull=False)
         if query:
             rows = rows.filter(Q(user__username__icontains=query) | Q(user__first_name__icontains=query) | Q(user__last_name__icontains=query))
         if cursor:
@@ -183,7 +185,8 @@ def submit_rating(request):
         prepare_windows()
         profile = StudentProfile.objects.select_for_update().get(user=request.user)
         user = User.objects.select_for_update().get(pk=request.user.pk)
-        if (user.role != 'student' or not user.is_active or not user.email_verified_at or not user.approved_at or
+        if (user.role != 'student' or not user.is_active or
+                (not demo.session_enabled(request) and (not user.email_verified_at or not user.approved_at)) or
                 profile.eligibility_status != 'eligible' or not profile.intra_active):
             return error('ACCESS_DENIED', 'Student access is not enabled.', 403)
         previous = RatingSubmission.objects.select_related('rating__window').filter(student=profile, key=key).first()
@@ -196,10 +199,12 @@ def submit_rating(request):
             return error('WINDOW_CLOSED', 'This voting window is closed.', 409)
         if not WindowParticipant.objects.filter(window=window, student=profile).exists():
             return error('VOTER_UNAVAILABLE', 'Your account is not in this window’s opening roster.', 403)
-        recipient = StudentProfile.objects.select_related('user').filter(pk=recipient_id,
+        recipients = StudentProfile.objects.select_related('user').filter(pk=recipient_id,
             windowparticipant__window=window, user__role='student', user__is_active=True,
-            user__email_verified_at__isnull=False, user__approved_at__isnull=False,
-            eligibility_status='eligible', intra_active=True).first()
+            eligibility_status='eligible', intra_active=True)
+        if not demo.session_enabled(request):
+            recipients = recipients.filter(user__email_verified_at__isnull=False, user__approved_at__isnull=False)
+        recipient = recipients.first()
         if not recipient:
             return error('RECIPIENT_UNAVAILABLE', 'This student is not available to rate.', 404)
         if recipient.pk == profile.pk:

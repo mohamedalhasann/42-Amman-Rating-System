@@ -17,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 from .accounts import (InvalidSetup, account_settings, complete_setup, complete_reset, eligible,
                        request_reset, request_setup, throttle)
 from .models import AccountAudit, StudentProfile, User
+from . import demo
 from .views import error, protected, profile_json
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ def limited(request, scope, limit, seconds):
 @never_cache
 @ensure_csrf_cookie
 def csrf(request):
-    return JsonResponse({'csrf_token': get_token(request)})
+    return JsonResponse({'csrf_token': get_token(request), 'local_demo_login': demo.enabled()})
 
 
 @require_POST
@@ -111,7 +112,7 @@ def sign_in(request):
         data = payload(request, ['intra_username', 'account_type', 'password'])
         username = identity(data)
         password = data.get('password')
-        if not isinstance(password, str) or not 1 <= len(password) <= 1024:
+        if not demo.enabled() and (not isinstance(password, str) or not 1 <= len(password) <= 1024):
             raise ValueError('Enter a username and password.')
     except ValueError as exc:
         return error('INVALID_REQUEST', str(exc), 400)
@@ -120,13 +121,15 @@ def sign_in(request):
     # account_type is accepted for older clients, but never consulted. The unique
     # stored username determines the account and its trusted role.
     account = User.objects.filter(username__iexact=username).first()
-    user = authenticate(request, username=account.username if account else username, password=password)
-    if not user or not eligible(user) or not user.email_verified_at:
+    demo_login = demo.enabled()
+    user = account if demo_login else authenticate(request, username=account.username if account else username, password=password)
+    if not user or not eligible(user) or (not demo_login and not user.email_verified_at):
         return error('INVALID_CREDENTIALS', 'Unable to sign in with these credentials.', 401)
-    login(request, user)
-    pending = not user.approved_at
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    request.session['local_demo_login'] = demo_login
+    pending = not demo_login and not user.approved_at
     request.session.set_expiry(900 if pending else settings.SESSION_COOKIE_AGE)
-    AccountAudit.objects.create(actor=user, subject=user, action='Pending approval sign-in' if pending else 'Signed in')
+    AccountAudit.objects.create(actor=user, subject=user, action='Local demo sign-in' if demo_login else ('Pending approval sign-in' if pending else 'Signed in'))
     return JsonResponse({'status': 'awaiting_approval' if pending else 'signed_in', 'role': user.role, 'csrf_token': get_token(request)})
 
 

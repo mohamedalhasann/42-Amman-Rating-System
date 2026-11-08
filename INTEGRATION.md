@@ -29,6 +29,24 @@ The five supplied staff usernames are `jsukkari`, `malhaimo`, `mosalim`, `abelei
 
 ## Student approval and voting
 
+### Local hackathon presentation
+
+Set `LOCAL_DEMO_LOGIN=true` in the ignored `backend/.env`, keep `DJANGO_DEBUG=true`,
+restart Django, and rebuild the student frontend after source changes. The existing
+shared login then asks only for an Intra username. Only existing active eligible
+students and previously provisioned staff can sign in; roles come from the database.
+There is no API request, account creation, mailbox check or approval step at login.
+Demo sessions do not overwrite passwords, verification timestamps or approval records.
+
+New voting-window snapshots in this mode include all active eligible students,
+including those without verification or approval. Existing captured rosters stay
+unchanged; create a fresh window after importing/creating the demo participants.
+Votes and roster snapshots still persist in the local database.
+
+Set `LOCAL_DEMO_LOGIN=false` and restart Django to restore normal authentication.
+Existing demo sessions then lose access and must sign in normally. This option is
+disabled outside Django debug mode; use it only for the local presentation.
+
 1. A student verifies their campus mailbox and sets a password through the setup link.
 2. With manual approval enabled, signing in shows only the waiting screen. The 15-minute pending session can read its own display identity; dashboard, peers, photos, preferences, voting and all staff routes remain blocked.
 3. Staff approve the verified account from **Accounts**. The student's **Check again** action then opens onboarding.
