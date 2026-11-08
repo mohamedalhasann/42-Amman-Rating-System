@@ -1,6 +1,6 @@
 // Fairly service worker. Caches only the public app shell so the app opens fast and installs.
 // API responses are private and always go to the network; nothing personal is ever cached.
-const CACHE = 'fairly-shell-v2';
+const CACHE = 'fairly-shell-v3';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
