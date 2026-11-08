@@ -1,6 +1,6 @@
 // Fairly service worker. Caches only the public app shell so the app opens fast and installs.
 // API responses are private and always go to the network; nothing personal is ever cached.
-const CACHE = 'fairly-shell-v1';
+const CACHE = 'fairly-shell-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -29,7 +29,7 @@ self.addEventListener('fetch', event => {
   }
 
   // Built assets have hashed names and never change: cache first.
-  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/')) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/cats/')) {
     event.respondWith(caches.match(request).then(hit => hit || fetch(request).then(response => {
       if (response.ok) { const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(request, copy)); }
       return response;

@@ -6,7 +6,7 @@ from django.views.static import serve
 from profiles.frontend import pwa_file, staff_page, student_page
 
 urlpatterns = [path('admin/', admin.site.urls), path('api/v1/', include('profiles.urls')), path('staff/', staff_page),
-               re_path(r'^(?P<name>manifest\.webmanifest|sw\.js|icons/[a-z0-9-]+\.png)$', pwa_file),
+               re_path(r'^(?P<name>manifest\.webmanifest|sw\.js|icons/[a-z0-9-]+\.png|cats/cat-\d{2}\.jpg)$', pwa_file),
                path('account/', RedirectView.as_view(url='/login')),
                path('account/setup/', RedirectView.as_view(url='/setup/complete')),
                re_path(r'^(?:login|welcome|setup(?:/complete)?|reset(?:/complete)?)?/?$', student_page)]

@@ -1,8 +1,9 @@
 import {useEffect,useState} from 'react';
-import {initials} from './bits';
+import {catFor} from './cat';
 
-export function ProfilePicture({first,last,picture}:{first:string;last:string;picture?:string|null}) {
+// The student's photo, or their cat when there is none (or it fails to load).
+export function ProfilePicture({picture,seed}:{first?:string;last?:string;picture?:string|null;seed?:string|null}) {
   const [failed,setFailed]=useState(false);
   useEffect(()=>setFailed(false),[picture]);
-  return picture&&!failed?<img src={picture} alt="" onError={()=>setFailed(true)}/>:<span>{initials(first,last)}</span>;
+  return <img src={picture&&!failed?picture:catFor(seed)} alt="" onError={()=>setFailed(true)}/>;
 }

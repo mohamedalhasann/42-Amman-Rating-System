@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.http import FileResponse, Http404, HttpResponse
 from django.views.decorators.cache import never_cache
@@ -41,12 +43,13 @@ PWA_FILES = {
 
 @require_GET
 def pwa_file(request, name):
-    if name not in PWA_FILES:
+    kind = PWA_FILES.get(name) or ('image/jpeg' if re.fullmatch(r'cats/cat-\d{2}\.jpg', name) else None)
+    if not kind:
         raise Http404
     path = settings.BASE_DIR.parent / 'frontend' / 'dist' / name
     if not path.is_file():
         raise Http404
-    response = FileResponse(path.open('rb'), content_type=PWA_FILES[name])
+    response = FileResponse(path.open('rb'), content_type=kind)
     if name == 'sw.js':
         # the worker must always be fresh so new builds reach students, and it controls the whole site
         response['Cache-Control'] = 'no-cache'

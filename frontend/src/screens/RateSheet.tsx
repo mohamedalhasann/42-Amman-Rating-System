@@ -244,7 +244,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
                         setStep('form');
                       }}
                     >
-                      <span className="peer__avatar mono" aria-hidden="true"><ProfilePicture first={p.first_name} last={p.last_name} picture={p.picture_url}/></span>
+                      <span className="peer__avatar mono" aria-hidden="true"><ProfilePicture first={p.first_name} last={p.last_name} picture={p.picture_url} seed={p.intra_username}/></span>
                       <span className="peer__text">
                         <span className="peer__name">{p.first_name} {p.last_name}</span>
                         <span className="mono muted peer__login">{p.intra_username}</span>
@@ -263,7 +263,7 @@ export function RateSheet({ votingWindow, ratedIds, onClose, onSubmitted }: Prop
         {step === 'form' && target && (
           <div className="sheet__body">
             <div className="target">
-              <span className="peer__avatar peer__avatar--lg mono" aria-hidden="true"><ProfilePicture first={target.first_name} last={target.last_name} picture={target.picture_url}/></span>
+              <span className="peer__avatar peer__avatar--lg mono" aria-hidden="true"><ProfilePicture first={target.first_name} last={target.last_name} picture={target.picture_url} seed={target.intra_username}/></span>
               <div>
                 <p className="target__name">{target.first_name} {target.last_name}</p>
                 <p className="mono muted">{target.intra_username}</p>

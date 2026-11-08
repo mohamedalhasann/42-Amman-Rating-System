@@ -84,7 +84,7 @@ export function Home() {
         <section className="poster rise" aria-labelledby="poster-title">
           <div className="poster__who">
             <div className="poster__badge">
-              <Monogram first={me.first_name} last={me.last_name} picture={me.picture_url}/>
+              <Monogram first={me.first_name} last={me.last_name} picture={me.picture_url} seed={me.intra_username}/>
             </div>
             <div className="poster__names">
               <h1 className="poster__name">{me.first_name} {me.last_name}</h1>

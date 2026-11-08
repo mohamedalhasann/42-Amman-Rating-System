@@ -1,3 +1,4 @@
+import {catFor} from './cat';
 import React, {useEffect, useRef, useState} from 'react';
 import {useStaff} from './context';
 import {toneOf} from './insights';
@@ -26,11 +27,9 @@ export function Icon({name, size = 20}) {
 export function Badge({children, tone = ''}) {return <span className={`badge ${tone}`}>{children}</span>;}
 export function Avatar({student}) {
   const [failed,setFailed]=useState(false);
-  useEffect(()=>setFailed(false),[student.photo_url]);
-  const color=[...student.id].reduce((sum,letter)=>sum+letter.charCodeAt(0),0)%5;
-  return <span className={`avatar avatar-${color}`} aria-hidden="true">{student.photo_url&&!failed?
-    <img src={student.photo_url} alt="" loading="lazy" onError={()=>setFailed(true)}/>:
-    `${student.first_name?.[0]||''}${student.last_name?.[0]||''}`||student.intra_username.slice(0,2).toUpperCase()}</span>;
+  useEffect(()=>setFailed(false),[student?.photo_url]);
+  // a photo when there is one, otherwise the student's cat (the same one the student app shows)
+  return <span className="avatar" aria-hidden="true"><img src={student?.photo_url&&!failed?student.photo_url:catFor(student?.intra_username)} alt="" loading="lazy" onError={()=>setFailed(true)}/></span>;
 }
 export function Person({id, compact = false, clickable = true}) {
   const {db, goStudent} = useStaff();
